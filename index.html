@@ -15,7 +15,7 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
   html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#0e2a4a;font-family:"Trebuchet MS",Arial,Helvetica,sans-serif;color:var(--ui);touch-action:none;overscroll-behavior:none}
   #game{position:fixed;inset:0;width:100%;height:100%;display:block}
-  .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));text-align:center;background:linear-gradient(180deg,rgba(8,40,90,.55),rgba(8,40,90,.85))}
+  .screen{position:fixed;left:0;top:0;width:100%;height:100vh;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(16px,env(safe-area-inset-top)) 16px calc(env(safe-area-inset-bottom) + 36px);text-align:center;background:linear-gradient(180deg,rgba(8,40,90,.55),rgba(8,40,90,.85))}
   .screen::before,.screen::after{content:'';margin:auto}
   .hidden{display:none!important}
   h1{margin:0 0 4px;font-size:clamp(30px,9vw,58px);letter-spacing:1px;color:var(--accent);text-shadow:0 3px 0 #a56a00,0 6px 16px rgba(0,0,0,.6)}
@@ -36,7 +36,7 @@
   .stage .best{color:var(--accent);font-size:13px;margin-top:4px}
   .stat{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;font-size:13px;opacity:.85;margin-top:12px}
   .small{font-size:12px;opacity:.7;margin-top:14px;max-width:420px;line-height:1.4}
-  #ver{position:fixed;left:0;right:0;bottom:max(8px,env(safe-area-inset-bottom));text-align:center;font-size:12px;opacity:.6;letter-spacing:.5px}
+  #ver{position:static;margin-top:12px;text-align:center;font-size:12px;opacity:.6;letter-spacing:.5px}
   #hud{position:fixed;left:0;right:0;top:0;padding:max(8px,env(safe-area-inset-top)) 10px 0;pointer-events:none;display:flex;justify-content:space-between;align-items:flex-start;font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,.7)}
   #hud .box{background:rgba(0,0,0,.35);border-radius:12px;padding:6px 10px;font-size:clamp(13px,3.6vw,18px);line-height:1.25}
   #hud .speed{font-size:clamp(22px,7vw,36px);color:var(--accent);line-height:1}
@@ -132,7 +132,7 @@
 
 <script>
 'use strict';
-const VERSION='1.8.2', VERSION_DATE='2026-10-01';
+const VERSION='1.8.3', VERSION_DATE='2026-10-01';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
