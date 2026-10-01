@@ -10,13 +10,13 @@ Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installa
 
 * **Auf dem Handy:** `index.html` öffnen (z. B. per AirDrop/Mail/Dateien-App an das Handy schicken und
   im Browser öffnen) oder die Datei auf einen beliebigen Webspace legen. Über „Zum Home-Bildschirm
-  hinzufügen“ läuft es bildschirmfüllend wie eine App. Das Auto gibt von allein Gas (bis 120 km/h),
+  hinzufügen“ läuft es bildschirmfüllend wie eine App. Das Auto gibt von allein Gas (bis 110 km/h),
   gelenkt wird mit den Pfeil-Buttons unten oder durch Antippen der linken/rechten Bildschirmhälfte.
   **Kipp-Steuerung:** Über den Button „📱 Kipp-Steuerung“ (Streckenauswahl oder rechts oben im Rennen)
   lenkst du durch Neigen des Handys. Beim Rennstart das Handy kurz ruhig halten, das legt die Mitte fest.
   Auf dem iPhone fragt der Browser einmal nach der Erlaubnis für den Bewegungssensor. 
 * **Am Computer:** `index.html` doppelklicken. Pfeiltasten links/rechts oder `A`/`D`, `P`/`Esc` für Pause.
-* **Boost:** Orange Felder auf der Straße geben für gut drei Sekunden Turbo bis 170 km/h.
+* **Boost:** Orange Felder auf der Straße geben für gut drei Sekunden Turbo bis 150 km/h.
 
 ## Was drin ist
 

@@ -88,7 +88,7 @@
   <p class="sub">Zwei Kinder, zwei Autos, eine Insel!</p>
   <button class="btn" id="btnStart">Los geht's!</button>
   <button class="btn secondary" id="btnRanking">🏆 Rangliste</button>
-  <p class="small">Das Auto gibt von allein Gas, du musst nur lenken: Pfeile unten antippen, Handy kippen oder am Computer <span class="kbd">←</span><span class="kbd">→</span> bzw. <span class="kbd">A</span><span class="kbd">D</span>. Fahr über die orangen Boost-Felder für Turbo bis 170 km/h!</p>
+  <p class="small">Das Auto gibt von allein Gas, du musst nur lenken: Pfeile unten antippen, Handy kippen oder am Computer <span class="kbd">←</span><span class="kbd">→</span> bzw. <span class="kbd">A</span><span class="kbd">D</span>. Fahr über die orangen Boost-Felder für Turbo bis 150 km/h!</p>
   <div id="ver"></div>
 </div>
 
@@ -132,7 +132,7 @@
 
 <script>
 'use strict';
-const VERSION='1.7.0', VERSION_DATE='2026-10-01';
+const VERSION='1.7.1', VERSION_DATE='2026-10-01';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -173,7 +173,7 @@ const DRIVERS = {
 function driverName(d){ return (store('name_'+d.id) || d.defName); }
 
 // ---------- Konstanten der 3D-Darstellung ----------
-const SEG_LEN=200, RUMBLE=3, LANES=2, ROAD_W=2000, FOV=100, CAM_H=1000, DRAW_DIST=240, TOP_SPEED=SEG_LEN*32, K=2.5, KMH_MAX=120, KMH_BOOST=170, BOOST_F=KMH_BOOST/KMH_MAX, BOOST_SEC=3.2;
+const SEG_LEN=200, RUMBLE=3, LANES=2, ROAD_W=2000, FOV=100, CAM_H=1000, DRAW_DIST=240, K=2.5, KMH_MAX=110, KMH_BOOST=150, TOP_SPEED=SEG_LEN*32*(KMH_MAX/120), BOOST_F=KMH_BOOST/KMH_MAX, BOOST_SEC=3.2;
 const cameraDepth = 1/Math.tan((FOV/2)*Math.PI/180);
 const playerZ = CAM_H*cameraDepth;
 const SPRITE_SCALE = 0.3/80;
@@ -641,7 +641,6 @@ function buildSprites(){
   makeSprite('lighthouse',140,330,drawLighthouse);
   makeSprite('finca',260,180,drawFinca);
   makeSprite('rock',140,70,drawRock);
-  makeSprite('archStart',680,340,(x,w,h)=>drawArch(x,w,h,'START'));
   makeSprite('archFinish',680,340,(x,w,h)=>drawArch(x,w,h,'ZIEL'));
   makeSprite('parasol',120,110,drawParasol);
   makeSprite('boat',140,170,drawBoat);
@@ -755,7 +754,6 @@ function buildTrack(stage){
   // Start- und Zielmarkierungen samt Bogen
   for(const i of [2,3]) segs[i].color=2;
   for(const i of [finishIndex-1,finishIndex]) segs[i].color=2;
-  segs[4].sprites.push({offset:0,ox:-0.5,sprite:SPR.archStart});
   segs[finishIndex].sprites.push({offset:0,ox:-0.5,sprite:SPR.archFinish});
   // Ortsschilder
   for(const [frac,town] of stage.towns){ const idx=clamp(Math.round(frac*(finishIndex-1))+1,1,finishIndex-1); const s=makeSprite('sign_'+stage.id+'_'+town,160,200,(x,w,h)=>drawSign(x,w,h,town)); segs[idx].sprites.push({offset:-1.25,sprite:s}); }
@@ -946,7 +944,7 @@ function update(dt){
   G.steerVis += (clamp(inp.steer,-1,1)-G.steerVis)*Math.min(1,dt*7);
   if(Math.abs(G.steerVis)>0.55 && speedPct>0.6 && G.carRect){ const c=G.carRect; for(const side of [-1,1]) FX.add({x:c.x+side*c.w*0.36,y:c.bottom-c.h*0.02,vx:rnd(-30,30)-G.steerVis*60,vy:rnd(10,50),life:rnd(0.3,0.6),max:0.6,size:rnd(4,8),grow:true,color:'rgba(230,230,230,0.5)'}); }
   G.playerX -= dx*speedPct*playerSegment.curve*0.14;
-  // Gas-Automatik: beschleunigt von allein bis 120 km/h, mit Boost kurzzeitig bis 170 km/h
+  // Gas-Automatik: beschleunigt von allein bis KMH_MAX, mit Boost kurzzeitig bis KMH_BOOST
   const accel=G.maxSpeed/5*d.accelF;
   G.boostT=Math.max(0,G.boostT-dt);
   const target = G.boostT>0 ? G.maxSpeed*BOOST_F : G.maxSpeed;
