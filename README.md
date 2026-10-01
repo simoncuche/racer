@@ -22,10 +22,11 @@ Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installa
 
 * Zwei Fahrer mit eigenem Fahrverhalten: Der Sportwagen ist schneller, der Jeep kommt besser über
   Wiese und Schotter. Die Namen der Kinder lassen sich im Auswahlbildschirm eintippen.
-* Drei Strecken mit Ortsschildern, Kathedrale, Trockensteinmauern, Olivenbäumen, Oleander, Pinien,
-  Mandelbäumen, Windmühlen, Leuchtturm, Strand und Meer.
+* Drei Strecken mit Ortsschildern, Dörfern mit Kirchen und Cafés, Steinbrücken über der Straße, Bergmassiven,
+  Kathedrale, Trockensteinmauern, Olivenbäumen, Oleander, Pinien, Mandelbäumen, Weinbergen, Sonnenblumen,
+  Kakteen, Schafen, Windmühlen, Sóller-Tram, Strandhütten, Leuchtturm, Strand und Meer.
 * Das jeweils andere Kind fährt als Gegner mit. Dazu Touristenbusse, Roller, Radfahrer und Ziegen.
-* Orangen und Ensaimadas einsammeln zählt fürs Ergebnis.
+* Meeresfrüchte (Garnele, Fisch, Krabbe, Muschel, Tintenfisch) einsammeln zählt fürs Ergebnis.
 * Rangliste: die zehn besten Zeiten pro Strecke mit Name, Datum und Auto. Gespeichert im Browser
   (localStorage) und zusätzlich als Cookie, erreichbar über „Rangliste“ im Startbildschirm.
 * Motorsound und Signaltöne per WebAudio, abschaltbar über den Lautsprecher-Button.
