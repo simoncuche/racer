@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **1.7.1**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **1.8.0**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -38,7 +38,8 @@ Das Auto gibt von allein Gas, es wird nur gelenkt.
 | Handy mit Kipp-Steuerung | Handy nach links oder rechts neigen | Beim Rennstart kurz ruhig halten, das legt die Mitte fest |
 | Computer | `←` `→` oder `A` `D` | `P` oder `Esc` für Pause |
 
-Die Kipp-Steuerung wird in der Streckenauswahl oder im Rennen rechts oben eingeschaltet und bleibt
+Beim Lenken zeigt sich das Auto schräg: Die Flanke und das eingeschlagene Vorderrad werden sichtbar,
+in fünf Stufen je nach Lenkwinkel. Die Kipp-Steuerung wird in der Streckenauswahl oder im Rennen rechts oben eingeschaltet und bleibt
 gespeichert. Sie reagiert ab etwa 3 Grad und lenkt bei etwa 22 Grad voll ein. Hoch- und Querformat
 funktionieren beide.
 
@@ -75,8 +76,9 @@ Zielbogen mit Konfetti-Regen.
 
 ### Verkehr und Crashs
 
-Touristenbusse, Roller, Radfahrer und Ziegen sind unterwegs. Beim Zusammenstoß sprühen Funken, Staub
-steigt auf, Sterne kreisen über dem Kopf und das Auto verliert Tempo. Auch das andere Kind weicht
+Touristenbusse mit blinkendem Blinker, Roller mit Auspuffwölkchen, strampelnde Radfahrer und trottende
+Ziegen mit Glocke sind unterwegs, alle mit zwei Bewegungsphasen und kleinen Seitenbewegungen. Beim
+Zusammenstoß sprühen Funken, Staub steigt auf, Sterne kreisen über dem Kopf und das Auto verliert Tempo. Auch das andere Kind weicht
 dem Verkehr aus.
 
 ### Meeresfrüchte sammeln
@@ -84,10 +86,12 @@ dem Verkehr aus.
 Garnelen, Fische, Krabben, Muscheln und Tintenfische schweben animiert über der Straße. Wer sie
 einsammelt, bekommt Funken, ein aufsteigendes „+1“ und einen Eintrag im Ergebnis.
 
-### Rangliste
+### Punkte und Rangliste
 
-Pro Strecke werden die zehn besten Zeiten mit Name, Auto, Datum, gesammelten Meeresfrüchten und
-Turbos gespeichert. Die Rangliste ist über den Startbildschirm erreichbar, nach jedem Rennen steht
+Jedes Rennen ergibt eine Punktzahl: Zeitbonus `(200 − Sekunden) × 20`, dazu 100 Punkte pro
+Meeresfrucht, 50 pro Turbo und 500 für den Sieg gegen das andere Kind. Die Punkte laufen im HUD live
+mit. Pro Strecke werden die zehn besten Punktzahlen mit Name, Auto, Zeit, Datum und gesammelten
+Meeresfrüchten gespeichert. Die Rangliste ist über den Startbildschirm erreichbar, nach jedem Rennen steht
 der eigene Platz im Ergebnis. Gespeichert wird im Browser (localStorage) und zusätzlich als Cookie.
 
 ### Sound
@@ -127,7 +131,7 @@ WebAudio erzeugt. Über das Lautsprecher-Symbol abschaltbar.
 Die wichtigsten Stellschrauben stehen oben in `index.html`:
 
 ```js
-const VERSION='1.7.1', VERSION_DATE='2026-10-01';
+const VERSION='1.8.0', VERSION_DATE='2026-10-01';
 const KMH_MAX=110, KMH_BOOST=150, BOOST_SEC=3.2;   // Tempo und Dauer des Turbos
 const DRAW_DIST=240;                                // Sichtweite in Segmenten
 ```
