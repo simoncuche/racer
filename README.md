@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **1.8.3**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **1.8.4**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -51,8 +51,9 @@ funktionieren beide.
 | | Roter Flitzer | Blauer Jeep |
 |---|---|---|
 | Fahrerin / Fahrer | Mädchen mit Lockenkopf | Junge im blauen Shirt |
-| Stärke | Liegt super auf der Straße | Beschleunigt kräftiger, kommt neben der Straße gut voran |
-| Schwäche | Wird im Gelände sehr langsam | – |
+| Tempo | 110 km/h, Boost 150 | 105 km/h, Boost 145 |
+| Stärke | Liegt super auf der Straße | Lenkt direkter, etwas kleiner, beschleunigt kräftiger, kommt neben der Straße gut voran |
+| Schwäche | Wird im Gelände sehr langsam | 5 km/h langsamer |
 
 Die Namen der Kinder lassen sich im Auswahlbildschirm eintippen und werden gespeichert. Das jeweils
 andere Kind fährt als Gegner mit.

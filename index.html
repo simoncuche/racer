@@ -132,7 +132,7 @@
 
 <script>
 'use strict';
-const VERSION='1.8.3', VERSION_DATE='2026-10-01';
+const VERSION='1.8.4', VERSION_DATE='2026-10-01';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -166,12 +166,12 @@ function mkCanvas(w,h){const c=document.createElement('canvas');c.width=w;c.heig
 const DRIVERS = {
   girl:{ id:'girl', defName:'Pilotin', carName:'Roter Flitzer', carColor:'#e2231a', dark:'#9c1109', light:'#ff6a5c',
          hair:'#4a2b1a', shirt:'#f4f1ea', shirtPrint:'#d9456b', skin:'#f1c9a5', type:'sport',
-         desc:'Roter Sportwagen. Liegt super auf der Straße, wird daneben aber sehr langsam.',
-         maxSpeedF:1.0, offRoadF:0.28, accelF:1.0, grip:1.0 },
+         desc:'Roter Sportwagen, 110 km/h. Liegt super auf der Straße, wird daneben aber sehr langsam.',
+         maxSpeedF:1.0, offRoadF:0.28, accelF:1.0, grip:1.0, size:1.0 },
   boy: { id:'boy', defName:'Pilot', carName:'Blauer Jeep', carColor:'#1e8fe0', dark:'#0f5a94', light:'#6cc0ff',
          hair:'#5a3a22', shirt:'#2a5bd7', shirtPrint:'#ffffff', skin:'#f1c9a5', type:'jeep',
-         desc:'Starker blauer Jeep. Beschleunigt flott und kommt auch neben der Straße gut voran.',
-         maxSpeedF:1.0, offRoadF:0.6, accelF:1.25, grip:0.9 }
+         desc:'Blauer Jeep, 105 km/h. Lenkt direkter, ist etwas kleiner und kommt auch neben der Straße gut voran.',
+         maxSpeedF:105/110, offRoadF:0.6, accelF:1.25, grip:1.15, size:0.92 }
 };
 function driverName(d){ return (store('name_'+d.id) || d.defName); }
 
@@ -1006,7 +1006,8 @@ function update(dt){
   // Gas-Automatik: beschleunigt von allein bis KMH_MAX, mit Boost kurzzeitig bis KMH_BOOST
   const accel=G.maxSpeed/5*d.accelF;
   G.boostT=Math.max(0,G.boostT-dt);
-  const target = G.boostT>0 ? G.maxSpeed*BOOST_F : G.maxSpeed;
+  const boostSpeed = G.maxSpeed + TOP_SPEED*(BOOST_F-1);
+  const target = G.boostT>0 ? boostSpeed : G.maxSpeed;
   if(G.finished){ G.speed += -G.maxSpeed/3*dt; }
   else if(G.speed<target) G.speed=Math.min(target, G.speed + accel*(G.boostT>0?2.5:1)*dt);
   else G.speed=Math.max(target, G.speed - G.maxSpeed/4*dt);
@@ -1025,7 +1026,7 @@ function update(dt){
   { const r=G.rival; const seg=findSegment(r.z); if(seg===playerSegment && G.speed>r.speed && overlap(G.playerX,0.55,r.offset,0.4)){ G.speed=r.speed*0.9; crashFx(); } }
   // Gegenstände einsammeln
   for(const it of playerSegment.items){ if(!it.taken && Math.abs(G.playerX-it.offset)<0.35){ it.taken=true; G.items++; Audio.pickup(); showToast(it.kind[2]+' '+it.kind[1]+'! 😋',0.7); pickupFx(it.kind[2]); } }
-  G.playerX=clamp(G.playerX,-2.2,2.2); G.speed=clamp(G.speed,0,G.maxSpeed*BOOST_F);
+  G.playerX=clamp(G.playerX,-2.2,2.2); G.speed=clamp(G.speed,0,G.maxSpeed+TOP_SPEED*(BOOST_F-1));
   // Ortsschilder-Toast
   for(const [frac,town] of G.stage.towns){ const idx=Math.round(frac*(T.finishIndex-1))+1; if(idx>2 && idx<T.finishIndex-1 && startPosition<idx*SEG_LEN-playerZ && G.position>=idx*SEG_LEN-playerZ){ showToast(town+' 📍',1.4); Audio.beep(660,0.15,'sine'); } }
   // Parallax
@@ -1173,7 +1174,7 @@ function render(){
   const bounce=(1.5*Math.random()*(G.speed/G.maxSpeed)*(H/480))*(Math.random()>0.5?1:-1);
   const spr=SPR['car_'+d.id+'_'+steer];
   const landscape = W>H;
-  const carW = (landscape ? Math.min(W*0.22, H*0.5) : W*0.42)*(300/260);
+  const carW = (landscape ? Math.min(W*0.22, H*0.5) : W*0.42)*(300/260)*d.size;
   const carH = carW*spr.h/spr.w;
   const bottom = landscape ? H*0.95 : H*0.82;
   const carX = W/2 + sv*carW*0.06; // Auto rutscht leicht in Lenkrichtung
@@ -1190,12 +1191,12 @@ function drawCarsInSegment(seg){
     const scale=lerp(seg.p1.screen.scale,next.p1.screen.scale,percent); const sx=lerp(seg.p1.screen.x,next.p1.screen.x,percent)+scale*c.offset*ROAD_W*W/2; const sy=lerp(seg.p1.screen.y,next.p1.screen.y,percent);
     const spr = c===G.rival ? SPR['car_'+c.driver.id+'_'+(c.offset-(c.prevOffset||c.offset)>0.002?1:c.offset-(c.prevOffset||c.offset)<-0.002?-1:0)] : c.sprite;
     if(c===G.rival) c.prevOffset=c.offset;
-    drawSprite(spr,scale*(c===G.rival?100/260:1),sx,sy,-0.5,-1,seg.clip); }
+    drawSprite(spr,scale*(c===G.rival?100/260*c.driver.size:1),sx,sy,-0.5,-1,seg.clip); }
 }
 
 // ---------- HUD ----------
 function updateHUD(){
-  const kmh=Math.round(G.speed/G.maxSpeed*KMH_MAX);
+  const kmh=Math.round(G.speed/TOP_SPEED*KMH_MAX);
   $('spd').textContent=kmh; $('spd').style.color = G.boostT>0 ? '#ff7a1a' : '';
   $('score').textContent=calcScore(G.finished?G.finishTime:G.time,G.items,G.boosts,false); $('time').textContent=fmtTime(G.time); $('items').textContent=G.items;
   const pz=G.position+playerZ, rz=G.rival.z; const ahead = G.finished ? (G.rival.finished && G.rivalFinishTime<G.finishTime ? false : true) : (pz>=rz);
