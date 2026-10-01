@@ -323,69 +323,102 @@ function drawBoat(x,w,h){
   x.restore();
 }
 
-// Fahrzeug von hinten (Spieler & Rivale)
-function drawVehicleBack(x, w, h, d, steer=0, bob=0){
-  x.save(); x.translate(w/2, h-6+bob);
-  const c=d.carColor, dark=d.dark, light=d.light;
-  // Schatten
-  x.fillStyle='rgba(0,0,0,0.35)'; x.beginPath(); x.ellipse(0,2,w*0.46,h*0.08,0,0,7); x.fill();
+// Fahrzeug von hinten (Spieler & Rivale) – steer: -1..1 (Blick leicht auf die Außenseite)
+function shade(hex,f){ const n=parseInt(hex.slice(1),16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255; r=clamp(Math.round(r*f),0,255); g=clamp(Math.round(g*f),0,255); b=clamp(Math.round(b*f),0,255); return `rgb(${r},${g},${b})`; }
+function tire(x,cx,cy,tw,th,knobby){ // cx,cy = Mitte unten
+  x.fillStyle='#161616'; x.beginPath(); x.roundRect(cx-tw/2,cy-th,tw,th,tw*0.22); x.fill();
+  x.fillStyle='#2b2b2b'; x.beginPath(); x.roundRect(cx-tw*0.36,cy-th*0.92,tw*0.72,th*0.84,tw*0.18); x.fill();
+  x.fillStyle='#111'; const rows=knobby?6:8; for(let i=0;i<rows;i++){ const yy=cy-th*0.88+i*(th*0.78/rows); if(knobby){ x.fillRect(cx-tw*0.36,yy,tw*0.3,th*0.06); x.fillRect(cx+tw*0.06,yy+th*0.03,tw*0.3,th*0.06); } else x.fillRect(cx-tw*0.34,yy,tw*0.68,th*0.025); }
+}
+function drawVehicleBack(x, w, h, d, steer=0){
+  x.save(); x.translate(w/2, h-8);
+  const c=d.carColor, sh=steer*w*0.03;
+  x.fillStyle='rgba(0,0,0,0.35)'; x.beginPath(); x.ellipse(0,3,w*0.47,h*0.06,0,0,7); x.fill();
+  const bodyGrad=(y0,y1)=>{ const g=x.createLinearGradient(0,y0,0,y1); g.addColorStop(0,shade(c,1.25)); g.addColorStop(0.35,c); g.addColorStop(1,shade(c,0.62)); return g; };
   if(d.type==='sport'){
-    // Räder
-    x.fillStyle='#222'; x.beginPath(); x.roundRect(-w*0.46+steer*3,-h*0.34,w*0.16,h*0.34,4); x.fill(); x.beginPath(); x.roundRect(w*0.30+steer*3,-h*0.34,w*0.16,h*0.34,4); x.fill();
-    x.fillStyle='#8fd3ff'; x.fillRect(-w*0.43+steer*3,-h*0.3,w*0.1,h*0.22); x.fillRect(w*0.33+steer*3,-h*0.3,w*0.1,h*0.22);
+    tire(x,-w*0.36+sh,0,w*0.17,h*0.34,false); tire(x,w*0.36+sh,0,w*0.17,h*0.34,false);
     // Karosserie
-    x.fillStyle=c; x.beginPath(); x.roundRect(-w*0.42,-h*0.52,w*0.84,h*0.46,[6,6,10,10]); x.fill();
-    x.fillStyle=dark; x.fillRect(-w*0.42,-h*0.2,w*0.84,h*0.06);
-    // Heckleuchten
-    x.fillStyle='#ff3b2f'; x.fillRect(-w*0.38,-h*0.42,w*0.2,h*0.07); x.fillRect(w*0.18,-h*0.42,w*0.2,h*0.07);
-    x.fillStyle='#ffd9d6'; x.fillRect(-w*0.36,-h*0.4,w*0.07,h*0.03); x.fillRect(w*0.29,-h*0.4,w*0.07,h*0.03);
-    // Nummernschild
-    x.fillStyle='#fff'; x.fillRect(-w*0.11,-h*0.36,w*0.22,h*0.09); x.fillStyle='#333'; x.font=`bold ${Math.floor(h*0.06)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('SX 158',0,-h*0.315);
-    // Cockpit / Sitz
-    x.fillStyle='#2a2a2a'; x.beginPath(); x.roundRect(-w*0.3,-h*0.74,w*0.6,h*0.26,8); x.fill();
-    x.fillStyle=light; x.fillRect(-w*0.42,-h*0.53,w*0.84,h*0.03);
-    // Spiegel
-    x.fillStyle=c; x.fillRect(-w*0.5,-h*0.66,w*0.08,h*0.06); x.fillRect(w*0.42,-h*0.66,w*0.08,h*0.06);
-    // Windschutzscheibe
-    x.fillStyle='rgba(180,220,255,0.75)'; x.beginPath(); x.moveTo(-w*0.28,-h*0.74); x.lineTo(-w*0.22,-h*0.9); x.lineTo(w*0.22,-h*0.9); x.lineTo(w*0.28,-h*0.74); x.fill();
-    x.strokeStyle='#111'; x.lineWidth=3; x.beginPath(); x.arc(0,-h*0.8,w*0.12,Math.PI*1.05,Math.PI*1.95); x.stroke();
-    drawKidBack(x, 0, -h*0.58, w*0.18, d);
+    x.fillStyle=bodyGrad(-h*0.6,-h*0.08); x.beginPath(); x.roundRect(-w*0.43,-h*0.6,w*0.86,h*0.52,[w*0.14,w*0.14,w*0.05,w*0.05]); x.fill();
+    // Kotflügel-Wölbungen
+    x.fillStyle=shade(c,0.85); x.beginPath(); x.ellipse(-w*0.36,-h*0.3,w*0.1,h*0.17,0,0,7); x.fill(); x.beginPath(); x.ellipse(w*0.36,-h*0.3,w*0.1,h*0.17,0,0,7); x.fill();
+    // Glanzkante
+    x.fillStyle='rgba(255,255,255,0.35)'; x.beginPath(); x.roundRect(-w*0.36,-h*0.585,w*0.72,h*0.03,h*0.015); x.fill();
+    // Stoßstange + Diffusor + Auspuff
+    x.fillStyle=shade(c,0.7); x.fillRect(-w*0.43,-h*0.2,w*0.86,h*0.08);
+    x.fillStyle='#1a1a1a'; x.beginPath(); x.roundRect(-w*0.34,-h*0.15,w*0.68,h*0.07,4); x.fill();
+    for(const ex of [-w*0.2,w*0.2]){ x.fillStyle='#9a9a9a'; x.beginPath(); x.arc(ex,-h*0.115,w*0.035,0,7); x.fill(); x.fillStyle='#222'; x.beginPath(); x.arc(ex,-h*0.115,w*0.02,0,7); x.fill(); }
+    // Heckleuchten mit Leuchten
+    x.save(); x.shadowColor='rgba(255,60,40,0.9)'; x.shadowBlur=10; x.fillStyle='#ff2d20';
+    x.beginPath(); x.roundRect(-w*0.4,-h*0.49,w*0.26,h*0.075,4); x.fill(); x.beginPath(); x.roundRect(w*0.14,-h*0.49,w*0.26,h*0.075,4); x.fill(); x.restore();
+    x.fillStyle='#ffd0c8'; x.fillRect(-w*0.38,-h*0.475,w*0.1,h*0.02); x.fillRect(w*0.28,-h*0.475,w*0.1,h*0.02);
+    x.fillStyle='#ff9b2a'; x.fillRect(-w*0.4,-h*0.43,w*0.08,h*0.02); x.fillRect(w*0.32,-h*0.43,w*0.08,h*0.02);
+    // Kennzeichen
+    x.fillStyle='#f4f4f4'; x.beginPath(); x.roundRect(-w*0.12,-h*0.37,w*0.24,h*0.085,3); x.fill(); x.fillStyle='#1e3a8a'; x.fillRect(-w*0.12,-h*0.37,w*0.03,h*0.085);
+    x.fillStyle='#222'; x.font=`bold ${Math.floor(h*0.05)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('SX 158',w*0.015,-h*0.327);
+    // Emblem
+    x.fillStyle='#d4a52a'; x.beginPath(); x.moveTo(0,-h*0.555); x.lineTo(w*0.02,-h*0.52); x.lineTo(-w*0.02,-h*0.52); x.fill();
+    // Spoilerlippe
+    x.fillStyle=shade(c,0.8); x.beginPath(); x.roundRect(-w*0.38,-h*0.63,w*0.76,h*0.035,4); x.fill();
+    // Cockpit: Sitz, Kopfstütze, Scheibe, Spiegel
+    x.fillStyle='#222'; x.beginPath(); x.roundRect(-w*0.3,-h*0.78,w*0.6,h*0.2,8); x.fill();
+    x.fillStyle='#333'; x.beginPath(); x.roundRect(-w*0.12,-h*0.86,w*0.24,h*0.1,6); x.fill();
+    const gl=x.createLinearGradient(0,-h,0,-h*0.75); gl.addColorStop(0,'rgba(200,235,255,0.9)'); gl.addColorStop(1,'rgba(150,200,240,0.55)'); x.fillStyle=gl;
+    x.beginPath(); x.moveTo(-w*0.33,-h*0.78); x.lineTo(-w*0.27,-h*0.98); x.lineTo(w*0.27,-h*0.98); x.lineTo(w*0.33,-h*0.78); x.fill();
+    x.strokeStyle=shade(c,0.7); x.lineWidth=3; x.stroke();
+    x.fillStyle='rgba(255,255,255,0.35)'; x.beginPath(); x.moveTo(-w*0.2,-h*0.97); x.lineTo(-w*0.1,-h*0.97); x.lineTo(-w*0.24,-h*0.8); x.lineTo(-w*0.3,-h*0.8); x.fill();
+    x.strokeStyle=shade(c,0.7); x.lineWidth=3; x.beginPath(); x.moveTo(-w*0.36,-h*0.74); x.lineTo(-w*0.46,-h*0.74); x.moveTo(w*0.36,-h*0.74); x.lineTo(w*0.46,-h*0.74); x.stroke();
+    x.fillStyle=c; x.beginPath(); x.roundRect(-w*0.52,-h*0.77,w*0.08,h*0.055,3); x.fill(); x.beginPath(); x.roundRect(w*0.44,-h*0.77,w*0.08,h*0.055,3); x.fill();
+    x.strokeStyle='#111'; x.lineWidth=3; x.beginPath(); x.arc(0,-h*0.8,w*0.11,Math.PI*1.05,Math.PI*1.95); x.stroke();
+    drawKidBack(x, 0, -h*0.6, w*0.17, d, steer);
   } else {
-    // Jeep: große Räder
-    x.fillStyle='#1a1a1a'; x.beginPath(); x.roundRect(-w*0.5+steer*3,-h*0.4,w*0.2,h*0.4,5); x.fill(); x.beginPath(); x.roundRect(w*0.3+steer*3,-h*0.4,w*0.2,h*0.4,5); x.fill();
-    x.fillStyle='#555'; x.fillRect(-w*0.46+steer*3,-h*0.33,w*0.12,h*0.24); x.fillRect(w*0.34+steer*3,-h*0.33,w*0.12,h*0.24);
-    // Karosserie
-    x.fillStyle=c; x.beginPath(); x.roundRect(-w*0.42,-h*0.6,w*0.84,h*0.5,[4,4,8,8]); x.fill();
-    x.fillStyle=dark; x.fillRect(-w*0.42,-h*0.18,w*0.84,h*0.08);
+    tire(x,-w*0.4+sh,0,w*0.22,h*0.42,true); tire(x,w*0.4+sh,0,w*0.22,h*0.42,true);
     // Kotflügel
-    x.fillStyle='#222'; x.beginPath(); x.roundRect(-w*0.52,-h*0.46,w*0.2,h*0.1,4); x.fill(); x.beginPath(); x.roundRect(w*0.32,-h*0.46,w*0.2,h*0.1,4); x.fill();
-    // Heckleuchten
-    x.fillStyle='#ff3b2f'; x.fillRect(-w*0.4,-h*0.5,w*0.12,h*0.1); x.fillRect(w*0.28,-h*0.5,w*0.12,h*0.1);
-    // Ersatzrad
-    x.fillStyle='#1a1a1a'; x.beginPath(); x.arc(0,-h*0.36,w*0.13,0,7); x.fill(); x.fillStyle='#777'; x.beginPath(); x.arc(0,-h*0.36,w*0.05,0,7); x.fill();
-    x.fillStyle='#fff'; x.fillRect(-w*0.09,-h*0.2,w*0.18,h*0.07); x.fillStyle='#333'; x.font=`bold ${Math.floor(h*0.05)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('SX 1718',0,-h*0.165);
-    // Überrollbügel
-    x.strokeStyle='#111'; x.lineWidth=5; x.beginPath(); x.moveTo(-w*0.36,-h*0.6); x.lineTo(-w*0.34,-h*0.98); x.lineTo(w*0.34,-h*0.98); x.lineTo(w*0.36,-h*0.6); x.stroke();
-    // Sitz
-    x.fillStyle='#222'; x.beginPath(); x.roundRect(-w*0.3,-h*0.84,w*0.6,h*0.26,6); x.fill();
-    // Lichtleiste
-    x.fillStyle='#ddd'; x.fillRect(-w*0.3,-h*1.0,w*0.6,h*0.05);
-    x.strokeStyle='#111'; x.lineWidth=3; x.beginPath(); x.arc(0,-h*0.9,w*0.12,Math.PI*1.05,Math.PI*1.95); x.stroke();
-    drawKidBack(x, 0, -h*0.62, w*0.17, d);
+    x.fillStyle='#1d1d1d'; for(const fx of [-w*0.4,w*0.4]){ x.beginPath(); x.ellipse(fx,-h*0.4,w*0.15,h*0.08,0,Math.PI,0); x.fill(); }
+    // Karosserie
+    x.fillStyle=bodyGrad(-h*0.68,-h*0.1); x.beginPath(); x.roundRect(-w*0.42,-h*0.68,w*0.84,h*0.58,[w*0.04,w*0.04,w*0.03,w*0.03]); x.fill();
+    x.fillStyle='rgba(255,255,255,0.3)'; x.fillRect(-w*0.38,-h*0.665,w*0.76,h*0.025);
+    // Heckklappen-Fuge
+    x.strokeStyle=shade(c,0.6); x.lineWidth=2; x.strokeRect(-w*0.3,-h*0.62,w*0.6,h*0.4);
+    // Stoßstange mit Abschlepphaken + Auspuff
+    x.fillStyle='#1a1a1a'; x.beginPath(); x.roundRect(-w*0.46,-h*0.2,w*0.92,h*0.1,4); x.fill();
+    x.fillStyle='#c0392b'; x.beginPath(); x.roundRect(-w*0.06,-h*0.17,w*0.12,h*0.05,2); x.fill();
+    x.fillStyle='#9a9a9a'; x.beginPath(); x.arc(w*0.3,-h*0.13,w*0.03,0,7); x.fill(); x.fillStyle='#222'; x.beginPath(); x.arc(w*0.3,-h*0.13,w*0.017,0,7); x.fill();
+    // Heckleuchten senkrecht
+    x.save(); x.shadowColor='rgba(255,60,40,0.9)'; x.shadowBlur=8;
+    for(const lx of [-w*0.4,w*0.32]){ x.fillStyle='#ff2d20'; x.beginPath(); x.roundRect(lx,-h*0.6,w*0.08,h*0.12,3); x.fill(); x.fillStyle='#ff9b2a'; x.fillRect(lx,-h*0.48,w*0.08,h*0.05); x.fillStyle='#ffffff'; x.fillRect(lx,-h*0.43,w*0.08,h*0.03); }
+    x.restore();
+    // Ersatzrad mit Abdeckung
+    x.fillStyle='#161616'; x.beginPath(); x.arc(0,-h*0.42,w*0.16,0,7); x.fill();
+    x.fillStyle=shade(c,0.55); x.beginPath(); x.arc(0,-h*0.42,w*0.12,0,7); x.fill();
+    x.fillStyle='#888'; x.beginPath(); x.arc(0,-h*0.42,w*0.04,0,7); x.fill();
+    x.fillStyle='#fff'; x.font=`bold ${Math.floor(h*0.035)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('4x4',0,-h*0.5);
+    // Kennzeichen
+    x.fillStyle='#f4f4f4'; x.beginPath(); x.roundRect(-w*0.11,-h*0.25,w*0.22,h*0.075,3); x.fill(); x.fillStyle='#1e3a8a'; x.fillRect(-w*0.11,-h*0.25,w*0.028,h*0.075);
+    x.fillStyle='#222'; x.font=`bold ${Math.floor(h*0.045)}px Arial`; x.fillText('SX 1718',w*0.014,-h*0.212);
+    // Überrollbügel + Lichtleiste
+    x.strokeStyle='#111'; x.lineWidth=6; x.lineCap='round'; x.beginPath(); x.moveTo(-w*0.36,-h*0.68); x.lineTo(-w*0.34,-h*1.0); x.lineTo(w*0.34,-h*1.0); x.lineTo(w*0.36,-h*0.68); x.stroke();
+    x.beginPath(); x.moveTo(-w*0.35,-h*0.84); x.lineTo(w*0.35,-h*0.84); x.stroke();
+    x.fillStyle='#2a2a2a'; x.beginPath(); x.roundRect(-w*0.3,-h*1.04,w*0.6,h*0.055,3); x.fill();
+    x.fillStyle='#fff6c0'; for(let i=0;i<8;i++) x.fillRect(-w*0.27+i*w*0.07,-h*1.03,w*0.045,h*0.035);
+    // Sitz, Scheibe, Spiegel
+    x.fillStyle='#222'; x.beginPath(); x.roundRect(-w*0.3,-h*0.86,w*0.6,h*0.2,6); x.fill();
+    x.fillStyle='#333'; x.beginPath(); x.roundRect(-w*0.12,-h*0.92,w*0.24,h*0.08,4); x.fill();
+    x.fillStyle='rgba(170,215,250,0.6)'; x.fillRect(-w*0.3,-h*0.99,w*0.6,h*0.14); x.strokeStyle='#111'; x.lineWidth=3; x.strokeRect(-w*0.3,-h*0.99,w*0.6,h*0.14);
+    x.fillStyle='#111'; x.beginPath(); x.roundRect(-w*0.5,-h*0.8,w*0.08,h*0.06,2); x.fill(); x.beginPath(); x.roundRect(w*0.42,-h*0.8,w*0.08,h*0.06,2); x.fill();
+    x.strokeStyle='#111'; x.lineWidth=3; x.beginPath(); x.arc(0,-h*0.88,w*0.11,Math.PI*1.05,Math.PI*1.95); x.stroke();
+    drawKidBack(x, 0, -h*0.66, w*0.16, d, steer);
   }
   x.restore();
 }
-function drawKidBack(x, cx, cy, s, d){
-  // Oberkörper / T-Shirt (sitzt im Sitz, von hinten)
+function drawKidBack(x, cx, cy, s, d, steer=0){
+  cx += steer*s*0.25; // Kind lehnt sich in die Kurve
   x.fillStyle=d.shirt; x.beginPath(); x.roundRect(cx-s*0.95,cy-s*0.75,s*1.9,s*0.9,s*0.45); x.fill();
   x.fillStyle='rgba(0,0,0,0.12)'; x.fillRect(cx-s*0.95,cy-s*0.1,s*1.9,s*0.25);
-  // Arme nach vorne zum Lenkrad
   x.fillStyle=d.skin; x.fillRect(cx-s*1.05,cy-s*0.6,s*0.3,s*0.5); x.fillRect(cx+s*0.75,cy-s*0.6,s*0.3,s*0.5);
-  // Hals
   x.fillStyle=d.skin; x.fillRect(cx-s*0.2,cy-s*1.05,s*0.4,s*0.4);
-  // Kopf von hinten = Haare
+  x.fillStyle=d.skin; x.beginPath(); x.arc(cx-s*0.6,cy-s*1.45,s*0.14,0,7); x.fill(); x.beginPath(); x.arc(cx+s*0.6,cy-s*1.45,s*0.14,0,7); x.fill();
   x.fillStyle=d.hair; x.beginPath(); x.arc(cx,cy-s*1.5,s*0.6,0,7); x.fill();
-  if(d.id==='girl'){ // Locken + kleiner Dutt
+  if(d.id==='girl'){
     for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; x.beginPath(); x.arc(cx+Math.cos(a)*s*0.52,cy-s*1.5+Math.sin(a)*s*0.52,s*0.2,0,7); x.fill(); }
     x.beginPath(); x.arc(cx,cy-s*2.05,s*0.3,0,7); x.fill();
     x.fillStyle='#e0527a'; x.beginPath(); x.arc(cx+s*0.2,cy-s*1.95,s*0.1,0,7); x.fill();
@@ -395,27 +428,47 @@ function drawKidBack(x, cx, cy, s, d){
 function drawVehicleFront(x, w, h, d){
   x.save(); x.translate(w/2,h*0.96); x.scale(0.7,0.7);
   const c=d.carColor;
-  x.fillStyle='rgba(0,0,0,0.25)'; x.beginPath(); x.ellipse(0,0,w*0.42,h*0.06,0,0,7); x.fill();
+  const bodyGrad=(y0,y1)=>{ const g=x.createLinearGradient(0,y0,0,y1); g.addColorStop(0,shade(c,1.25)); g.addColorStop(0.4,c); g.addColorStop(1,shade(c,0.62)); return g; };
+  x.fillStyle='rgba(0,0,0,0.25)'; x.beginPath(); x.ellipse(0,0,w*0.44,h*0.06,0,0,7); x.fill();
   if(d.type==='sport'){
-    x.fillStyle='#222'; x.beginPath(); x.roundRect(-w*0.42,-h*0.3,w*0.14,h*0.3,5); x.fill(); x.beginPath(); x.roundRect(w*0.28,-h*0.3,w*0.14,h*0.3,5); x.fill();
-    x.fillStyle=c; x.beginPath(); x.roundRect(-w*0.38,-h*0.5,w*0.76,h*0.44,[10,10,8,8]); x.fill();
-    x.fillStyle=d.dark; x.fillRect(-w*0.3,-h*0.22,w*0.6,h*0.08);
-    x.fillStyle='#fff'; x.fillRect(-w*0.1,-h*0.3,w*0.2,h*0.07); x.fillStyle='#333'; x.font=`bold ${Math.floor(h*0.05)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('SX 158',0,-h*0.265);
-    x.fillStyle='#fffbe0'; x.beginPath(); x.ellipse(-w*0.26,-h*0.4,w*0.07,h*0.05,0,0,7); x.fill(); x.beginPath(); x.ellipse(w*0.26,-h*0.4,w*0.07,h*0.05,0,0,7); x.fill();
-    x.fillStyle='#ffd700'; x.beginPath(); x.arc(0,-h*0.42,w*0.03,0,7); x.fill();
-    x.fillStyle='rgba(150,200,240,0.8)'; x.beginPath(); x.moveTo(-w*0.3,-h*0.5); x.lineTo(-w*0.24,-h*0.7); x.lineTo(w*0.24,-h*0.7); x.lineTo(w*0.3,-h*0.5); x.fill();
-    drawKidFront(x,0,-h*0.62,w*0.2,d);
+    tire(x,-w*0.34,0,w*0.16,h*0.3,false); tire(x,w*0.34,0,w*0.16,h*0.3,false);
+    x.fillStyle=bodyGrad(-h*0.52,-h*0.06); x.beginPath(); x.roundRect(-w*0.4,-h*0.52,w*0.8,h*0.46,[w*0.12,w*0.12,w*0.05,w*0.05]); x.fill();
+    x.fillStyle=shade(c,0.85); x.beginPath(); x.ellipse(-w*0.33,-h*0.26,w*0.1,h*0.15,0,0,7); x.fill(); x.beginPath(); x.ellipse(w*0.33,-h*0.26,w*0.1,h*0.15,0,0,7); x.fill();
+    x.fillStyle='rgba(255,255,255,0.35)'; x.beginPath(); x.roundRect(-w*0.3,-h*0.505,w*0.6,h*0.03,h*0.015); x.fill();
+    // Scheinwerfer
+    for(const lx of [-w*0.26,w*0.26]){ x.fillStyle='#e8f4ff'; x.beginPath(); x.ellipse(lx,-h*0.4,w*0.085,h*0.06,0,0,7); x.fill(); x.fillStyle='#8ec9ff'; x.beginPath(); x.ellipse(lx,-h*0.4,w*0.05,h*0.04,0,0,7); x.fill(); x.fillStyle='#fff'; x.beginPath(); x.arc(lx-w*0.02,-h*0.41,w*0.015,0,7); x.fill(); }
+    // Kühlergrill, Stoßstange, Tagfahrlicht
+    x.fillStyle=shade(c,0.7); x.fillRect(-w*0.4,-h*0.18,w*0.8,h*0.07);
+    x.fillStyle='#1a1a1a'; x.beginPath(); x.roundRect(-w*0.2,-h*0.3,w*0.4,h*0.1,6); x.fill(); x.fillStyle='#333'; for(let i=0;i<5;i++) x.fillRect(-w*0.17+i*w*0.07,-h*0.28,w*0.05,h*0.06);
+    x.fillStyle='#1a1a1a'; x.beginPath(); x.roundRect(-w*0.36,-h*0.15,w*0.1,h*0.05,3); x.fill(); x.beginPath(); x.roundRect(w*0.26,-h*0.15,w*0.1,h*0.05,3); x.fill();
+    x.fillStyle='#fffbe0'; x.fillRect(-w*0.35,-h*0.135,w*0.08,h*0.015); x.fillRect(w*0.27,-h*0.135,w*0.08,h*0.015);
+    x.fillStyle='#f4f4f4'; x.beginPath(); x.roundRect(-w*0.1,-h*0.13,w*0.2,h*0.06,3); x.fill(); x.fillStyle='#222'; x.font=`bold ${Math.floor(h*0.04)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('SX 158',0,-h*0.1);
+    x.fillStyle='#d4a52a'; x.beginPath(); x.moveTo(0,-h*0.49); x.lineTo(w*0.02,-h*0.45); x.lineTo(-w*0.02,-h*0.45); x.fill();
+    // Windschutzscheibe
+    const gl=x.createLinearGradient(0,-h*0.75,0,-h*0.52); gl.addColorStop(0,'rgba(200,235,255,0.9)'); gl.addColorStop(1,'rgba(150,200,240,0.6)'); x.fillStyle=gl;
+    x.beginPath(); x.moveTo(-w*0.32,-h*0.52); x.lineTo(-w*0.26,-h*0.74); x.lineTo(w*0.26,-h*0.74); x.lineTo(w*0.32,-h*0.52); x.fill(); x.strokeStyle=shade(c,0.7); x.lineWidth=3; x.stroke();
+    x.fillStyle=c; x.beginPath(); x.roundRect(-w*0.42,-h*0.66,w*0.08,h*0.05,3); x.fill(); x.beginPath(); x.roundRect(w*0.34,-h*0.66,w*0.08,h*0.05,3); x.fill();
+    drawKidFront(x,0,-h*0.6,w*0.2,d);
+    x.fillStyle='rgba(255,255,255,0.25)'; x.beginPath(); x.moveTo(-w*0.22,-h*0.73); x.lineTo(-w*0.12,-h*0.73); x.lineTo(-w*0.24,-h*0.54); x.lineTo(-w*0.3,-h*0.54); x.fill();
   } else {
-    x.fillStyle='#1a1a1a'; x.beginPath(); x.roundRect(-w*0.48,-h*0.36,w*0.18,h*0.36,5); x.fill(); x.beginPath(); x.roundRect(w*0.3,-h*0.36,w*0.18,h*0.36,5); x.fill();
-    x.fillStyle=c; x.beginPath(); x.roundRect(-w*0.4,-h*0.56,w*0.8,h*0.48,6); x.fill();
-    x.fillStyle='#222'; x.beginPath(); x.roundRect(-w*0.42,-h*0.26,w*0.84,h*0.1,4); x.fill();
-    x.fillStyle='#333'; for(let i=0;i<5;i++) x.fillRect(-w*0.12+i*w*0.06,-h*0.5,w*0.035,h*0.16);
-    x.fillStyle='#fffbe0'; x.beginPath(); x.arc(-w*0.26,-h*0.42,w*0.07,0,7); x.fill(); x.beginPath(); x.arc(w*0.26,-h*0.42,w*0.07,0,7); x.fill();
-    x.fillStyle='#fff'; x.fillRect(-w*0.1,-h*0.2,w*0.2,h*0.06); x.fillStyle='#333'; x.font=`bold ${Math.floor(h*0.045)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('SX 1718',0,-h*0.17);
-    x.strokeStyle='#111'; x.lineWidth=5; x.beginPath(); x.moveTo(-w*0.34,-h*0.56); x.lineTo(-w*0.32,-h*0.9); x.lineTo(w*0.32,-h*0.9); x.lineTo(w*0.34,-h*0.56); x.stroke();
-    x.fillStyle='#ddd'; x.fillRect(-w*0.3,-h*0.93,w*0.6,h*0.05);
-    x.fillStyle='rgba(150,200,240,0.6)'; x.fillRect(-w*0.3,-h*0.78,w*0.6,h*0.22);
+    tire(x,-w*0.4,0,w*0.2,h*0.38,true); tire(x,w*0.4,0,w*0.2,h*0.38,true);
+    x.fillStyle='#1d1d1d'; for(const fx of [-w*0.4,w*0.4]){ x.beginPath(); x.ellipse(fx,-h*0.36,w*0.14,h*0.08,0,Math.PI,0); x.fill(); }
+    x.fillStyle=bodyGrad(-h*0.6,-h*0.08); x.beginPath(); x.roundRect(-w*0.4,-h*0.6,w*0.8,h*0.52,[w*0.03,w*0.03,w*0.03,w*0.03]); x.fill();
+    x.fillStyle='rgba(255,255,255,0.3)'; x.fillRect(-w*0.36,-h*0.585,w*0.72,h*0.025);
+    // Grill mit 7 Schlitzen, runde Scheinwerfer
+    x.fillStyle='#1a1a1a'; x.beginPath(); x.roundRect(-w*0.17,-h*0.5,w*0.34,h*0.2,4); x.fill(); x.fillStyle=shade(c,0.75); for(let i=0;i<7;i++) x.fillRect(-w*0.155+i*w*0.047,-h*0.48,w*0.02,h*0.16);
+    for(const lx of [-w*0.27,w*0.27]){ x.fillStyle='#ddd'; x.beginPath(); x.arc(lx,-h*0.4,w*0.085,0,7); x.fill(); x.fillStyle='#fffbe0'; x.beginPath(); x.arc(lx,-h*0.4,w*0.065,0,7); x.fill(); x.fillStyle='#fff'; x.beginPath(); x.arc(lx-w*0.02,-h*0.42,w*0.018,0,7); x.fill(); }
+    x.fillStyle='#ff9b2a'; x.fillRect(-w*0.39,-h*0.3,w*0.07,h*0.04); x.fillRect(w*0.32,-h*0.3,w*0.07,h*0.04);
+    // Bullenfänger + Stoßstange
+    x.fillStyle='#1a1a1a'; x.beginPath(); x.roundRect(-w*0.45,-h*0.22,w*0.9,h*0.1,4); x.fill();
+    x.strokeStyle='#2c2c2c'; x.lineWidth=5; x.lineCap='round'; x.beginPath(); x.moveTo(-w*0.22,-h*0.12); x.lineTo(-w*0.22,-h*0.34); x.lineTo(w*0.22,-h*0.34); x.lineTo(w*0.22,-h*0.12); x.stroke();
+    x.fillStyle='#f4f4f4'; x.beginPath(); x.roundRect(-w*0.1,-h*0.19,w*0.2,h*0.055,3); x.fill(); x.fillStyle='#222'; x.font=`bold ${Math.floor(h*0.038)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('SX 1718',0,-h*0.162);
+    // Überrollbügel, Lichtleiste, Scheibe
+    x.strokeStyle='#111'; x.lineWidth=6; x.beginPath(); x.moveTo(-w*0.34,-h*0.6); x.lineTo(-w*0.32,-h*0.92); x.lineTo(w*0.32,-h*0.92); x.lineTo(w*0.34,-h*0.6); x.stroke();
+    x.fillStyle='#2a2a2a'; x.beginPath(); x.roundRect(-w*0.28,-h*0.96,w*0.56,h*0.05,3); x.fill(); x.fillStyle='#fff6c0'; for(let i=0;i<7;i++) x.fillRect(-w*0.25+i*w*0.075,-h*0.95,w*0.05,h*0.03);
+    x.fillStyle='rgba(170,215,250,0.6)'; x.fillRect(-w*0.3,-h*0.82,w*0.6,h*0.22); x.strokeStyle='#111'; x.lineWidth=3; x.strokeRect(-w*0.3,-h*0.82,w*0.6,h*0.22);
     drawKidFront(x,0,-h*0.66,w*0.2,d);
+    x.fillStyle='#111'; x.beginPath(); x.roundRect(-w*0.44,-h*0.74,w*0.08,h*0.05,2); x.fill(); x.beginPath(); x.roundRect(w*0.36,-h*0.74,w*0.08,h*0.05,2); x.fill();
   }
   x.restore();
 }
@@ -424,10 +477,13 @@ function drawKidFront(x,cx,cy,s,d){
   if(d.id==='girl'){ x.fillStyle=d.shirtPrint; x.font=`bold ${Math.floor(s*0.35)}px Arial`; x.textAlign='center'; x.fillText('NEW',cx,cy-s*0.3); }
   x.fillStyle=d.skin; x.fillRect(cx-s*0.2,cy-s*1.05,s*0.4,s*0.35);
   x.fillStyle=d.hair; x.beginPath(); x.arc(cx,cy-s*1.5,s*0.66,0,7); x.fill();
-  if(d.id==='girl'){ for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; x.beginPath(); x.arc(cx+Math.cos(a)*s*0.58,cy-s*1.5+Math.sin(a)*s*0.58,s*0.17,0,7); x.fill(); } x.beginPath(); x.arc(cx,cy-s*2.05,s*0.28,0,7); x.fill(); }
+  if(d.id==='girl'){ for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; x.beginPath(); x.arc(cx+Math.cos(a)*s*0.58,cy-s*1.5+Math.sin(a)*s*0.58,s*0.17,0,7); x.fill(); } x.beginPath(); x.arc(cx,cy-s*2.05,s*0.28,0,7); x.fill(); x.fillStyle='#e0527a'; x.beginPath(); x.arc(cx+s*0.18,cy-s*1.95,s*0.09,0,7); x.fill(); }
   x.fillStyle=d.skin; x.beginPath(); x.ellipse(cx,cy-s*1.4,s*0.52,s*0.58,0,0,7); x.fill();
+  x.fillStyle=d.skin; x.beginPath(); x.arc(cx-s*0.55,cy-s*1.4,s*0.12,0,7); x.fill(); x.beginPath(); x.arc(cx+s*0.55,cy-s*1.4,s*0.12,0,7); x.fill();
   if(d.id==='boy'){ x.fillStyle=d.hair; x.beginPath(); x.moveTo(cx-s*0.6,cy-s*1.6); x.quadraticCurveTo(cx-s*0.2,cy-s*2.0,cx+s*0.6,cy-s*1.65); x.lineTo(cx+s*0.6,cy-s*1.5); x.quadraticCurveTo(cx,cy-s*1.75,cx-s*0.6,cy-s*1.45); x.fill(); }
-  x.fillStyle='#2a1a10'; x.beginPath(); x.arc(cx-s*0.2,cy-s*1.45,s*0.07,0,7); x.fill(); x.beginPath(); x.arc(cx+s*0.2,cy-s*1.45,s*0.07,0,7); x.fill();
+  x.fillStyle='#fff'; x.beginPath(); x.ellipse(cx-s*0.2,cy-s*1.45,s*0.11,s*0.1,0,0,7); x.fill(); x.beginPath(); x.ellipse(cx+s*0.2,cy-s*1.45,s*0.11,s*0.1,0,0,7); x.fill();
+  x.fillStyle='#2a1a10'; x.beginPath(); x.arc(cx-s*0.19,cy-s*1.44,s*0.06,0,7); x.fill(); x.beginPath(); x.arc(cx+s*0.21,cy-s*1.44,s*0.06,0,7); x.fill();
+  x.fillStyle='rgba(240,120,120,0.35)'; x.beginPath(); x.arc(cx-s*0.3,cy-s*1.25,s*0.09,0,7); x.fill(); x.beginPath(); x.arc(cx+s*0.3,cy-s*1.25,s*0.09,0,7); x.fill();
   x.strokeStyle='#8a3a2a'; x.lineWidth=2; x.beginPath(); x.arc(cx,cy-s*1.25,s*0.18,0.2,Math.PI-0.2); x.stroke();
 }
 
@@ -474,7 +530,7 @@ function buildSprites(){
   makeSprite('cyclist',60,100,drawCyclist);
   makeSprite('goat',80,70,drawGoat);
   for(const d of Object.values(DRIVERS)){
-    for(let s=-1;s<=1;s++) makeSprite('car_'+d.id+'_'+s,200,200,(x,w,h)=>drawVehicleBack(x,w,h,d,s*2));
+    for(let s=-1;s<=1;s++) makeSprite('car_'+d.id+'_'+s,260,260,(x,w,h)=>drawVehicleBack(x,w,h,d,s));
   }
 }
 
@@ -631,7 +687,7 @@ function resize(){ DPR=Math.min(window.devicePixelRatio||1, 2); const cw=window.
 window.addEventListener('resize',resize); window.addEventListener('orientationchange',()=>setTimeout(resize,200));
 
 const G = { state:'title', driver:'girl', stageIdx:0, track:null, stage:null,
-  position:0, playerX:0, speed:0, maxSpeed:TOP_SPEED, time:0, items:0, boostT:0, boosts:0, crashT:0, finishFx:0, carRect:null, finished:false, countdown:3, startDelay:0,
+  position:0, playerX:0, speed:0, maxSpeed:TOP_SPEED, time:0, items:0, boostT:0, boosts:0, crashT:0, finishFx:0, carRect:null, steerVis:0, finished:false, countdown:3, startDelay:0,
   rival:null, traffic:[], skyOffset:0, hillOffset:0, treeOffset:0, shake:0, lastT:0, bob:0, keys:{}, toastT:0, finishTime:0, rivalFinishTime:0, bump:0 };
 
 function startRace(){
@@ -736,6 +792,8 @@ function update(dt){
   G.position += dt*G.speed; if(G.position>=T.length) G.position-=T.length;
   // Lenken
   G.playerX += dx*clamp(inp.steer,-1,1);
+  G.steerVis += (clamp(inp.steer,-1,1)-G.steerVis)*Math.min(1,dt*7);
+  if(Math.abs(G.steerVis)>0.55 && speedPct>0.6 && G.carRect){ const c=G.carRect; for(const side of [-1,1]) FX.add({x:c.x+side*c.w*0.36,y:c.bottom-c.h*0.02,vx:rnd(-30,30)-G.steerVis*60,vy:rnd(10,50),life:rnd(0.3,0.6),max:0.6,size:rnd(4,8),grow:true,color:'rgba(230,230,230,0.5)'}); }
   G.playerX -= dx*speedPct*playerSegment.curve*0.14;
   // Gas-Automatik: beschleunigt von allein bis 120 km/h, mit Boost kurzzeitig bis 170 km/h
   const accel=G.maxSpeed/5*d.accelF;
@@ -891,16 +949,20 @@ function render(){
   }
   // Spieler
   const d=DRIVERS[G.driver], inp=readInput();
-  const steer = G.speed<=0?0 : (inp.steer<-0.25?-1:inp.steer>0.25?1:0);
+  const sv = G.speed<=0?0 : G.steerVis; const steer = sv<-0.3?-1:sv>0.3?1:0;
   const bounce=(1.5*Math.random()*(G.speed/G.maxSpeed)*(H/480))*(Math.random()>0.5?1:-1);
   const spr=SPR['car_'+d.id+'_'+steer];
   const landscape = W>H;
   const carW = landscape ? Math.min(W*0.22, H*0.5) : W*0.42;
   const carH = carW*spr.h/spr.w;
   const bottom = landscape ? H*0.95 : H*0.82;
-  G.carRect={x:W/2,bottom,w:carW,h:carH};
-  if(G.crashT>0){ ctx.save(); ctx.translate(W/2,bottom); ctx.rotate(Math.sin(G.crashT*40)*0.07*clamp(G.crashT,0,1)); ctx.drawImage(spr.c,-carW/2,-carH+bounce,carW,carH); ctx.restore(); }
-  else ctx.drawImage(spr.c, W/2-carW/2, bottom-carH+bounce, carW, carH);
+  const carX = W/2 + sv*carW*0.12; // Auto rutscht leicht in Lenkrichtung
+  G.carRect={x:carX,bottom,w:carW,h:carH};
+  ctx.save(); ctx.translate(carX,bottom);
+  if(G.crashT>0) ctx.rotate(Math.sin(G.crashT*40)*0.07*clamp(G.crashT,0,1));
+  ctx.transform(1,0,-sv*0.24,1,0,0); // Scherung: Front dreht in die Kurve
+  ctx.rotate(-sv*0.05);               // leichte Wankbewegung
+  ctx.drawImage(spr.c,-carW/2,-carH+bounce,carW,carH); ctx.restore();
   FX.draw(); drawCrashStars(); drawBoostOverlay();
   ctx.restore();
 }
@@ -910,7 +972,7 @@ function drawCarsInSegment(seg){
     const scale=lerp(seg.p1.screen.scale,next.p1.screen.scale,percent); const sx=lerp(seg.p1.screen.x,next.p1.screen.x,percent)+scale*c.offset*ROAD_W*W/2; const sy=lerp(seg.p1.screen.y,next.p1.screen.y,percent);
     const spr = c===G.rival ? SPR['car_'+c.driver.id+'_'+(c.offset-(c.prevOffset||c.offset)>0.002?1:c.offset-(c.prevOffset||c.offset)<-0.002?-1:0)] : c.sprite;
     if(c===G.rival) c.prevOffset=c.offset;
-    drawSprite(spr,scale*(c===G.rival?0.5:1),sx,sy,-0.5,-1,seg.clip); }
+    drawSprite(spr,scale*(c===G.rival?100/260:1),sx,sy,-0.5,-1,seg.clip); }
 }
 
 // ---------- HUD ----------
