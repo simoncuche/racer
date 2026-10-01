@@ -13,9 +13,10 @@
 <style>
   :root{--ui:#fff;--accent:#ffcf3f;--panel:rgba(10,30,60,.82)}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-  html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#0e2a4a;font-family:"Trebuchet MS",Arial,Helvetica,sans-serif;color:var(--ui);touch-action:none;overscroll-behavior:none}
+  html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#0e2a4a;font-family:"Trebuchet MS",Arial,Helvetica,sans-serif;color:var(--ui);overscroll-behavior:none}
+  #game,#controls,.pbtn,.icon,#hud{touch-action:none}
   #game{position:fixed;inset:0;width:100%;height:100%;display:block}
-  .screen{position:fixed;left:0;top:0;width:100%;height:100vh;height:100dvh;height:var(--vh,100dvh);touch-action:pan-y;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(16px,env(safe-area-inset-top)) 16px calc(env(safe-area-inset-bottom) + 36px);text-align:center;background:linear-gradient(180deg,rgba(8,40,90,.55),rgba(8,40,90,.85))}
+  .screen{position:fixed;left:0;top:0;width:100%;height:100vh;height:100dvh;height:var(--vh,100dvh);touch-action:pan-y;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(16px,env(safe-area-inset-top)) 16px calc(env(safe-area-inset-bottom) + 64px);text-align:center;background:linear-gradient(180deg,rgba(8,40,90,.55),rgba(8,40,90,.85))}
   .screen::before,.screen::after{content:'';margin:auto}
   .hidden{display:none!important}
   h1{margin:0 0 4px;font-size:clamp(30px,9vw,58px);letter-spacing:1px;color:var(--accent);text-shadow:0 3px 0 #a56a00,0 6px 16px rgba(0,0,0,.6)}
@@ -60,6 +61,8 @@
   #result .big{font-size:clamp(28px,9vw,54px);font-weight:900;color:var(--accent);text-shadow:0 3px 0 #a56a00,0 8px 20px rgba(0,0,0,.6);margin:6px 0}
   table{border-collapse:collapse;margin:8px auto 14px;font-size:clamp(14px,4vw,18px)}
   td{padding:4px 12px}
+  .stage table{font-size:13px;margin:6px auto 4px}
+  .stage td{padding:2px 6px}
   td:first-child{opacity:.8;text-align:right}
   td:last-child{font-weight:700;text-align:left}
   .kbd{display:inline-block;border:1px solid rgba(255,255,255,.5);border-radius:5px;padding:0 6px;margin:0 2px;font-family:monospace}
@@ -110,8 +113,8 @@
 
 <!-- Rangliste -->
 <div id="ranking" class="screen hidden">
-  <h2>🏆 Rangliste</h2>
-  <div id="rankList" style="width:100%;max-width:520px"></div>
+  <div class="row" style="align-items:center;justify-content:space-between;max-width:520px;flex-wrap:nowrap"><h2 style="margin:0">🏆 Rangliste</h2><button class="btn secondary" id="btnRankBackTop" style="padding:10px 18px;margin:0">Zurück</button></div>
+  <div id="rankList" style="width:100%;max-width:520px;margin-top:10px"></div>
   <div class="row" style="margin-top:14px"><button class="btn secondary" id="btnRankBack">Zurück</button></div>
 </div>
 
@@ -132,7 +135,7 @@
 
 <script>
 'use strict';
-const VERSION='1.9.2', VERSION_DATE='2026-10-01';
+const VERSION='1.9.3', VERSION_DATE='2026-10-01';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -1246,7 +1249,7 @@ function rankingTable(stageId, highlightId, limit){
 }
 function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function renderRanking(){
-  $('rankList').innerHTML = STAGES.map(st=>`<div class="card stage" style="max-width:none;margin-bottom:10px;cursor:default"><div class="title">${st.emoji} ${st.name}</div>${rankingTable(st.id,null,10)}</div>`).join('');
+  $('rankList').innerHTML = STAGES.map(st=>`<div class="card stage" style="max-width:none;margin-bottom:10px;cursor:default;font-size:14px"><div class="title">${st.emoji} ${st.name}</div>${rankingTable(st.id,null,10)}</div>`).join('');
 }
 function renderDrivers(){
   const box=$('drivers'); box.innerHTML='';
@@ -1270,7 +1273,7 @@ function renderStages(){
 $('btnStart').onclick=()=>{ Audio.init(); Audio.resume(); setState('select'); };
 $('btnBackTitle').onclick=()=>setState('title');
 $('btnRanking').onclick=()=>setState('ranking');
-$('btnRankBack').onclick=()=>setState('title');
+$('btnRankBack').onclick=()=>setState('title'); $('btnRankBackTop').onclick=()=>setState('title');
 $('btnToStages').onclick=()=>setState('stages');
 $('btnBackSelect').onclick=()=>setState('select');
 $('btnRace').onclick=()=>startRace();
