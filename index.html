@@ -909,7 +909,12 @@ if(store('tilt') && Tilt.supported){ if(typeof DeviceOrientationEvent.requestPer
 requestAnimationFrame(frame);
 
 // Service Worker nur über http(s) (bei file:// nicht verfügbar) – für Offline-Nutzung als Web-App
-if('serviceWorker' in navigator && location.protocol.startsWith('http')){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  // Wenn ein neuer Service Worker übernimmt, die Seite einmal neu laden, damit sofort die neue Version läuft
+  let hadController = !!navigator.serviceWorker.controller, reloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(hadController && !reloaded){ reloaded=true; location.reload(); } hadController=true; });
+  navigator.serviceWorker.register('sw.js').then(reg=>{ reg.update().catch(()=>{}); }).catch(()=>{});
+}
 </script>
 </body>
 </html>
