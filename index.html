@@ -132,7 +132,7 @@
 
 <script>
 'use strict';
-const VERSION='1.8.0', VERSION_DATE='2026-10-01';
+const VERSION='1.8.1', VERSION_DATE='2026-10-01';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -456,30 +456,19 @@ function tire(x,cx,cy,tw,th,knobby){ // cx,cy = Mitte unten
   x.fillStyle='#111'; const rows=knobby?6:8; for(let i=0;i<rows;i++){ const yy=cy-th*0.88+i*(th*0.78/rows); if(knobby){ x.fillRect(cx-tw*0.36,yy,tw*0.3,th*0.06); x.fillRect(cx+tw*0.06,yy+th*0.03,tw*0.3,th*0.06); } else x.fillRect(cx-tw*0.34,yy,tw*0.68,th*0.025); }
 }
 function drawVehicleBack(x, w, h, d, yaw=0){
-  // yaw -1..1: das Auto dreht in die Kurve, die Flanke und das eingeschlagene Vorderrad werden sichtbar
+  // yaw -1..1: das Auto bleibt von hinten zu sehen, nur die eingeschlagenen Vorderräder lugen auf der Kurvenseite leicht hervor
   const steer=Math.sign(yaw)*Math.min(1,Math.abs(yaw)*2), a=Math.abs(yaw), dir=Math.sign(yaw);
-  const cw=w; w=260; // Proportionen bleiben wie beim 260er-Sprite, die Leinwand ist breiter für die Flanke
-  x.save(); x.translate(cw/2 - dir*w*0.07*a, h-8);
-  const c=d.carColor, sh=steer*w*0.025;
-  const narrow=1-0.14*a; // Heck wird schmaler, je mehr es sich wegdreht
-  if(a>0){ // Flanke (Seite des Autos) hinter dem Heck, zur Kurve hin, plus eingeschlagenes Vorderrad
-    const bodyW = d.type==='sport'? w*0.43 : w*0.42, top = d.type==='sport'? -h*0.6 : -h*0.68, bot=-h*0.1;
-    const rx=dir*(bodyW*narrow-w*0.05), fx=dir*(bodyW*narrow+w*0.19*a), lift=h*0.13*a;
-    const fbot=bot-lift, ftop=fbot-(bot-top)*0.72; // vorne höher und kleiner (Perspektive)
-    // Vorderrad (von der Seite, eingeschlagen) – liegt hinter der Flanke
-    const wx=fx-dir*w*0.015, wy=fbot+h*0.07, rW=w*0.045+w*0.05*a, rH=(d.type==='jeep'?h*0.12:h*0.1);
-    x.fillStyle='#161616'; x.beginPath(); x.ellipse(wx,wy-rH/2,rW,rH/2,0,0,7); x.fill();
-    x.fillStyle='#8a8a8a'; x.beginPath(); x.ellipse(wx,wy-rH/2,rW*0.5,rH*0.28,0,0,7); x.fill(); x.fillStyle='#333'; x.beginPath(); x.ellipse(wx,wy-rH/2,rW*0.2,rH*0.1,0,0,7); x.fill();
-    // Flanke
-    x.fillStyle=shade(c,0.78); x.beginPath(); x.moveTo(rx,top); x.lineTo(fx,ftop); x.lineTo(fx,fbot); x.lineTo(rx,bot); x.closePath(); x.fill();
-    x.fillStyle=shade(c,0.6); x.beginPath(); x.moveTo(rx,bot-h*0.08); x.lineTo(fx,fbot-h*0.06); x.lineTo(fx,fbot); x.lineTo(rx,bot); x.closePath(); x.fill(); // Schweller
-    x.strokeStyle=shade(c,0.55); x.lineWidth=2; x.beginPath(); x.moveTo(lerp(rx,fx,0.5),lerp(top,ftop,0.5)); x.lineTo(lerp(rx,fx,0.5),lerp(bot,fbot,0.5)); x.stroke(); // Türfuge
-    x.fillStyle='rgba(255,255,255,0.25)'; x.beginPath(); x.moveTo(rx,top+h*0.02); x.lineTo(fx,ftop+h*0.02); x.lineTo(fx,ftop+h*0.05); x.lineTo(rx,top+h*0.05); x.fill();
-    if(d.type==='jeep'){ x.fillStyle='rgba(170,215,250,0.6)'; x.beginPath(); x.moveTo(lerp(rx,fx,0.55),lerp(top,ftop,0.55)-h*0.12); x.lineTo(fx,ftop-h*0.12); x.lineTo(fx,ftop); x.lineTo(lerp(rx,fx,0.55),lerp(top,ftop,0.55)); x.fill(); }
-    // Radkasten-Bogen über dem Vorderrad
-    x.fillStyle=shade(c,0.7); x.beginPath(); x.ellipse(wx,fbot-h*0.02,rW*1.15,h*0.05,0,Math.PI,0); x.fill();
+  const cw=w; w=260;
+  x.save(); x.translate(cw/2, h-8);
+  const c=d.carColor, sh=steer*w*0.02;
+  if(a>0){
+    const bodyW = d.type==='sport'? w*0.43 : w*0.46, peek=w*0.02+w*0.05*a, top=(d.type==='sport'? -h*0.5 : -h*0.56), tH=(d.type==='jeep'? h*0.26 : h*0.2);
+    const tx=dir>0 ? bodyW : -bodyW-peek;
+    x.fillStyle='#161616'; x.beginPath(); x.roundRect(tx,top,peek,tH,3); x.fill();
+    x.fillStyle='#2b2b2b'; x.fillRect(tx+(dir>0?peek*0.3:0),top+tH*0.08,peek*0.7,tH*0.84);
+    x.fillStyle='#111'; for(let i=0;i<5;i++) x.fillRect(tx,top+tH*0.12+i*tH*0.17,peek,tH*0.03);
+    x.fillStyle='rgba(0,0,0,0.25)'; x.beginPath(); x.ellipse(tx+peek/2,top+tH+h*0.02,peek*0.9,h*0.015,0,0,7); x.fill();
   }
-  x.scale(narrow,1);
   x.fillStyle='rgba(0,0,0,0.35)'; x.beginPath(); x.ellipse(0,3,w*0.47,h*0.06,0,0,7); x.fill();
   const bodyGrad=(y0,y1)=>{ const g=x.createLinearGradient(0,y0,0,y1); g.addColorStop(0,shade(c,1.25)); g.addColorStop(0.35,c); g.addColorStop(1,shade(c,0.62)); return g; };
   if(d.type==='sport'){
@@ -735,7 +724,7 @@ function buildSprites(){
   makeSprite('cliff',300,220,drawCliff);
   for(const f of [0,1]){ makeSprite('bus_'+f,140,180,(x,w,h)=>drawBus(x,w,h,f)); makeSprite('scooter_'+f,70,115,(x,w,h)=>drawScooter(x,w,h,f)); makeSprite('cyclist_'+f,70,115,(x,w,h)=>drawCyclist(x,w,h,f)); makeSprite('goat_'+f,90,85,(x,w,h)=>drawGoat(x,w,h,f)); }
   for(const d of Object.values(DRIVERS)){
-    for(let s=-2;s<=2;s++) makeSprite('car_'+d.id+'_'+s,340,260,(x,w,h)=>drawVehicleBack(x,w,h,d,s/2));
+    for(let s=-2;s<=2;s++) makeSprite('car_'+d.id+'_'+s,300,260,(x,w,h)=>drawVehicleBack(x,w,h,d,s/2));
   }
 }
 
@@ -1180,10 +1169,10 @@ function render(){
   const bounce=(1.5*Math.random()*(G.speed/G.maxSpeed)*(H/480))*(Math.random()>0.5?1:-1);
   const spr=SPR['car_'+d.id+'_'+steer];
   const landscape = W>H;
-  const carW = (landscape ? Math.min(W*0.22, H*0.5) : W*0.42)*(340/260);
+  const carW = (landscape ? Math.min(W*0.22, H*0.5) : W*0.42)*(300/260);
   const carH = carW*spr.h/spr.w;
   const bottom = landscape ? H*0.95 : H*0.82;
-  const carX = W/2 + sv*carW*0.12; // Auto rutscht leicht in Lenkrichtung
+  const carX = W/2 + sv*carW*0.06; // Auto rutscht leicht in Lenkrichtung
   G.carRect={x:carX,bottom,w:carW,h:carH};
   ctx.save(); ctx.translate(carX,bottom);
   if(G.crashT>0) ctx.rotate(Math.sin(G.crashT*40)*0.07*clamp(G.crashT,0,1));

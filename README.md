@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **1.8.0**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **1.8.1**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -38,8 +38,8 @@ Das Auto gibt von allein Gas, es wird nur gelenkt.
 | Handy mit Kipp-Steuerung | Handy nach links oder rechts neigen | Beim Rennstart kurz ruhig halten, das legt die Mitte fest |
 | Computer | `←` `→` oder `A` `D` | `P` oder `Esc` für Pause |
 
-Beim Lenken zeigt sich das Auto schräg: Die Flanke und das eingeschlagene Vorderrad werden sichtbar,
-in fünf Stufen je nach Lenkwinkel. Die Kipp-Steuerung wird in der Streckenauswahl oder im Rennen rechts oben eingeschaltet und bleibt
+Beim Lenken bleibt das Auto von hinten zu sehen, nur die eingeschlagenen Vorderräder lugen auf der
+Kurvenseite leicht hervor. Die Kipp-Steuerung wird in der Streckenauswahl oder im Rennen rechts oben eingeschaltet und bleibt
 gespeichert. Sie reagiert ab etwa 3 Grad und lenkt bei etwa 22 Grad voll ein. Hoch- und Querformat
 funktionieren beide.
 
