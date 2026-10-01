@@ -51,6 +51,7 @@
   .pbtn.on{background:rgba(255,207,63,.65);border-color:#fff}
   .pbtn.gas{background:rgba(60,200,90,.35)}.pbtn.brake{background:rgba(230,60,60,.35)}
   #topbtns{position:fixed;right:10px;top:calc(max(8px,env(safe-area-inset-top)) + 58px);display:flex;flex-direction:column;gap:8px}
+  .icon.on{background:rgba(255,207,63,.75);color:#222}
   .icon{width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.5);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer}
   #result .big{font-size:clamp(28px,9vw,54px);font-weight:900;color:var(--accent);text-shadow:0 3px 0 #a56a00,0 8px 20px rgba(0,0,0,.6);margin:6px 0}
   table{border-collapse:collapse;margin:8px auto 14px;font-size:clamp(14px,4vw,18px)}
@@ -70,11 +71,11 @@
   <div class="box" style="text-align:right"><div id="pos">1. Platz</div><div><span id="time">0:00.0</span> · 🥐 <span id="items">0</span></div></div>
 </div>
 <div id="prog" class="hidden"><div class="mark rival" id="mRival"></div><div class="mark you" id="mYou"></div><div class="flag">🏁</div></div>
-<div id="topbtns" class="hidden"><div class="icon" id="btnPause">⏸</div><div class="icon" id="btnMute">🔊</div></div>
+<div id="topbtns" class="hidden"><div class="icon" id="btnPause">⏸</div><div class="icon" id="btnMute">🔊</div><div class="icon" id="btnTilt" title="Kipp-Steuerung">📱</div></div>
 <div id="msg" class="hidden"></div>
 <div id="toast"></div>
 <div id="controls" class="hidden">
-  <div class="pad"><div class="pbtn" data-k="left">◀</div><div class="pbtn" data-k="right">▶</div></div>
+  <div class="pad" id="steerPad"><div class="pbtn" data-k="left">◀</div><div class="pbtn" data-k="right">▶</div></div>
   <div class="pad"><div class="pbtn brake" data-k="brake">▼</div><div class="pbtn gas" data-k="gas">▲</div></div>
 </div>
 
@@ -97,7 +98,9 @@
 <div id="stages" class="screen hidden">
   <h2>Wohin geht die Reise?</h2>
   <div class="row" id="stagelist"></div>
-  <div class="row" style="margin-top:14px"><button class="btn secondary" id="btnBackSelect">Zurück</button><button class="btn" id="btnRace">Rennen starten!</button></div>
+  <div class="row" style="margin-top:6px"><button class="btn secondary" id="btnTiltMenu">📱 Kipp-Steuerung: aus</button></div>
+  <p class="small" id="tiltHint">Mit Kipp-Steuerung lenkst du, indem du das Handy nach links oder rechts neigst. Beim Start das Handy ruhig halten, so wird die Mitte festgelegt.</p>
+  <div class="row" style="margin-top:8px"><button class="btn secondary" id="btnBackSelect">Zurück</button><button class="btn" id="btnRace">Rennen starten!</button></div>
 </div>
 
 <!-- Pause -->
@@ -570,7 +573,7 @@ function startRace(){
   G.traffic=[]; const kinds=['bus','scooter','cyclist','cyclist','goat','scooter'];
   for(let i=0;i<Math.floor(G.track.finishIndex/70);i++){ const kind=kinds[i%kinds.length]; const spd = kind==='bus'? G.maxSpeed*0.35 : kind==='scooter'? G.maxSpeed*0.45 : kind==='goat'? G.maxSpeed*0.1 : G.maxSpeed*0.25;
     G.traffic.push({ kind, sprite:SPR[kind], z:(40+i*70+rnd(0,30))*SEG_LEN, offset:kind==='goat'? rnd(-0.9,0.9) : [-0.5,0,0.5][Math.floor(rnd(0,3))], speed:spd }); }
-  G.skyOffset=G.hillOffset=G.treeOffset=0;
+  G.skyOffset=G.hillOffset=G.treeOffset=0; Tilt.calibrate();
   setState('race'); showToast(stage.towns[0][1]+' – Start!',1.6); Audio.init(); Audio.resume();
 }
 
@@ -605,9 +608,38 @@ window.addEventListener('keydown',e=>{ G.keys[e.code]=true; if(e.code==='Escape'
 window.addEventListener('keyup',e=>{ G.keys[e.code]=false; });
 function readInput(){
   const k=G.keys; const sides=Object.values(touchActive);
-  return { left: input.left||k.ArrowLeft||k.KeyA||sides.includes('left'), right: input.right||k.ArrowRight||k.KeyD||sides.includes('right'),
-           gas: input.gas||k.ArrowUp||k.KeyW||k.Space, brake: input.brake||k.ArrowDown||k.KeyS };
+  let steer = (input.left||k.ArrowLeft||k.KeyA||sides.includes('left')) ? -1 : (input.right||k.ArrowRight||k.KeyD||sides.includes('right')) ? 1 : 0;
+  if(Tilt.enabled && steer===0) steer = Tilt.value;
+  return { steer, left: steer<0, right: steer>0, gas: input.gas||k.ArrowUp||k.KeyW||k.Space, brake: input.brake||k.ArrowDown||k.KeyS };
 }
+
+// ---------- Kipp-Steuerung (Gyroskop / Lagesensor) ----------
+const Tilt = {
+  enabled:false, value:0, raw:0, base:null, supported:('DeviceOrientationEvent' in window),
+  // Welcher Sensorwinkel „links/rechts neigen“ bedeutet, hängt von der Bildschirmdrehung ab
+  read(e){
+    const angle = (screen.orientation && typeof screen.orientation.angle==='number') ? screen.orientation.angle : (window.orientation||0);
+    let t;
+    if(angle===90) t = e.beta; else if(angle===-90||angle===270) t = -e.beta; else if(angle===180) t = -e.gamma; else t = e.gamma;
+    if(t==null) return;
+    Tilt.raw=t; if(Tilt.base===null) Tilt.base=t;
+    let d=t-Tilt.base; if(d>180) d-=360; if(d<-180) d+=360;
+    const dead=3, range=22; // Grad: kleine Totzone, volle Lenkung ab ~22°
+    const v = Math.abs(d)<dead ? 0 : clamp((Math.abs(d)-dead)/(range-dead),0,1)*Math.sign(d);
+    Tilt.value = Tilt.value*0.5 + v*0.5; // leicht geglättet
+  },
+  calibrate(){ Tilt.base=null; Tilt.value=0; },
+  async enable(){
+    if(!Tilt.supported){ showToast('Kein Lagesensor gefunden 😕',2); return false; }
+    try{ if(typeof DeviceOrientationEvent.requestPermission==='function'){ const r=await DeviceOrientationEvent.requestPermission(); if(r!=='granted'){ showToast('Zugriff auf den Sensor abgelehnt',2); return false; } } }catch(err){ showToast('Sensor nicht erlaubt',2); return false; }
+    if(!Tilt.listening){ window.addEventListener('deviceorientation',Tilt.read); Tilt.listening=true; }
+    Tilt.enabled=true; Tilt.calibrate(); store('tilt',true); Tilt.updateUI(); return true;
+  },
+  disable(){ Tilt.enabled=false; Tilt.value=0; store('tilt',false); Tilt.updateUI(); },
+  async toggle(){ if(Tilt.enabled) Tilt.disable(); else await Tilt.enable(); },
+  updateUI(){ $('btnTilt').classList.toggle('on',Tilt.enabled); $('btnTiltMenu').textContent='📱 Kipp-Steuerung: '+(Tilt.enabled?'an':'aus'); $('steerPad').style.visibility = Tilt.enabled? 'hidden':'visible'; }
+};
+window.addEventListener('orientationchange',()=>Tilt.calibrate());
 
 // ---------- Update ----------
 function findSegment(z){ const s=G.track.segments; return s[Math.floor(z/SEG_LEN)%s.length]; }
@@ -622,7 +654,7 @@ function update(dt){
     if(G.countdown>0) { return; }
   }
   if(!G.finished) G.time+=dt;
-  const inp = G.finished ? {left:false,right:false,gas:false,brake:false} : readInput();
+  const inp = G.finished ? {steer:0,left:false,right:false,gas:false,brake:false} : readInput();
   const playerSegment=findSegment(G.position+playerZ);
   const speedPct=G.speed/G.maxSpeed;
   const dx=dt*2*speedPct*(0.8+0.3*d.grip);
@@ -631,7 +663,7 @@ function update(dt){
   updateRival(dt); updateTraffic(dt);
   G.position += dt*G.speed; if(G.position>=T.length) G.position-=T.length;
   // Lenken
-  if(inp.left) G.playerX-=dx; else if(inp.right) G.playerX+=dx;
+  G.playerX += dx*clamp(inp.steer,-1,1);
   G.playerX -= dx*speedPct*playerSegment.curve*0.14;
   // Gas (Autogas, wenn weder Gas noch Bremse gedrückt – kinderfreundlich: rollt immer leicht)
   const accel=G.maxSpeed/5*d.accelF;
@@ -770,7 +802,7 @@ function render(){
   }
   // Spieler
   const d=DRIVERS[G.driver], inp=readInput();
-  const steer = G.speed<=0?0 : (inp.left?-1:inp.right?1:0);
+  const steer = G.speed<=0?0 : (inp.steer<-0.25?-1:inp.steer>0.25?1:0);
   const bounce=(1.5*Math.random()*(G.speed/G.maxSpeed)*(H/480))*(Math.random()>0.5?1:-1);
   const spr=SPR['car_'+d.id+'_'+steer];
   const landscape = W>H;
@@ -842,6 +874,8 @@ $('btnAgain').onclick=()=>startRace();
 $('btnMenu').onclick=()=>setState('stages');
 function setMuteIcon(){ $('btnMute').textContent = Audio.muted? '🔇':'🔊'; }
 $('btnMute').onclick=()=>{ Audio.toggle(); setMuteIcon(); };
+$('btnTilt').onclick=()=>Tilt.toggle();
+$('btnTiltMenu').onclick=()=>Tilt.toggle();
 document.addEventListener('visibilitychange',()=>{ if(document.hidden && G.state==='race') setState('pause'); });
 
 // ---------- Hauptschleife ----------
@@ -863,6 +897,8 @@ function drawMenuBackground(t){
 buildSprites(); buildOrangeTree(); resize(); bindPad(); setMuteIcon();
 G.driver=store('driver')||'girl'; G.stageIdx=clamp(store('stage')||0,0,STAGES.length-1);
 setState('title');
+Tilt.updateUI();
+if(store('tilt') && Tilt.supported){ if(typeof DeviceOrientationEvent.requestPermission==='function'){ $('btnStart').addEventListener('click',()=>Tilt.enable(),{once:true}); } else Tilt.enable(); }
 requestAnimationFrame(frame);
 
 // Service Worker nur über http(s) (bei file:// nicht verfügbar) – für Offline-Nutzung als Web-App

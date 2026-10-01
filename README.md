@@ -11,7 +11,10 @@ Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installa
 * **Auf dem Handy:** `index.html` öffnen (z. B. per AirDrop/Mail/Dateien-App an das Handy schicken und
   im Browser öffnen) oder die Datei auf einen beliebigen Webspace legen. Über „Zum Home-Bildschirm
   hinzufügen“ läuft es bildschirmfüllend wie eine App. Gelenkt wird mit den Pfeil-Buttons unten oder durch
-  Antippen der linken/rechten Bildschirmhälfte. ▲ ist Gas, ▼ ist Bremse. Ohne Gas rollt das Auto von allein
+  Antippen der linken/rechten Bildschirmhälfte. ▲ ist Gas, ▼ ist Bremse.
+  **Kipp-Steuerung:** Über den Button „📱 Kipp-Steuerung“ (Streckenauswahl oder rechts oben im Rennen)
+  lenkst du durch Neigen des Handys. Beim Rennstart das Handy kurz ruhig halten, das legt die Mitte fest.
+  Auf dem iPhone fragt der Browser einmal nach der Erlaubnis für den Bewegungssensor. Ohne Gas rollt das Auto von allein
   mit halber Geschwindigkeit – auch die Kleinsten kommen so ins Ziel.
 * **Am Computer:** `index.html` doppelklicken. Pfeiltasten oder `W A S D`, `P`/`Esc` für Pause.
 
