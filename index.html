@@ -104,7 +104,7 @@
   <h2>Wohin geht die Reise?</h2>
   <div class="row" id="stagelist"></div>
   <div class="row" style="margin-top:6px"><button class="btn secondary" id="btnTiltMenu">📱 Kipp-Steuerung: aus</button></div>
-  <p class="small" id="tiltHint">Mit Kipp-Steuerung lenkst du, indem du das Handy nach links oder rechts neigst. Beim Start das Handy ruhig halten, so wird die Mitte festgelegt.</p>
+  <p class="small" id="tiltHint">Mit Kipp-Steuerung lenkst du, indem du das Handy nach links oder rechts neigst. Beim Start das Handy ruhig halten, so wird die Mitte festgelegt. Im Rennen setzt ein Tipp auf 📱 die Mitte neu.</p>
   <div class="row" style="margin-top:8px"><button class="btn secondary" id="btnBackSelect">Zurück</button><button class="btn" id="btnRace">Rennen starten!</button></div>
 </div>
 
@@ -132,7 +132,7 @@
 
 <script>
 'use strict';
-const VERSION='1.8.1', VERSION_DATE='2026-10-01';
+const VERSION='1.8.2', VERSION_DATE='2026-10-01';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -948,17 +948,21 @@ function readInput(){
 // ---------- Kipp-Steuerung (Gyroskop / Lagesensor) ----------
 const Tilt = {
   enabled:false, value:0, raw:0, base:null, supported:('DeviceOrientationEvent' in window),
-  // Welcher Sensorwinkel „links/rechts neigen“ bedeutet, hängt von der Bildschirmdrehung ab
+  // Aus beta/gamma wird die Schwerkraftrichtung im Geräte-Koordinatensystem rekonstruiert. Der Anteil entlang der
+  // waagrechten Bildschirmachse ist der Links-rechts-Neigungswinkel – egal ob das Handy flach oder steil gehalten wird.
   read(e){
+    if(e.beta==null || e.gamma==null) return;
+    const b=e.beta*Math.PI/180, g=e.gamma*Math.PI/180;
+    const ux=-Math.sin(g)*Math.cos(b), uy=Math.sin(b); // „oben“ im Geräte-System (x nach rechts, y nach oben)
     const angle = (screen.orientation && typeof screen.orientation.angle==='number') ? screen.orientation.angle : (window.orientation||0);
-    let t;
-    if(angle===90) t = e.beta; else if(angle===-90||angle===270) t = -e.beta; else if(angle===180) t = -e.gamma; else t = e.gamma;
-    if(t==null) return;
+    let sx; if(angle===90) sx=-uy; else if(angle===-90||angle===270) sx=uy; else if(angle===180) sx=-ux; else sx=ux;
+    const t = -Math.asin(clamp(sx,-1,1))*180/Math.PI; // Grad, positiv = rechte Seite nach unten geneigt
     Tilt.raw=t; if(Tilt.base===null) Tilt.base=t;
-    let d=t-Tilt.base; if(d>180) d-=360; if(d<-180) d+=360;
-    const dead=3, range=22; // Grad: kleine Totzone, volle Lenkung ab ~22°
+    const d=t-Tilt.base;
+    if(Math.abs(d)<5) Tilt.base += d*0.004; // Mitte wandert ganz langsam mit, wenn fast gerade gehalten wird
+    const dead=4, range=20; // Grad: Totzone, volle Lenkung ab ~20°
     const v = Math.abs(d)<dead ? 0 : clamp((Math.abs(d)-dead)/(range-dead),0,1)*Math.sign(d);
-    Tilt.value = Tilt.value*0.5 + v*0.5; // leicht geglättet
+    Tilt.value = Tilt.value*0.6 + v*0.4; // geglättet
   },
   calibrate(){ Tilt.base=null; Tilt.value=0; },
   async enable(){
@@ -998,7 +1002,7 @@ function update(dt){
   G.playerX += dx*clamp(inp.steer,-1,1);
   G.steerVis += (clamp(inp.steer,-1,1)-G.steerVis)*Math.min(1,dt*7);
   if(Math.abs(G.steerVis)>0.55 && speedPct>0.6 && G.carRect){ const c=G.carRect; for(const side of [-1,1]) FX.add({x:c.x+side*c.w*0.36,y:c.bottom-c.h*0.02,vx:rnd(-30,30)-G.steerVis*60,vy:rnd(10,50),life:rnd(0.3,0.6),max:0.6,size:rnd(4,8),grow:true,color:'rgba(230,230,230,0.5)'}); }
-  G.playerX -= dx*speedPct*playerSegment.curve*0.14;
+  G.playerX -= dx*speedPct*playerSegment.curve*0.1;
   // Gas-Automatik: beschleunigt von allein bis KMH_MAX, mit Boost kurzzeitig bis KMH_BOOST
   const accel=G.maxSpeed/5*d.accelF;
   G.boostT=Math.max(0,G.boostT-dt);
@@ -1251,13 +1255,13 @@ $('btnToStages').onclick=()=>setState('stages');
 $('btnBackSelect').onclick=()=>setState('select');
 $('btnRace').onclick=()=>startRace();
 $('btnPause').onclick=()=>{ if(G.state==='race') setState('pause'); };
-$('btnResume').onclick=()=>setState('race');
+$('btnResume').onclick=()=>{ Tilt.calibrate(); setState('race'); };
 $('btnQuit').onclick=()=>{ Audio.setEngine(0,false); setState('stages'); };
 $('btnAgain').onclick=()=>startRace();
 $('btnMenu').onclick=()=>setState('stages');
 function setMuteIcon(){ $('btnMute').textContent = Audio.muted? '🔇':'🔊'; }
 $('btnMute').onclick=()=>{ Audio.toggle(); setMuteIcon(); };
-$('btnTilt').onclick=()=>Tilt.toggle();
+$('btnTilt').onclick=()=>{ if(G.state==='race' && Tilt.enabled){ Tilt.calibrate(); showToast('Mitte neu gesetzt 📱',1); } else Tilt.toggle(); };
 $('btnTiltMenu').onclick=()=>Tilt.toggle();
 document.addEventListener('visibilitychange',()=>{ if(document.hidden && G.state==='race') setState('pause'); });
 
