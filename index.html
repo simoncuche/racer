@@ -132,7 +132,7 @@
 
 <script>
 'use strict';
-const VERSION='1.9.1', VERSION_DATE='2026-10-01';
+const VERSION='1.9.2', VERSION_DATE='2026-10-01';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -178,7 +178,7 @@ function driverName(d){ return (store('name_'+d.id) || d.defName); }
 // ---------- Konstanten der 3D-Darstellung ----------
 const SEG_LEN=200, RUMBLE=3, LANES=2, ROAD_W=2000, FOV=100, CAM_H=1000, DRAW_DIST=240, K=2.5, KMH_MAX=110, KMH_BOOST=150, TOP_SPEED=SEG_LEN*32*(KMH_MAX/120), BOOST_F=KMH_BOOST/KMH_MAX, BOOST_SEC=3.2;
 const cameraDepth = 1/Math.tan((FOV/2)*Math.PI/180);
-const playerZ = CAM_H*cameraDepth;
+let playerZ = CAM_H*cameraDepth; // wird in resize() an die Kamerahöhe angepasst
 const SPRITE_SCALE = 0.3/80;
 
 // ---------- Sprite-Zeichnungen (prozedural) ----------
@@ -891,6 +891,7 @@ function resize(){ DPR=Math.min(window.devicePixelRatio||1, 2); const cw=window.
   // interne Auflösung begrenzen, damit es auf dem Handy flüssig bleibt
   const scale = Math.min(1, 900/Math.max(cw,ch));
   W=Math.round(cw*scale); H=Math.round(ch*scale); PW = W>H ? Math.min(W, Math.round(H*1.35)) : W;
+  playerZ = camH()*cameraDepth;
   canvas.width=Math.round(W*DPR*Math.min(1,1.5/DPR)); canvas.height=Math.round(H*DPR*Math.min(1,1.5/DPR));
   ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);
 }
@@ -1190,10 +1191,11 @@ function render(){
   const sv = G.speed<=0?0 : G.steerVis; const steer = clamp(Math.round(sv*2),-2,2);
   const bounce=(1.5*Math.random()*(G.speed/G.maxSpeed)*(H/480))*(Math.random()>0.5?1:-1);
   const spr=SPR['car_'+d.id+'_'+steer];
-  const landscape = W>H;
-  const carW = (landscape ? Math.min(W*0.22, H*0.5) : W*0.42)*(300/260)*d.size;
+  // Größe und Position aus derselben Projektion wie Rivale und Verkehr, damit alles zusammenpasst
+  const pScale = cameraDepth/playerZ;
+  const carW = (spr.w*pScale*PW/2)*(SPRITE_SCALE*ROAD_W)*(100/260)*d.size;
   const carH = carW*spr.h/spr.w;
-  const bottom = landscape ? H*0.95 : H*0.82;
+  const bottom = H*HORIZON() + pScale*camH()*H/2;
   const carX = W/2 + sv*carW*0.06; // Auto rutscht leicht in Lenkrichtung
   G.carRect={x:carX,bottom,w:carW,h:carH};
   ctx.save(); ctx.translate(carX,bottom);
