@@ -36,6 +36,7 @@
   .stage .best{color:var(--accent);font-size:13px;margin-top:4px}
   .stat{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;font-size:13px;opacity:.85;margin-top:12px}
   .small{font-size:12px;opacity:.7;margin-top:14px;max-width:420px;line-height:1.4}
+  #ver{position:fixed;left:0;right:0;bottom:max(8px,env(safe-area-inset-bottom));text-align:center;font-size:12px;opacity:.6;letter-spacing:.5px}
   #hud{position:fixed;left:0;right:0;top:0;padding:max(8px,env(safe-area-inset-top)) 10px 0;pointer-events:none;display:flex;justify-content:space-between;align-items:flex-start;font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,.7)}
   #hud .box{background:rgba(0,0,0,.35);border-radius:12px;padding:6px 10px;font-size:clamp(13px,3.6vw,18px);line-height:1.25}
   #hud .speed{font-size:clamp(22px,7vw,36px);color:var(--accent);line-height:1}
@@ -88,6 +89,7 @@
   <button class="btn" id="btnStart">Los geht's!</button>
   <button class="btn secondary" id="btnRanking">🏆 Rangliste</button>
   <p class="small">Das Auto gibt von allein Gas, du musst nur lenken: Pfeile unten antippen, Handy kippen oder am Computer <span class="kbd">←</span><span class="kbd">→</span> bzw. <span class="kbd">A</span><span class="kbd">D</span>. Fahr über die orangen Boost-Felder für Turbo bis 170 km/h!</p>
+  <div id="ver"></div>
 </div>
 
 <!-- Driver select -->
@@ -130,6 +132,7 @@
 
 <script>
 'use strict';
+const VERSION='1.6.0', VERSION_DATE='2026-10-01';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -1064,6 +1067,7 @@ function drawMenuBackground(t){
 
 // ---------- Start ----------
 buildSprites(); buildOrangeTree(); resize(); bindPad(); setMuteIcon();
+$('ver').textContent='Version '+VERSION+' · '+VERSION_DATE;
 G.driver=store('driver')||'girl'; G.stageIdx=clamp(store('stage')||0,0,STAGES.length-1);
 setState('title');
 Tilt.updateUI();
