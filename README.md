@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **1.8.5**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **1.9.0**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -73,8 +73,8 @@ andere Kind fährt als Gegner mit.
 | 🌊 Pollença → Formentor | Hafenort mit Café, Strandhütten, Klippen, Pinien, Serpentinen, Mirador, Leuchtturm |
 | 🏖️ Santanyí → Es Trenc | Windmühlen, Mandelbäume, Weinberge, Sonnenblumen, Kakteen, Schafe, Ses Salines, Colònia, Dünen und Strand |
 
-Jede Fahrt dauert etwa anderthalb Minuten. Ortsschilder zeigen, wo man gerade ist. Im Ziel wartet ein
-Zielbogen mit Konfetti-Regen.
+Jede Fahrt dauert etwa anderthalb Minuten. Ortsschilder zeigen, wo man gerade ist. Im Ziel warten ein
+Zielbogen, Konfetti-Regen, Applaus und eine Allee voller hüpfender, klatschender Meeresfrüchte.
 
 ### Verkehr und Crashs
 

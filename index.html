@@ -132,7 +132,7 @@
 
 <script>
 'use strict';
-const VERSION='1.8.5', VERSION_DATE='2026-10-01';
+const VERSION='1.9.0', VERSION_DATE='2026-10-01';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -799,7 +799,12 @@ function buildTrack(stage){
   const t=new TrackBuilder(); stage.build(t);
   // Auslauf hinter dem Ziel + sanftes Ende
   const finishIndex=t.segments.length;
-  t.straight(30);
+  t.straight(60); // Auslauf: die Straße geht weiter
+  // Zielallee: Palmen, Wimpel, Strandhütten – und jubelnde Meeresfrüchte an beiden Seiten
+  t.sprites.push(...Array.from({length:40},(_,i)=>({seg:finishIndex+8+i*3,offset:(i%2?1:-1)*(2.6+rnd(0,0.6)),name:i%3?'palm':'palm2'})));
+  t.sprites.push(...Array.from({length:10},(_,i)=>({seg:finishIndex+20+i*10,offset:(i%2?1:-1)*(3.4+rnd(0,0.5)),name:'beachhut'})));
+  for(let i=finishIndex-30;i<finishIndex+60;i++){ if(!t.segments[i]) continue; t.segments[i].crowd=[];
+    for(const side of [-1,1]){ const n = i<finishIndex? 2 : 1; for(let k=0;k<n;k++){ if(Math.random()<0.8) t.segments[i].crowd.push({offset:side*(1.2+k*0.3+rnd(0,0.15)), kind:SEAFOOD[Math.floor(rnd(0,SEAFOOD.length))], phase:rnd(0,6), speed:rnd(4,7)}); } } }
   const segs=t.segments;
   for(const s of t.sprites){ if(segs[s.seg]) segs[s.seg].sprites.push({offset:s.offset,ox:s.ox,sprite:SPR[s.name]}); }
   // Sammelgegenstände
@@ -872,9 +877,10 @@ const Audio = (()=>{
   function pickup(){ beep(880,0.12,'sine',0.15); setTimeout(()=>beep(1320,0.18,'sine',0.12),80); }
   function boost(){ beep(300,0.5,'sawtooth',0.1); setTimeout(()=>beep(600,0.4,'sawtooth',0.08),120); setTimeout(()=>beep(1200,0.3,'sawtooth',0.06),240); }
   function crash(){ if(!ctx||muted) return; const b=ctx.createBuffer(1,ctx.sampleRate*0.25,ctx.sampleRate); const d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length); const s=ctx.createBufferSource(); s.buffer=b; const g=ctx.createGain(); g.gain.value=0.25; s.connect(g); g.connect(ctx.destination); s.start(); }
+  function applause(){ if(!ctx||muted) return; const dur=3.5, b=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate), d=b.getChannelData(0); for(let i=0;i<d.length;i++){ const t=i/ctx.sampleRate; const env=Math.min(1,t*3)*Math.max(0,1-(t-2)/1.5); d[i]=(Math.random()*2-1)*env*(0.5+0.5*Math.random()*Math.random()); } const src=ctx.createBufferSource(); src.buffer=b; const f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1800; f.Q.value=0.6; const g=ctx.createGain(); g.gain.value=0.25; src.connect(f); f.connect(g); g.connect(ctx.destination); src.start(); }
   function fanfare(win){ const seq = win? [[523,0],[659,120],[784,240],[1047,360],[1047,600]] : [[392,0],[349,250],[330,500]]; for(const [f,t] of seq) setTimeout(()=>beep(f,0.3,'triangle',0.18),t); }
   function toggle(){ muted=!muted; store('muted',muted); return muted; }
-  return { init, resume, setEngine, beep, pickup, boost, crash, fanfare, toggle, get muted(){return muted;} };
+  return { init, resume, setEngine, beep, pickup, boost, crash, fanfare, applause, toggle, get muted(){return muted;} };
 })();
 
 // ---------- Spielzustand ----------
@@ -1009,7 +1015,7 @@ function update(dt){
   G.boostT=Math.max(0,G.boostT-dt);
   const boostSpeed = G.maxSpeed + TOP_SPEED*(BOOST_F-1);
   const target = G.boostT>0 ? boostSpeed : G.maxSpeed;
-  if(G.finished){ G.speed += -G.maxSpeed/3*dt; }
+  if(G.finished){ G.speed += -G.maxSpeed/5*dt; }
   else if(G.speed<target) G.speed=Math.min(target, G.speed + accel*(G.boostT>0?2.5:1)*dt);
   else G.speed=Math.max(target, G.speed - G.maxSpeed/4*dt);
   // Boost-Feld überfahren?
@@ -1022,9 +1028,9 @@ function update(dt){
     // Kollision mit Randobjekten
     for(const sp of playerSegment.sprites){ if(sp.offset===0) continue; const spriteW=sp.sprite.w*SPRITE_SCALE; if(overlap(G.playerX,0.6,sp.offset+spriteW/2*(sp.offset>0?1:-1),spriteW)){ G.speed=G.maxSpeed/6; G.position=Math.max(0,startPosition); crashFx(); showToast('Autsch! 🌵',0.8); break; } }
   }
-  // Kollision mit Verkehr/Rivale
-  for(const c of G.traffic){ const seg=findSegment(c.z); if(seg===playerSegment && G.speed>c.speed && overlap(G.playerX,0.5,c.offset,Math.min(0.45,c.sprite.w*SPRITE_SCALE*0.8))){ G.speed=c.speed*0.9; G.position=Math.max(0,startPosition-SEG_LEN*0.3); crashFx(); showToast('Krach! 💥',0.8); } }
-  { const r=G.rival; const seg=findSegment(r.z); if(seg===playerSegment && G.speed>r.speed && overlap(G.playerX,0.55,r.offset,0.4)){ G.speed=r.speed*0.9; crashFx(); } }
+  // Kollision mit Verkehr/Rivale (nach dem Ziel nicht mehr)
+  if(!G.finished) for(const c of G.traffic){ const seg=findSegment(c.z); if(seg===playerSegment && G.speed>c.speed && overlap(G.playerX,0.5,c.offset,Math.min(0.45,c.sprite.w*SPRITE_SCALE*0.8))){ G.speed=c.speed*0.9; G.position=Math.max(0,startPosition-SEG_LEN*0.3); crashFx(); showToast('Krach! 💥',0.8); } }
+  if(!G.finished){ const r=G.rival; const seg=findSegment(r.z); if(seg===playerSegment && G.speed>r.speed && overlap(G.playerX,0.55,r.offset,0.4)){ G.speed=r.speed*0.9; crashFx(); } }
   // Gegenstände einsammeln
   for(const it of playerSegment.items){ if(!it.taken && Math.abs(G.playerX-it.offset)<0.35){ it.taken=true; G.items++; Audio.pickup(); showToast(it.kind[2]+' '+it.kind[1]+'! 😋',0.7); pickupFx(it.kind[2]); } }
   G.playerX=clamp(G.playerX,-2.2,2.2); G.speed=clamp(G.speed,0,G.maxSpeed+TOP_SPEED*(BOOST_F-1));
@@ -1037,8 +1043,8 @@ function update(dt){
   if(G.finishFx>0){ G.finishFx-=dt; if(G.finishFx>1.5) confettiFx(); }
   FX.update(dt);
   // Ziel
-  if(!G.finished && G.position+playerZ>=T.finishZ){ G.finished=true; G.finishTime=G.time; G.finishFx=4; Audio.fanfare(!G.rival.finished); popMsg('ZIEL! 🏁'); setTimeout(showResult,3200); }
-  if(G.finished && G.position+playerZ>=T.length-SEG_LEN*10){ G.speed=0; }
+  if(!G.finished && G.position+playerZ>=T.finishZ){ G.finished=true; G.finishTime=G.time; G.finishFx=4; Audio.fanfare(!G.rival.finished); Audio.applause(); popMsg('ZIEL! 🏁'); setTimeout(showResult,4000); }
+  if(G.finished && G.position+playerZ>=T.length-SEG_LEN*20){ G.speed=0; }
   Audio.setEngine(speedPct, G.state==='race');
 }
 function overlap(x1,w1,x2,w2){ const h1=w1/2,h2=w2/2; return !((x1+h1 < x2-h2) || (x1-h1 > x2+h2)); }
@@ -1046,13 +1052,13 @@ function updateRival(dt){
   const r=G.rival, T=G.track; if(G.countdown>0) return;
   const seg=findSegment(r.z);
   const accel=r.maxSpeed/4;
-  const targetSpeed = r.finished ? 0 : r.maxSpeed*(1-Math.min(0.35,Math.abs(seg.curve)*0.04));
+  const targetSpeed = r.finished ? r.maxSpeed*0.12 : r.maxSpeed*(1-Math.min(0.35,Math.abs(seg.curve)*0.04)); // im Ziel rollt der Rivale langsam weiter
   if(r.speed<targetSpeed) r.speed=Math.min(targetSpeed,r.speed+accel*dt); else r.speed=Math.max(targetSpeed,r.speed-accel*2*dt);
   // Ausweichen vor Verkehr
   let steer=0; for(const c of G.traffic){ const dz=c.z-r.z; if(dz>0 && dz<SEG_LEN*10 && Math.abs(c.offset-r.offset)<0.45){ steer = c.offset>r.offset? -1: 1; } }
   // Ausweichen vor Spieler
   const pz=G.position+playerZ; const dzp=pz-r.z; if(dzp>0 && dzp<SEG_LEN*8 && Math.abs(G.playerX-r.offset)<0.45 && r.speed>G.speed) steer = G.playerX>r.offset? -1:1;
-  r.wobble+=dt; const ideal = steer!==0 ? r.offset+steer*0.9 : Math.sin(r.wobble*0.4)*0.5 - seg.curve*0.06;
+  r.wobble+=dt; const ideal = r.finished ? 0.8*Math.sign(r.offset||1) : steer!==0 ? r.offset+steer*0.9 : Math.sin(r.wobble*0.4)*0.5 - seg.curve*0.06;
   r.offset += clamp(ideal-r.offset,-1,1)*dt*1.2; r.offset=clamp(r.offset,-0.85,0.85);
   r.z += r.speed*dt; if(r.z>=T.length) r.z-=T.length;
   if(!r.finished && r.z>=T.finishZ){ r.finished=true; G.rivalFinishTime=G.time; if(!G.finished) showToast(driverName(r.driver)+' ist im Ziel!',1.5); }
@@ -1102,6 +1108,15 @@ function drawItem(it,scale,cx,baseY,clipY){ // dreht sich, pulsiert und funkelt
   const g=ctx.createRadialGradient(0,0,destW*0.2,0,0,destW*0.9); g.addColorStop(0,'rgba(255,255,200,'+(0.35+Math.sin(t*2)*0.15)+')'); g.addColorStop(1,'rgba(255,255,200,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,destW*0.9,0,7); ctx.fill();
   ctx.rotate(Math.sin(t)*0.35); ctx.scale(pulse*(0.75+0.25*Math.abs(Math.cos(t*0.7))),pulse); ctx.drawImage(sp.c,-destW/2,-destH/2,destW,destH); ctx.restore();
   if(destW>12){ ctx.fillStyle='#fff'; const a=t*2.5; for(let i=0;i<2;i++){ const px=cx+Math.cos(a+i*3)*destW*0.6, py=cy+Math.sin(a+i*3)*destH*0.5, r=destW*0.07*(0.5+0.5*Math.sin(t*4+i)); ctx.beginPath(); ctx.moveTo(px-r,py); ctx.lineTo(px,py-r); ctx.lineTo(px+r,py); ctx.lineTo(px,py+r); ctx.fill(); } }
+}
+function drawCheer(m,scale,cx,baseY,clipY){ // jubelnde Meeresfrucht: hüpft, wackelt, klatscht
+  const sp=SPR[m.kind[0]]; const destW=(sp.w*scale*W/2)*(SPRITE_SCALE*ROAD_W), destH=(sp.h*scale*W/2)*(SPRITE_SCALE*ROAD_W);
+  if(destW<1.5 || (clipY && baseY-destH>clipY)) return;
+  const t=G.time*m.speed+m.phase, hop=Math.abs(Math.sin(t))*destH*0.45, cy=baseY-destH/2-hop;
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(Math.sin(t*2)*0.18); ctx.scale(1+Math.cos(t*2)*0.06,1-Math.cos(t*2)*0.06);
+  ctx.drawImage(sp.c,-destW/2,-destH/2,destW,destH); ctx.restore();
+  ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(cx,baseY,destW*0.35*(1-hop/destH*0.5),destH*0.08,0,0,7); ctx.fill();
+  if(destW>10 && hop>destH*0.3){ ctx.font=`${Math.round(destW*0.55)}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('👏',cx+destW*0.55,cy-destH*0.45); }
 }
 function drawSprite(sprite,scale,destX,destY,offsetX,offsetY,clipY){
   const destW=(sprite.w*scale*W/2)*(SPRITE_SCALE*ROAD_W), destH=(sprite.h*scale*W/2)*(SPRITE_SCALE*ROAD_W);
@@ -1166,6 +1181,7 @@ function render(){
     if(seg.p1.camera.z<=cameraDepth) continue;
     for(const sp of seg.sprites){ const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*sp.offset*ROAD_W*W/2; drawSprite(sp.sprite,scale,sx,seg.p1.screen.y,(sp.ox!==undefined?sp.ox:(sp.offset<0?-1:0)),-1,seg.clip); }
     for(const it of seg.items){ if(it.taken) continue; const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*it.offset*ROAD_W*W/2; const bob=Math.sin(G.time*5+it.phase)*0.15; drawItem(it,scale*1.15,sx,seg.p1.screen.y-scale*W*ROAD_W*SPRITE_SCALE*22*(0.5+bob),seg.clip); }
+    if(seg.crowd) for(const m of seg.crowd){ const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*m.offset*ROAD_W*W/2; drawCheer(m,scale*1.5,sx,seg.p1.screen.y,seg.clip); }
     // Fahrzeuge in diesem Segment
     drawCarsInSegment(seg);
   }
