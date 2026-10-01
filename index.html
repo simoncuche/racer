@@ -132,7 +132,7 @@
 
 <script>
 'use strict';
-const VERSION='1.9.0', VERSION_DATE='2026-10-01';
+const VERSION='1.9.1', VERSION_DATE='2026-10-01';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -885,17 +885,17 @@ const Audio = (()=>{
 
 // ---------- Spielzustand ----------
 const canvas=$('game'), ctx=canvas.getContext('2d');
-let W=360, H=640, DPR=1;
+let W=360, H=640, DPR=1, PW=360; // PW: Breite für die Straßenprojektion (im Querformat begrenzt, sonst wird die Straße riesig)
+const camH=()=> W>H ? 1800 : 1000;    // im Querformat höhere Kamera, damit man mehr Strecke sieht
 function resize(){ DPR=Math.min(window.devicePixelRatio||1, 2); const cw=window.innerWidth, ch=window.innerHeight;
   // interne Auflösung begrenzen, damit es auf dem Handy flüssig bleibt
   const scale = Math.min(1, 900/Math.max(cw,ch));
-  W=Math.round(cw*scale); H=Math.round(ch*scale);
+  W=Math.round(cw*scale); H=Math.round(ch*scale); PW = W>H ? Math.min(W, Math.round(H*1.35)) : W;
   canvas.width=Math.round(W*DPR*Math.min(1,1.5/DPR)); canvas.height=Math.round(H*DPR*Math.min(1,1.5/DPR));
-  canvas.style.width=cw+'px'; canvas.style.height=ch+'px';
   ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);
 }
 function setVH(){ const h=(window.visualViewport? window.visualViewport.height : window.innerHeight); document.documentElement.style.setProperty('--vh', Math.round(h)+'px'); }
-window.addEventListener('resize',()=>{ resize(); setVH(); }); window.addEventListener('orientationchange',()=>setTimeout(()=>{ resize(); setVH(); },200)); if(window.visualViewport) window.visualViewport.addEventListener('resize',setVH); setVH();
+window.addEventListener('resize',()=>{ resize(); setVH(); }); if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); setVH(); }).observe(document.documentElement); window.addEventListener('orientationchange',()=>setTimeout(()=>{ resize(); setVH(); },200)); if(window.visualViewport) window.visualViewport.addEventListener('resize',setVH); setVH();
 
 const G = { state:'title', driver:'girl', stageIdx:0, track:null, stage:null,
   position:0, playerX:0, speed:0, maxSpeed:TOP_SPEED, time:0, items:0, boostT:0, boosts:0, crashT:0, finishFx:0, carRect:null, steerVis:0, finished:false, countdown:3, startDelay:0,
@@ -1069,13 +1069,13 @@ function updateTraffic(dt){ for(const c of G.traffic){ c.z += c.speed*dt; if(c.z
   c.sprite=SPR[c.kind+'_'+(Math.floor(t*c.fps)%2)]; } }
 
 // ---------- Rendern ----------
-const HORIZON=()=> W>H ? 0.5 : 0.42; // im Hochformat weniger leerer Himmel
+const HORIZON=()=> W>H ? 0.4 : 0.42; // Horizont höher, damit die Straße mehr Platz hat
 function project(p,camX,camY,camZ,width,height){
   p.camera.x=(p.world.x||0)-camX; p.camera.y=(p.world.y||0)-camY; p.camera.z=(p.world.z||0)-camZ;
   p.screen.scale=cameraDepth/p.camera.z;
-  p.screen.x=Math.round(width/2 + p.screen.scale*p.camera.x*width/2);
+  p.screen.x=Math.round(width/2 + p.screen.scale*p.camera.x*PW/2);
   p.screen.y=Math.round(height*HORIZON() - p.screen.scale*p.camera.y*height/2);
-  p.screen.w=Math.round(p.screen.scale*ROAD_W*width/2);
+  p.screen.w=Math.round(p.screen.scale*ROAD_W*PW/2);
 }
 function poly(x1,y1,x2,y2,x3,y3,x4,y4,color){ ctx.fillStyle=color; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.lineTo(x4,y4); ctx.closePath(); ctx.fill(); }
 function drawSegment(w,lanes,x1,y1,w1,x2,y2,w2,fog,seg){
@@ -1101,7 +1101,7 @@ function drawSegment(w,lanes,x1,y1,w1,x2,y2,w2,fog,seg){
   if(fog<1){ ctx.fillStyle=st.fog; ctx.globalAlpha=1-fog; ctx.fillRect(0,y2,w,y1-y2); ctx.globalAlpha=1; }
 }
 function drawItem(it,scale,cx,baseY,clipY){ // dreht sich, pulsiert und funkelt
-  const sp=it.sprite; const destW=(sp.w*scale*W/2)*(SPRITE_SCALE*ROAD_W), destH=(sp.h*scale*W/2)*(SPRITE_SCALE*ROAD_W);
+  const sp=it.sprite; const destW=(sp.w*scale*PW/2)*(SPRITE_SCALE*ROAD_W), destH=(sp.h*scale*PW/2)*(SPRITE_SCALE*ROAD_W);
   if(destW<1 || (clipY && baseY-destH/2>clipY)) return;
   const t=G.time*3+it.phase, pulse=1+Math.sin(t*2)*0.08, cy=baseY-destH/2;
   ctx.save(); ctx.translate(cx,cy);
@@ -1110,7 +1110,7 @@ function drawItem(it,scale,cx,baseY,clipY){ // dreht sich, pulsiert und funkelt
   if(destW>12){ ctx.fillStyle='#fff'; const a=t*2.5; for(let i=0;i<2;i++){ const px=cx+Math.cos(a+i*3)*destW*0.6, py=cy+Math.sin(a+i*3)*destH*0.5, r=destW*0.07*(0.5+0.5*Math.sin(t*4+i)); ctx.beginPath(); ctx.moveTo(px-r,py); ctx.lineTo(px,py-r); ctx.lineTo(px+r,py); ctx.lineTo(px,py+r); ctx.fill(); } }
 }
 function drawCheer(m,scale,cx,baseY,clipY){ // jubelnde Meeresfrucht: hüpft, wackelt, klatscht
-  const sp=SPR[m.kind[0]]; const destW=(sp.w*scale*W/2)*(SPRITE_SCALE*ROAD_W), destH=(sp.h*scale*W/2)*(SPRITE_SCALE*ROAD_W);
+  const sp=SPR[m.kind[0]]; const destW=(sp.w*scale*PW/2)*(SPRITE_SCALE*ROAD_W), destH=(sp.h*scale*PW/2)*(SPRITE_SCALE*ROAD_W);
   if(destW<1.5 || (clipY && baseY-destH>clipY)) return;
   const t=G.time*m.speed+m.phase, hop=Math.abs(Math.sin(t))*destH*0.45, cy=baseY-destH/2-hop;
   ctx.save(); ctx.translate(cx,cy); ctx.rotate(Math.sin(t*2)*0.18); ctx.scale(1+Math.cos(t*2)*0.06,1-Math.cos(t*2)*0.06);
@@ -1119,7 +1119,7 @@ function drawCheer(m,scale,cx,baseY,clipY){ // jubelnde Meeresfrucht: hüpft, wa
   if(destW>10 && hop>destH*0.3){ ctx.font=`${Math.round(destW*0.55)}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('👏',cx+destW*0.55,cy-destH*0.45); }
 }
 function drawSprite(sprite,scale,destX,destY,offsetX,offsetY,clipY){
-  const destW=(sprite.w*scale*W/2)*(SPRITE_SCALE*ROAD_W), destH=(sprite.h*scale*W/2)*(SPRITE_SCALE*ROAD_W);
+  const destW=(sprite.w*scale*PW/2)*(SPRITE_SCALE*ROAD_W), destH=(sprite.h*scale*PW/2)*(SPRITE_SCALE*ROAD_W);
   destX=destX+destW*(offsetX||0); destY=destY+destH*(offsetY||0);
   const clipH = clipY ? Math.max(0,destY+destH-clipY) : 0;
   // Objekte, die fast ganz hinter einer Kuppe liegen, gar nicht zeichnen (sonst scheinen sie zu schweben)
@@ -1168,8 +1168,8 @@ function render(){
     const seg=segs[(baseSegment.index+n)%segs.length];
     seg.looped=seg.index<baseSegment.index; seg.fog=1/Math.pow(Math.E,(n/DRAW_DIST)*(n/DRAW_DIST)*4); seg.clip=maxy;
     const camZ=G.position-(seg.looped?T.length:0);
-    project(seg.p1,(G.playerX*ROAD_W)-x,playerY+CAM_H,camZ,W,H);
-    project(seg.p2,(G.playerX*ROAD_W)-x-dx,playerY+CAM_H,camZ,W,H);
+    project(seg.p1,(G.playerX*ROAD_W)-x,playerY+camH(),camZ,W,H);
+    project(seg.p2,(G.playerX*ROAD_W)-x-dx,playerY+camH(),camZ,W,H);
     x+=dx; dx+=seg.curve;
     if(seg.p1.camera.z<=cameraDepth || seg.p2.screen.y>=seg.p1.screen.y || seg.p2.screen.y>=maxy) continue;
     drawSegment(W,LANES,seg.p1.screen.x,seg.p1.screen.y,seg.p1.screen.w,seg.p2.screen.x,seg.p2.screen.y,seg.p2.screen.w,seg.fog,seg);
@@ -1179,9 +1179,9 @@ function render(){
   for(let n=DRAW_DIST-1;n>0;n--){
     const seg=segs[(baseSegment.index+n)%segs.length];
     if(seg.p1.camera.z<=cameraDepth) continue;
-    for(const sp of seg.sprites){ const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*sp.offset*ROAD_W*W/2; drawSprite(sp.sprite,scale,sx,seg.p1.screen.y,(sp.ox!==undefined?sp.ox:(sp.offset<0?-1:0)),-1,seg.clip); }
-    for(const it of seg.items){ if(it.taken) continue; const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*it.offset*ROAD_W*W/2; const bob=Math.sin(G.time*5+it.phase)*0.15; drawItem(it,scale*1.15,sx,seg.p1.screen.y-scale*W*ROAD_W*SPRITE_SCALE*22*(0.5+bob),seg.clip); }
-    if(seg.crowd) for(const m of seg.crowd){ const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*m.offset*ROAD_W*W/2; drawCheer(m,scale*1.5,sx,seg.p1.screen.y,seg.clip); }
+    for(const sp of seg.sprites){ const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*sp.offset*ROAD_W*PW/2; drawSprite(sp.sprite,scale,sx,seg.p1.screen.y,(sp.ox!==undefined?sp.ox:(sp.offset<0?-1:0)),-1,seg.clip); }
+    for(const it of seg.items){ if(it.taken) continue; const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*it.offset*ROAD_W*PW/2; const bob=Math.sin(G.time*5+it.phase)*0.15; drawItem(it,scale*1.15,sx,seg.p1.screen.y-scale*W*ROAD_W*SPRITE_SCALE*22*(0.5+bob),seg.clip); }
+    if(seg.crowd) for(const m of seg.crowd){ const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*m.offset*ROAD_W*PW/2; drawCheer(m,scale*1.5,sx,seg.p1.screen.y,seg.clip); }
     // Fahrzeuge in diesem Segment
     drawCarsInSegment(seg);
   }
@@ -1205,7 +1205,7 @@ function render(){
 function drawCarsInSegment(seg){
   const list=[]; for(const c of G.traffic){ if(findSegment(c.z)===seg) list.push(c); } if(findSegment(G.rival.z)===seg) list.push(G.rival);
   for(const c of list){ const percent=(c.z%SEG_LEN)/SEG_LEN; const next=G.track.segments[(seg.index+1)%G.track.segments.length];
-    const scale=lerp(seg.p1.screen.scale,next.p1.screen.scale,percent); const sx=lerp(seg.p1.screen.x,next.p1.screen.x,percent)+scale*c.offset*ROAD_W*W/2; const sy=lerp(seg.p1.screen.y,next.p1.screen.y,percent);
+    const scale=lerp(seg.p1.screen.scale,next.p1.screen.scale,percent); const sx=lerp(seg.p1.screen.x,next.p1.screen.x,percent)+scale*c.offset*ROAD_W*PW/2; const sy=lerp(seg.p1.screen.y,next.p1.screen.y,percent);
     const spr = c===G.rival ? SPR['car_'+c.driver.id+'_'+(c.offset-(c.prevOffset||c.offset)>0.002?1:c.offset-(c.prevOffset||c.offset)<-0.002?-1:0)] : c.sprite;
     if(c===G.rival) c.prevOffset=c.offset;
     drawSprite(spr,scale*(c===G.rival?100/260*c.driver.size:1),sx,sy,-0.5,-1,seg.clip); }
