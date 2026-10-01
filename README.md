@@ -10,13 +10,13 @@ Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installa
 
 * **Auf dem Handy:** `index.html` öffnen (z. B. per AirDrop/Mail/Dateien-App an das Handy schicken und
   im Browser öffnen) oder die Datei auf einen beliebigen Webspace legen. Über „Zum Home-Bildschirm
-  hinzufügen“ läuft es bildschirmfüllend wie eine App. Gelenkt wird mit den Pfeil-Buttons unten oder durch
-  Antippen der linken/rechten Bildschirmhälfte. ▲ ist Gas, ▼ ist Bremse.
+  hinzufügen“ läuft es bildschirmfüllend wie eine App. Das Auto gibt von allein Gas (bis 120 km/h),
+  gelenkt wird mit den Pfeil-Buttons unten oder durch Antippen der linken/rechten Bildschirmhälfte.
   **Kipp-Steuerung:** Über den Button „📱 Kipp-Steuerung“ (Streckenauswahl oder rechts oben im Rennen)
   lenkst du durch Neigen des Handys. Beim Rennstart das Handy kurz ruhig halten, das legt die Mitte fest.
-  Auf dem iPhone fragt der Browser einmal nach der Erlaubnis für den Bewegungssensor. Ohne Gas rollt das Auto von allein
-  mit halber Geschwindigkeit – auch die Kleinsten kommen so ins Ziel.
-* **Am Computer:** `index.html` doppelklicken. Pfeiltasten oder `W A S D`, `P`/`Esc` für Pause.
+  Auf dem iPhone fragt der Browser einmal nach der Erlaubnis für den Bewegungssensor. 
+* **Am Computer:** `index.html` doppelklicken. Pfeiltasten links/rechts oder `A`/`D`, `P`/`Esc` für Pause.
+* **Boost:** Orange Felder auf der Straße geben für gut drei Sekunden Turbo bis 170 km/h.
 
 ## Was drin ist
 
@@ -25,8 +25,9 @@ Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installa
 * Drei Strecken mit Ortsschildern, Kathedrale, Trockensteinmauern, Olivenbäumen, Oleander, Pinien,
   Mandelbäumen, Windmühlen, Leuchtturm, Strand und Meer.
 * Das jeweils andere Kind fährt als Gegner mit. Dazu Touristenbusse, Roller, Radfahrer und Ziegen.
-* Orangen und Ensaimadas einsammeln gibt einen kleinen Schub.
-* Bestzeiten und Siege werden im Browser gespeichert (localStorage).
+* Orangen und Ensaimadas einsammeln zählt fürs Ergebnis.
+* Rangliste: die zehn besten Zeiten pro Strecke mit Name, Datum und Auto. Gespeichert im Browser
+  (localStorage) und zusätzlich als Cookie, erreichbar über „Rangliste“ im Startbildschirm.
 * Motorsound und Signaltöne per WebAudio, abschaltbar über den Lautsprecher-Button.
 * `manifest.json` und `sw.js` machen es zur installierbaren, offline-fähigen PWA, wenn es über
   `http(s)` ausgeliefert wird (bei direktem Öffnen der Datei werden sie einfach ignoriert).

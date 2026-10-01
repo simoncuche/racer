@@ -47,6 +47,7 @@
   #toast{position:fixed;left:0;right:0;top:22%;text-align:center;font-size:clamp(18px,6vw,34px);font-weight:900;color:#fff;text-shadow:0 2px 0 #333,0 6px 20px rgba(0,0,0,.6);pointer-events:none;opacity:0;transition:opacity .3s}
   #controls{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;padding:0 14px max(14px,env(safe-area-inset-bottom));pointer-events:none}
   .pad{display:flex;gap:12px;pointer-events:auto}
+  #steerPad{width:100%;justify-content:space-between}
   .pbtn{width:clamp(64px,19vw,96px);height:clamp(64px,19vw,96px);border-radius:50%;background:rgba(255,255,255,.22);border:3px solid rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;font-size:clamp(28px,8vw,40px);color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.6);backdrop-filter:blur(2px)}
   .pbtn.on{background:rgba(255,207,63,.65);border-color:#fff}
   .pbtn.gas{background:rgba(60,200,90,.35)}.pbtn.brake{background:rgba(230,60,60,.35)}
@@ -76,7 +77,6 @@
 <div id="toast"></div>
 <div id="controls" class="hidden">
   <div class="pad" id="steerPad"><div class="pbtn" data-k="left">◀</div><div class="pbtn" data-k="right">▶</div></div>
-  <div class="pad"><div class="pbtn brake" data-k="brake">▼</div><div class="pbtn gas" data-k="gas">▲</div></div>
 </div>
 
 <!-- Title -->
@@ -84,7 +84,8 @@
   <h1>🌴 Mallorca Rallye 🌴</h1>
   <p class="sub">Zwei Kinder, zwei Autos, eine Insel!</p>
   <button class="btn" id="btnStart">Los geht's!</button>
-  <p class="small">Mit dem Handy: Pfeile unten antippen. Am Computer: Pfeiltasten oder <span class="kbd">A</span><span class="kbd">D</span> lenken, <span class="kbd">W</span>/<span class="kbd">↑</span> Gas, <span class="kbd">S</span>/<span class="kbd">↓</span> Bremse. Tipp: Zum Startbildschirm hinzufügen, dann läuft es wie eine App.</p>
+  <button class="btn secondary" id="btnRanking">🏆 Rangliste</button>
+  <p class="small">Das Auto gibt von allein Gas, du musst nur lenken: Pfeile unten antippen, Handy kippen oder am Computer <span class="kbd">←</span><span class="kbd">→</span> bzw. <span class="kbd">A</span><span class="kbd">D</span>. Fahr über die orangen Boost-Felder für Turbo bis 170 km/h!</p>
 </div>
 
 <!-- Driver select -->
@@ -101,6 +102,13 @@
   <div class="row" style="margin-top:6px"><button class="btn secondary" id="btnTiltMenu">📱 Kipp-Steuerung: aus</button></div>
   <p class="small" id="tiltHint">Mit Kipp-Steuerung lenkst du, indem du das Handy nach links oder rechts neigst. Beim Start das Handy ruhig halten, so wird die Mitte festgelegt.</p>
   <div class="row" style="margin-top:8px"><button class="btn secondary" id="btnBackSelect">Zurück</button><button class="btn" id="btnRace">Rennen starten!</button></div>
+</div>
+
+<!-- Rangliste -->
+<div id="ranking" class="screen hidden">
+  <h2>🏆 Rangliste</h2>
+  <div id="rankList" style="width:100%;max-width:520px"></div>
+  <div class="row" style="margin-top:14px"><button class="btn secondary" id="btnRankBack">Zurück</button></div>
 </div>
 
 <!-- Pause -->
@@ -135,23 +143,32 @@ const easeOut = (a,b,p)=>a+(b-a)*(1-Math.pow(1-p,2));
 const easeInOut = (a,b,p)=>a+(b-a)*((-Math.cos(p*Math.PI)/2)+0.5);
 function fmtTime(t){const m=Math.floor(t/60),s=Math.floor(t%60),d=Math.floor((t*10)%10);return `${m}:${s<10?'0':''}${s}.${d}`;}
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem('mr_'+k));localStorage.setItem('mr_'+k,JSON.stringify(v));}catch(e){return null;}}
+// Rangliste: wird im Browser gespeichert (localStorage) und zusätzlich als Cookie abgelegt
+const Ranking = {
+  load(){ let lb=store('lb'); if(!Array.isArray(lb)){ try{ const m=document.cookie.match(/(?:^|; )mr_lb=([^;]*)/); lb = m ? JSON.parse(decodeURIComponent(m[1])) : []; }catch(e){ lb=[]; } } return Array.isArray(lb)?lb:[]; },
+  save(lb){ store('lb',lb); try{ document.cookie='mr_lb='+encodeURIComponent(JSON.stringify(lb))+'; max-age=315360000; path=/; SameSite=Lax'; }catch(e){} },
+  add(entry){ const lb=Ranking.load(); entry.id=Date.now(); lb.push(entry); // pro Strecke nur die 10 besten Zeiten behalten
+    const kept=[]; for(const st of STAGES){ kept.push(...lb.filter(e=>e.stage===st.id).sort((a,b)=>a.time-b.time).slice(0,10)); }
+    Ranking.save(kept); return { entry, rank: kept.filter(e=>e.stage===entry.stage).sort((a,b)=>a.time-b.time).findIndex(e=>e.id===entry.id)+1 }; },
+  forStage(id){ return Ranking.load().filter(e=>e.stage===id).sort((a,b)=>a.time-b.time); }
+};
 function mkCanvas(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
 
 // ---------- Fahrer (die beiden Kinder) ----------
 const DRIVERS = {
   girl:{ id:'girl', defName:'Pilotin', carName:'Roter Flitzer', carColor:'#e2231a', dark:'#9c1109', light:'#ff6a5c',
          hair:'#4a2b1a', shirt:'#f4f1ea', shirtPrint:'#d9456b', skin:'#f1c9a5', type:'sport',
-         desc:'Schneller roter Sportwagen. Super auf der Straße, rutschig daneben.',
+         desc:'Roter Sportwagen. Liegt super auf der Straße, wird daneben aber sehr langsam.',
          maxSpeedF:1.0, offRoadF:0.28, accelF:1.0, grip:1.0 },
   boy: { id:'boy', defName:'Pilot', carName:'Blauer Jeep', carColor:'#1e8fe0', dark:'#0f5a94', light:'#6cc0ff',
          hair:'#5a3a22', shirt:'#2a5bd7', shirtPrint:'#ffffff', skin:'#f1c9a5', type:'jeep',
-         desc:'Starker blauer Jeep. Nicht ganz so schnell, aber auch neben der Straße flott.',
-         maxSpeedF:0.93, offRoadF:0.6, accelF:1.08, grip:0.9 }
+         desc:'Starker blauer Jeep. Beschleunigt flott und kommt auch neben der Straße gut voran.',
+         maxSpeedF:1.0, offRoadF:0.6, accelF:1.25, grip:0.9 }
 };
 function driverName(d){ return (store('name_'+d.id) || d.defName); }
 
 // ---------- Konstanten der 3D-Darstellung ----------
-const SEG_LEN=200, RUMBLE=3, LANES=2, ROAD_W=2000, FOV=100, CAM_H=1000, DRAW_DIST=240, TOP_SPEED=SEG_LEN*32, K=2.5;
+const SEG_LEN=200, RUMBLE=3, LANES=2, ROAD_W=2000, FOV=100, CAM_H=1000, DRAW_DIST=240, TOP_SPEED=SEG_LEN*32, K=2.5, KMH_MAX=120, KMH_BOOST=170, BOOST_F=KMH_BOOST/KMH_MAX, BOOST_SEC=3.2;
 const cameraDepth = 1/Math.tan((FOV/2)*Math.PI/180);
 const playerZ = CAM_H*cameraDepth;
 const SPRITE_SCALE = 0.3/80;
@@ -519,6 +536,8 @@ function buildTrack(stage){
   for(const s of t.sprites){ if(segs[s.seg]) segs[s.seg].sprites.push({offset:s.offset,sprite:SPR[s.name]}); }
   // Sammelgegenstände
   for(let i=30;i<finishIndex-10;i+=rnd(24,40)|0){ const lane=[-0.6,-0.2,0.2,0.6][Math.floor(rnd(0,4))]; segs[i].items.push({offset:lane,sprite:SPR[stage.item],taken:false}); }
+  // Boost-Felder: alle ~110 Segmente, 4 Segmente lang, in einer von drei Spuren
+  for(let i=90;i<finishIndex-40;i+=rnd(95,130)|0){ const offset=[-0.5,0,0.5][Math.floor(rnd(0,3))]; for(let k=0;k<4;k++) segs[i+k].boost={offset,k}; }
   // Start- und Zielmarkierungen
   for(const i of [2,3]) segs[i].color=2;
   for(const i of [finishIndex-1,finishIndex]) segs[i].color=2;
@@ -537,13 +556,14 @@ const Audio = (()=>{
     engine.connect(filt); filt.connect(engineGain); engineGain.connect(ctx.destination); engine.start();
   }
   function resume(){ if(ctx&&ctx.state==='suspended') ctx.resume(); }
-  function setEngine(speedPct, on){ if(!ctx||!engine) return; const target = (on&&!muted)? 0.05+speedPct*0.05 : 0; engineGain.gain.setTargetAtTime(target, ctx.currentTime, 0.1); engine.frequency.setTargetAtTime(45+speedPct*140, ctx.currentTime, 0.1); }
+  function setEngine(speedPct, on){ if(!ctx||!engine) return; const target = (on&&!muted)? 0.05+speedPct*0.05 : 0; engineGain.gain.setTargetAtTime(target, ctx.currentTime, 0.1); engine.frequency.setTargetAtTime(45+speedPct*120, ctx.currentTime, 0.1); }
   function beep(freq,dur,type='square',vol=0.12){ if(!ctx||muted) return; const o=ctx.createOscillator(), g=ctx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=vol; o.connect(g); g.connect(ctx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur); o.stop(ctx.currentTime+dur); }
   function pickup(){ beep(880,0.12,'sine',0.15); setTimeout(()=>beep(1320,0.18,'sine',0.12),80); }
+  function boost(){ beep(300,0.5,'sawtooth',0.1); setTimeout(()=>beep(600,0.4,'sawtooth',0.08),120); setTimeout(()=>beep(1200,0.3,'sawtooth',0.06),240); }
   function crash(){ if(!ctx||muted) return; const b=ctx.createBuffer(1,ctx.sampleRate*0.25,ctx.sampleRate); const d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length); const s=ctx.createBufferSource(); s.buffer=b; const g=ctx.createGain(); g.gain.value=0.25; s.connect(g); g.connect(ctx.destination); s.start(); }
   function fanfare(win){ const seq = win? [[523,0],[659,120],[784,240],[1047,360],[1047,600]] : [[392,0],[349,250],[330,500]]; for(const [f,t] of seq) setTimeout(()=>beep(f,0.3,'triangle',0.18),t); }
   function toggle(){ muted=!muted; store('muted',muted); return muted; }
-  return { init, resume, setEngine, beep, pickup, crash, fanfare, toggle, get muted(){return muted;} };
+  return { init, resume, setEngine, beep, pickup, boost, crash, fanfare, toggle, get muted(){return muted;} };
 })();
 
 // ---------- Spielzustand ----------
@@ -560,13 +580,13 @@ function resize(){ DPR=Math.min(window.devicePixelRatio||1, 2); const cw=window.
 window.addEventListener('resize',resize); window.addEventListener('orientationchange',()=>setTimeout(resize,200));
 
 const G = { state:'title', driver:'girl', stageIdx:0, track:null, stage:null,
-  position:0, playerX:0, speed:0, maxSpeed:TOP_SPEED, time:0, items:0, finished:false, countdown:3, startDelay:0,
+  position:0, playerX:0, speed:0, maxSpeed:TOP_SPEED, time:0, items:0, boostT:0, boosts:0, finished:false, countdown:3, startDelay:0,
   rival:null, traffic:[], skyOffset:0, hillOffset:0, treeOffset:0, shake:0, lastT:0, bob:0, keys:{}, toastT:0, finishTime:0, rivalFinishTime:0, bump:0 };
 
 function startRace(){
   const stage=STAGES[G.stageIdx]; G.stage=stage; G.track=buildTrack(stage);
   const d=DRIVERS[G.driver]; const rivalId = G.driver==='girl'?'boy':'girl'; const r=DRIVERS[rivalId];
-  G.position=0; G.playerX=-0.4; G.speed=0; G.time=0; G.items=0; G.finished=false; G.countdown=3.99; G.shake=0; G.finishTime=0; G.rivalFinishTime=0;
+  G.position=0; G.playerX=-0.4; G.speed=0; G.time=0; G.items=0; G.boostT=0; G.boosts=0; G.finished=false; G.countdown=3.99; G.shake=0; G.finishTime=0; G.rivalFinishTime=0;
   G.maxSpeed = TOP_SPEED*d.maxSpeedF;
   G.rival={ driver:r, z:0, offset:0.4, speed:0, maxSpeed:TOP_SPEED*stage.rivalSpeed*(1+Math.random()*0.04), finished:false, sprite:SPR['car_'+rivalId+'_0'], wobble:Math.random()*10 };
   // Verkehr
@@ -579,11 +599,11 @@ function startRace(){
 
 function setState(s){
   G.state=s;
-  for(const id of ['title','select','stages','pause','result']) $(id).classList.toggle('hidden', id!==s);
+  for(const id of ['title','select','stages','pause','result','ranking']) $(id).classList.toggle('hidden', id!==s);
   const racing = s==='race'||s==='pause';
   for(const id of ['hud','prog','topbtns','controls']) $(id).classList.toggle('hidden', !racing);
   $('msg').classList.toggle('hidden', s!=='race');
-  if(s==='select') renderDrivers(); if(s==='stages') renderStages();
+  if(s==='select') renderDrivers(); if(s==='stages') renderStages(); if(s==='ranking') renderRanking();
 }
 function showToast(text,sec){ const t=$('toast'); t.textContent=text; t.style.opacity=1; G.toastT=sec; }
 
@@ -610,7 +630,7 @@ function readInput(){
   const k=G.keys; const sides=Object.values(touchActive);
   let steer = (input.left||k.ArrowLeft||k.KeyA||sides.includes('left')) ? -1 : (input.right||k.ArrowRight||k.KeyD||sides.includes('right')) ? 1 : 0;
   if(Tilt.enabled && steer===0) steer = Tilt.value;
-  return { steer, left: steer<0, right: steer>0, gas: input.gas||k.ArrowUp||k.KeyW||k.Space, brake: input.brake||k.ArrowDown||k.KeyS };
+  return { steer, left: steer<0, right: steer>0 };
 }
 
 // ---------- Kipp-Steuerung (Gyroskop / Lagesensor) ----------
@@ -654,7 +674,7 @@ function update(dt){
     if(G.countdown>0) { return; }
   }
   if(!G.finished) G.time+=dt;
-  const inp = G.finished ? {steer:0,left:false,right:false,gas:false,brake:false} : readInput();
+  const inp = G.finished ? {steer:0,left:false,right:false} : readInput();
   const playerSegment=findSegment(G.position+playerZ);
   const speedPct=G.speed/G.maxSpeed;
   const dx=dt*2*speedPct*(0.8+0.3*d.grip);
@@ -665,16 +685,19 @@ function update(dt){
   // Lenken
   G.playerX += dx*clamp(inp.steer,-1,1);
   G.playerX -= dx*speedPct*playerSegment.curve*0.14;
-  // Gas (Autogas, wenn weder Gas noch Bremse gedrückt – kinderfreundlich: rollt immer leicht)
+  // Gas-Automatik: beschleunigt von allein bis 120 km/h, mit Boost kurzzeitig bis 170 km/h
   const accel=G.maxSpeed/5*d.accelF;
+  G.boostT=Math.max(0,G.boostT-dt);
+  const target = G.boostT>0 ? G.maxSpeed*BOOST_F : G.maxSpeed;
   if(G.finished){ G.speed += -G.maxSpeed/3*dt; }
-  else if(inp.gas) G.speed += accel*dt;
-  else if(inp.brake) G.speed += -G.maxSpeed*dt;
-  else G.speed += (G.speed < G.maxSpeed*0.55 ? accel*0.7 : -G.maxSpeed/6)*dt; // sanfter Automatik-Modus
+  else if(G.speed<target) G.speed=Math.min(target, G.speed + accel*(G.boostT>0?2.5:1)*dt);
+  else G.speed=Math.max(target, G.speed - G.maxSpeed/4*dt);
+  // Boost-Feld überfahren?
+  if(!G.finished && playerSegment.boost && Math.abs(G.playerX-playerSegment.boost.offset)<0.42 && G.boostT<BOOST_SEC-0.5){ G.boostT=BOOST_SEC; G.boosts++; showToast('TURBO! 🔥',0.9); Audio.boost(); }
   // Neben der Straße
   const offRoadLimit=G.maxSpeed*d.offRoadF;
   if((G.playerX<-1||G.playerX>1)){
-    if(G.speed>offRoadLimit) G.speed += -G.maxSpeed*(d.type==='jeep'?0.5:1.0)*dt;
+    if(G.speed>offRoadLimit && G.boostT<=0) G.speed += -G.maxSpeed*(d.type==='jeep'?0.5:1.0)*dt;
     G.shake=Math.max(G.shake,0.6);
     // Kollision mit Randobjekten
     for(const sp of playerSegment.sprites){ const spriteW=sp.sprite.w*SPRITE_SCALE; if(overlap(G.playerX,0.6,sp.offset+spriteW/2*(sp.offset>0?1:-1),spriteW)){ G.speed=G.maxSpeed/6; G.position=Math.max(0,startPosition); Audio.crash(); G.shake=1; showToast('Autsch! 🌵',0.8); break; } }
@@ -683,8 +706,8 @@ function update(dt){
   for(const c of G.traffic){ const seg=findSegment(c.z); if(seg===playerSegment && G.speed>c.speed && overlap(G.playerX,0.5,c.offset,c.sprite.w*SPRITE_SCALE*0.9)){ G.speed=c.speed*0.9; G.position=Math.max(0,startPosition-SEG_LEN*0.3); Audio.crash(); G.shake=1; } }
   { const r=G.rival; const seg=findSegment(r.z); if(seg===playerSegment && G.speed>r.speed && overlap(G.playerX,0.55,r.offset,0.4)){ G.speed=r.speed*0.9; Audio.crash(); G.shake=0.7; } }
   // Gegenstände einsammeln
-  for(const it of playerSegment.items){ if(!it.taken && Math.abs(G.playerX-it.offset)<0.35){ it.taken=true; G.items++; G.speed=Math.min(G.maxSpeed*1.05,G.speed+G.maxSpeed*0.08); Audio.pickup(); showToast('+1 '+G.stage.itemOne+'! 😋',0.7); } }
-  G.playerX=clamp(G.playerX,-2.2,2.2); G.speed=clamp(G.speed,0,G.maxSpeed*1.05);
+  for(const it of playerSegment.items){ if(!it.taken && Math.abs(G.playerX-it.offset)<0.35){ it.taken=true; G.items++; Audio.pickup(); showToast('+1 '+G.stage.itemOne+'! 😋',0.7); } }
+  G.playerX=clamp(G.playerX,-2.2,2.2); G.speed=clamp(G.speed,0,G.maxSpeed*BOOST_F);
   // Ortsschilder-Toast
   for(const [frac,town] of G.stage.towns){ const idx=Math.round(frac*(T.finishIndex-1))+1; if(idx>2 && idx<T.finishIndex-1 && startPosition<idx*SEG_LEN-playerZ && G.position>=idx*SEG_LEN-playerZ){ showToast(town+' 📍',1.4); Audio.beep(660,0.15,'sine'); } }
   // Parallax
@@ -736,6 +759,12 @@ function drawSegment(w,lanes,x1,y1,w1,x2,y2,w2,fog,seg){
   if(col===0||col===2){ // Mittelstreifen
     const lw1=w1*2/lanes, lw2=w2*2/lanes; let lx1=x1-w1+lw1, lx2=x2-w2+lw2;
     for(let l=1;l<lanes;l++){ poly(lx1-l1/2,y1,lx1+l1/2,y1,lx2+l2/2,y2,lx2-l2/2,y2,st.lane); lx1+=lw1; lx2+=lw2; }
+  }
+  if(seg.boost){ // oranges Boost-Feld mit hellen Streifen
+    const o=seg.boost.offset, bw=0.42;
+    poly(x1+w1*(o-bw),y1,x1+w1*(o+bw),y1,x2+w2*(o+bw),y2,x2+w2*(o-bw),y2, seg.boost.k%2 ? '#ff7a1a' : '#ffb21a');
+    // Pfeilspitze nach vorne
+    poly(x1+w1*(o-bw*0.7),y1,x1+w1*o,lerp(y1,y2,0.5),x1+w1*(o+bw*0.7),y1,x1+w1*o,lerp(y1,y2,0.5), 'rgba(255,255,255,0.75)');
   }
   if(fog<1){ ctx.fillStyle=st.fog; ctx.globalAlpha=1-fog; ctx.fillRect(0,y2,w,y1-y2); ctx.globalAlpha=1; }
 }
@@ -828,8 +857,8 @@ function drawCarsInSegment(seg){
 
 // ---------- HUD ----------
 function updateHUD(){
-  const kmh=Math.round(G.speed/G.maxSpeed*(G.driver==='girl'?168:150));
-  $('spd').textContent=kmh; $('time').textContent=fmtTime(G.time); $('items').textContent=G.items;
+  const kmh=Math.round(G.speed/G.maxSpeed*KMH_MAX);
+  $('spd').textContent=kmh; $('spd').style.color = G.boostT>0 ? '#ff7a1a' : ''; $('time').textContent=fmtTime(G.time); $('items').textContent=G.items;
   const pz=G.position+playerZ, rz=G.rival.z; const ahead = G.finished ? (G.rival.finished && G.rivalFinishTime<G.finishTime ? false : true) : (pz>=rz);
   $('pos').textContent = ahead? '🥇 1. Platz' : '🥈 2. Platz';
   const fz=G.track.finishZ; $('mYou').style.left=clamp(pz/fz,0,1)*100+'%'; $('mRival').style.left=clamp(rz/fz,0,1)*100+'%';
@@ -842,12 +871,23 @@ function showResult(){
   $('resBig').textContent = won? '🥇 '+driverName(me)+' gewinnt!' : '🥈 '+driverName(r)+' war schneller!';
   const bestKey='best_'+G.stage.id; const best=store(bestKey); let isBest=false; if(!best || G.finishTime<best){ store(bestKey,G.finishTime); isBest=true; }
   const rivalTime = G.rival.finished? fmtTime(G.rivalFinishTime) : 'noch unterwegs';
-  $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${driverName(r)}</td><td>${rivalTime}</td></tr><tr><td>${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr>`;
+  const {entry,rank} = Ranking.add({ name:driverName(me), driver:me.id, stage:G.stage.id, time:Math.round(G.finishTime*10)/10, items:G.items, boosts:G.boosts, won, date:new Date().toISOString().slice(0,10) });
+  $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${driverName(r)}</td><td>${rivalTime}</td></tr><tr><td>${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>Rangliste</td><td>${rank? 'Platz '+rank+' auf dieser Strecke' : '–'}</td></tr>`
+    + '<tr><td colspan="2" style="text-align:center;padding-top:8px">'+rankingTable(G.stage.id, entry.id, 5)+'</td></tr>';
   if(won){ const wins=store('wins_'+G.stage.id)||0; store('wins_'+G.stage.id,wins+1); }
   setState('result'); Audio.setEngine(0,false);
 }
 
 // ---------- Menüs ----------
+function rankingTable(stageId, highlightId, limit){
+  const list=Ranking.forStage(stageId).slice(0,limit);
+  if(!list.length) return '<div style="opacity:.7">Noch keine Zeiten</div>';
+  return '<table style="margin:0 auto">'+list.map((e,i)=>`<tr style="${e.id===highlightId?'color:var(--accent)':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.driver==='girl'?'🚗':'🚙'} ${escapeHtml(e.name)}</td><td>${fmtTime(e.time)}</td><td style="opacity:.75;font-size:.85em">${e.date||''}</td></tr>`).join('')+'</table>';
+}
+function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function renderRanking(){
+  $('rankList').innerHTML = STAGES.map(st=>`<div class="card stage" style="max-width:none;margin-bottom:10px;cursor:default"><div class="title">${st.emoji} ${st.name}</div>${rankingTable(st.id,null,10)}</div>`).join('');
+}
 function renderDrivers(){
   const box=$('drivers'); box.innerHTML='';
   for(const d of Object.values(DRIVERS)){
@@ -869,6 +909,8 @@ function renderStages(){
 }
 $('btnStart').onclick=()=>{ Audio.init(); Audio.resume(); setState('select'); };
 $('btnBackTitle').onclick=()=>setState('title');
+$('btnRanking').onclick=()=>setState('ranking');
+$('btnRankBack').onclick=()=>setState('title');
 $('btnToStages').onclick=()=>setState('stages');
 $('btnBackSelect').onclick=()=>setState('select');
 $('btnRace').onclick=()=>startRace();
