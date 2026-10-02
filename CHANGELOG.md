@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.9.1 (2026-10-02)
+
+Rangliste zeigt nur noch Ergebnisse mit Avatar. Jeder Spieler hat ab jetzt automatisch einen Avatar (Standardgesicht, im Namensbildschirm anpassbar), damit jedes neue Ergebnis eines trägt.
+
 ## 3.9.0 (2026-10-02)
 
 Autowahl: Der Avatar sitzt jetzt im Auto hinter der Scheibe statt auf dem Dach. Streckenwahl: Mallorca mit spanischer Flagge 🇪🇸, Weltraum mit Alien.

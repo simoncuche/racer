@@ -174,7 +174,7 @@
 
 <script>
 'use strict';
-const VERSION='3.9.0', VERSION_DATE='2026-10-02';
+const VERSION='3.9.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -206,8 +206,9 @@ const Online = {
   enc(e){ return { fields:{ name:{stringValue:String(e.name).slice(0,14)}, driver:{stringValue:e.driver}, stage:{stringValue:colKey(e.stage)}, time:{doubleValue:Number(e.time)}, items:{integerValue:String(e.items|0)}, boosts:{integerValue:String(e.boosts|0)}, won:{booleanValue:!!e.won}, score:{integerValue:String(e.score|0)}, date:{stringValue:e.date||''}, ts:{integerValue:String(e.id||Date.now())}, ...(e.avatar? {avatar:{stringValue:Avatar.encode(e.avatar).slice(0,2000)}} : {}) } }; },
   dec(doc){ const f=doc.fields||{}; const v=k=>{ const x=f[k]||{}; return x.stringValue ?? (x.integerValue!==undefined? Number(x.integerValue) : x.doubleValue ?? x.booleanValue); };
     return { id:doc.name.split('/').pop(), ts:Number(v('ts'))||0, name:v('name')||'?', driver:v('driver')||'girl', stage:v('stage'), time:Number(v('time'))||0, items:Number(v('items'))||0, boosts:Number(v('boosts'))||0, won:!!v('won'), score:Number(v('score'))||0, date:v('date')||'', avatar:Avatar.decode(v('avatar')), online:true }; },
-  async count(stageId){ const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], select:{fields:[{fieldPath:'score'}]}, limit:1000 } };
-    const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document).length; },
+  hasAvatar(doc){ const a=doc.fields&&doc.fields.avatar; return !!(a&&a.stringValue); }, // alte Ergebnisse ohne Avatar zählen nicht mehr
+  async count(stageId){ const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], select:{fields:[{fieldPath:'avatar'}]}, limit:1000 } };
+    const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document&&Online.hasAvatar(x.document)).length; },
   async add(entry){ // schreibt ein Ergebnis; schlägt es fehl, landet es in der Warteschlange
     Online.lastError=null;
     try{ const r=await fetch(`${Online.base()}/scores_${colKey(entry.stage)}?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Online.enc(entry))});
@@ -215,14 +216,14 @@ const Online = {
     catch(err){ if(!Online.lastError) Online.lastError='net'; const q=store('queue')||[]; if(!q.some(e=>e.id===entry.id)) q.push(entry); store('queue',q.slice(-50)); return false; }
   },
   async flush(){ const q=store('queue')||[]; if(!q.length) return; const rest=[]; for(const e of q){ if(!(await Online.add({...e,_retry:true}))) rest.push(e); } store('queue',rest); },
-  async top(stageId,n=10){ // beste Punktzahlen einer Strecke
-    const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}], limit:n } };
+  async top(stageId,n=10){ // beste Punktzahlen einer Strecke (nur Einträge mit Avatar)
+    const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}], limit:n*3+20 } };
     const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document).map(x=>Online.dec(x.document)); },
+    if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document&&Online.hasAvatar(x.document)).map(x=>Online.dec(x.document)).slice(0,n); },
   async rankOf(entry){ // Platz des Eintrags: Anzahl besserer Punktzahlen + 1
-    const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(entry.stage)}], where:{fieldFilter:{field:{fieldPath:'score'},op:'GREATER_THAN',value:{integerValue:String(entry.score|0)}}}, select:{fields:[{fieldPath:'score'}]}, limit:200 } };
+    const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(entry.stage)}], where:{fieldFilter:{field:{fieldPath:'score'},op:'GREATER_THAN',value:{integerValue:String(entry.score|0)}}}, select:{fields:[{fieldPath:'avatar'}]}, limit:300 } };
     const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document).length+1; }
+    if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document&&Online.hasAvatar(x.document)).length+1; }
 };
 // Lokale Rangliste: wird im Browser gespeichert (localStorage) und zusätzlich als Cookie abgelegt
 const Ranking = {
@@ -2083,7 +2084,7 @@ function drawHeadwear(x,cx,cy,r,fw,fh,p,cap,back){
 }
 const Avatar = { pending:null, editing:null, urlCache:{},
   key(name){ return 'avatarp_'+String(name).trim().toLowerCase(); },
-  paramsFor(name){ try{ const v=localStorage.getItem('mr_'+Avatar.key(name)); return v? Object.assign(defaultAvatar(),JSON.parse(v)) : null; }catch(e){ return null; } },
+  paramsFor(name){ try{ const v=localStorage.getItem('mr_'+Avatar.key(name)); return v? Object.assign(defaultAvatar(),JSON.parse(v)) : defaultAvatar(); }catch(e){ return defaultAvatar(); } }, // ohne eigene Einstellung das Standardgesicht – so trägt jedes Ergebnis einen Avatar
   save(name,p){ try{ if(p) localStorage.setItem('mr_'+Avatar.key(name),JSON.stringify(p)); else localStorage.removeItem('mr_'+Avatar.key(name)); }catch(e){} },
   encode(p){ return p? 'p:'+JSON.stringify(p) : null; },
   decode(str){ if(!str||typeof str!=='string'||!str.startsWith('p:')) return null; try{ const p=JSON.parse(str.slice(2)); if(p.moustache===true) p.moustache='wide'; if(p.moustache===false) p.moustache='none'; if(p.glasses===true) p.glasses='round'; if(p.glasses===false) p.glasses='none'; if(typeof p.eye==='string') p.eye = p.eye==='#3a6a9a'? 1 : 0; return Object.assign(defaultAvatar(),p); }catch(e){ return null; } },
@@ -2194,6 +2195,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.9.1','2026-10-02','Rangliste zeigt nur noch Ergebnisse mit Avatar. Jeder Spieler hat ab jetzt automatisch einen Avatar (Standardgesicht, im Namensbildschirm anpassbar), damit jedes neue Ergebnis eines trägt.'],
  ['3.9.0','2026-10-02','Autowahl: Der Avatar sitzt jetzt im Auto hinter der Scheibe statt auf dem Dach. Streckenwahl: Mallorca mit spanischer Flagge 🇪🇸, Weltraum mit Alien.'],
  ['3.8.2','2026-10-02','Kipp-Steuerung auf dem iPad: Hoch- und Querformat werden jetzt aus dem Fenster und der Schwerkraft bestimmt statt aus der vom Gerät gemeldeten Drehung, die beim iPad anders zählt.'],
  ['3.8.1','2026-10-02','Sant Salvador: großer Hügel mit kleinem Kloster obendrauf statt riesigem Haus. Ortstafeln Luzern und Palma stehen jetzt sichtbar kurz nach der Startlinie.'],
