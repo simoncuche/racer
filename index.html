@@ -207,7 +207,7 @@
 
 <script>
 'use strict';
-const VERSION='3.13.1', VERSION_DATE='2026-10-02';
+const VERSION='3.14.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -2034,15 +2034,16 @@ const AV_EYE=[['#2a1a10','Braun'],['#3a6a9a','Blau'],['#4a8a3a','Grün'],['#6a6a
 const AV_STYLES=[['none','Glatze'],['buzz','Stoppelkopf'],['short','Kurz'],['side','Scheitel'],['spiky','Stachelig'],['medium','Mittel'],['long','Lang'],['curly','Lockig'],['afro','Afro'],['bun','Dutt'],['pony','Pferdeschwanz'],['mohawk','Irokese']];
 const AV_BEARD=[['none','Kein'],['stubble','Stoppeln'],['goatee','Kinnbart'],['chin','Chinstrap'],['full','Vollbart'],['long','Rauschebart']];
 const AV_MUST=[['none','Keiner'],['thin','Schmal'],['wide','Breit'],['handlebar','Zwirbel'],['chevron','Chevron'],['walrus','Walross']];
-const AV_GLASSES=[['none','Keine'],['round','Rund'],['square','Eckig'],['sun','Sonnenbrille'],['pilot','Pilot']];
+const AV_GLASSES=[['none','Keine'],['round','Rund'],['square','Eckig'],['sun','Sonnenbrille'],['pilot','Pilot'],['cateye','Katzenauge'],['reading','Lesebrille'],['monocle','Monokel'],['goggles','Skibrille'],['heart','Herzbrille'],['star','Sternbrille'],['3d','3D-Brille'],['nerd','Nerdbrille']];
+const AV_BROWS=[['normal','Normal'],['arched','Geschwungen'],['angry','Grimmig'],['sad','Traurig'],['raised','Hochgezogen'],['uni','Monobraue']];
 const AV_HEAD=[['none','Nichts'],['cap','Cap'],['hat','Hut'],['beanie','Mütze'],['helmet','Helm'],['crown','Krone'],['band','Stirnband'],['cowboy','Cowboyhut']];
 const AV_FACE=[['round','Rund'],['oval','Oval'],['square','Kantig'],['wide','Breit']];
-const AV_MOUTH=[['smile','Lächeln'],['grin','Grinsen'],['laugh','Lachen'],['neutral','Neutral'],['open','Staunen'],['frown','Schmollen'],['smirk','Schief'],['tongue','Zunge'],['kiss','Kussmund'],['braces','Zahnspange']];
+const AV_MOUTH=[['smile','Lächeln'],['grin','Grinsen'],['laugh','Lachen'],['neutral','Neutral'],['open','Staunen'],['frown','Schmollen'],['smirk','Schief'],['tongue','Zunge'],['kiss','Kussmund'],['braces','Zahnspange'],['bigsmile','Breites Lachen'],['fangs','Vampir'],['buck','Hasenzähne'],['gap','Zahnlücke'],['whistle','Pfeifen'],['sadopen','Jammern']];
 const AV_EYESHAPE=[['round','Rund'],['almond','Mandel'],['wide','Groß'],['narrow','Schmal'],['sleepy','Müde'],['happy','Lachend']];
 const AV_NOSE=[['small','Klein'],['button','Knopf'],['long','Lang'],['wide','Breit'],['pointy','Spitz'],['hook','Haken'],['pig','Schwein'],['cat','Katze']];
 const AV_EARS=[['normal','Normal'],['small','Klein'],['big','Groß'],['stand','Abstehend'],['pointy','Spitz'],['alien','Alien'],['cat','Katze'],['bunny','Hase'],['bear','Bär']];
 const AV_CREATURE=[['none','Nichts'],['tentacles','Tentakel'],['antenna','Fühler'],['horns','Hörner'],['whiskers','Schnurrhaare'],['thirdeye','Drittes Auge'],['unicorn','Einhorn']];
-function defaultAvatar(){ return { skin:1, hair:'short', hairColor:3, beard:'none', moustache:'none', headwear:'none', capColor:0, glasses:'none', face:'round', eye:0, eyeShape:'round', nose:'small', ears:'normal', creature:'none', mouth:'smile', brows:1, freckles:false, earrings:false }; }
+function defaultAvatar(){ return { skin:1, hair:'short', hairColor:3, beard:'none', moustache:'none', headwear:'none', capColor:0, glasses:'none', face:'round', eye:0, eyeShape:'round', nose:'small', ears:'normal', creature:'none', mouth:'smile', brows:1, browShape:'normal', freckles:false, earrings:false }; }
 function drawAvatarHead(x, cx, cy, s, p, view){
   const skin=AV_SKIN[p.skin]||AV_SKIN[1], hair=AV_HAIR[p.hairColor]||AV_HAIR[3], cap=AV_CAP[p.capColor]||AV_CAP[0], eyeC=(AV_EYE[p.eye]||AV_EYE[0])[0];
   const r=s*0.6, fw = p.face==='oval'? 0.9 : p.face==='square'? 1.02 : p.face==='wide'? 1.12 : 1.0, fh = p.face==='oval'? 1.1 : p.face==='wide'? 0.95 : 1.0;
@@ -2102,7 +2103,15 @@ function drawAvatarHead(x, cx, cy, s, p, view){
   else if(p.hair==='afro'){ x.beginPath(); x.arc(cx,cy-r*0.2,r*1.45,Math.PI*0.95,Math.PI*2.05); x.fill(); x.beginPath(); x.ellipse(cx,cy-r*0.55,r*fw*1.0,r*0.6,0,Math.PI,0); x.fill(); }
   else if(p.hair==='mohawk'){ x.beginPath(); x.moveTo(cx-r*0.18,cy-r*0.6); x.lineTo(cx-r*0.1,cy-r*1.6); x.lineTo(cx,cy-r*1.75); x.lineTo(cx+r*0.1,cy-r*1.6); x.lineTo(cx+r*0.18,cy-r*0.6); x.fill(); }
   // Brauen
-  x.strokeStyle=p.hair==='none'? '#6b4a2a' : hair; x.lineWidth=lw(0.05+0.045*(p.brows||1)); x.lineCap='round'; x.beginPath(); x.moveTo(cx-r*0.55,cy-r*0.35); x.lineTo(cx-r*0.15,cy-r*0.4); x.moveTo(cx+r*0.15,cy-r*0.4); x.lineTo(cx+r*0.55,cy-r*0.35); x.stroke();
+  { x.strokeStyle=p.hair==='none'? '#6b4a2a' : hair; x.lineWidth=lw(0.05+0.045*(p.brows||1)); x.lineCap='round'; x.beginPath(); const bs=p.browShape||'normal';
+    if(bs==='uni'){ x.moveTo(cx-r*0.55,cy-r*0.35); x.quadraticCurveTo(cx,cy-r*0.5,cx+r*0.55,cy-r*0.35); }
+    else for(const sd of [-1,1]){ const ox=cx+sd*r*0.15, ix=cx+sd*r*0.55; // ox innen, ix außen
+      if(bs==='arched'){ x.moveTo(ix,cy-r*0.33); x.quadraticCurveTo(cx+sd*r*0.35,cy-r*0.58,ox,cy-r*0.38); }
+      else if(bs==='angry'){ x.moveTo(ix,cy-r*0.45); x.lineTo(ox,cy-r*0.28); }
+      else if(bs==='sad'){ x.moveTo(ix,cy-r*0.28); x.lineTo(ox,cy-r*0.45); }
+      else if(bs==='raised'){ x.moveTo(ix,cy-r*0.42); x.quadraticCurveTo(cx+sd*r*0.35,cy-r*0.62,ox,cy-r*0.5); }
+      else { x.moveTo(ix,cy-r*0.35); x.lineTo(ox,cy-r*0.4); } }
+    x.stroke(); }
   // Augen (Form wählbar)
   { const es=p.eyeShape||'round'; const ew = es==='wide'? 0.25 : es==='almond'? 0.23 : es==='narrow'? 0.22 : 0.2, eh = es==='wide'? 0.22 : es==='almond'? 0.13 : es==='narrow'? 0.09 : es==='sleepy'? 0.17 : 0.17, ir = es==='wide'? 0.12 : 0.1;
     for(const sd of [-1,1]){ const ex=cx+sd*r*0.35, ey=cy-r*0.05;
@@ -2140,6 +2149,12 @@ function drawAvatarHead(x, cx, cy, s, p, view){
   else if(p.mouth==='smirk'){ x.strokeStyle='#8a3a2a'; x.lineWidth=lw(0.08); x.lineCap='round'; x.beginPath(); x.moveTo(cx-r*0.22,cy+r*0.42); x.quadraticCurveTo(cx+r*0.05,cy+r*0.46,cx+r*0.3,cy+r*0.3); x.stroke(); }
   else if(p.mouth==='tongue'){ x.fillStyle='#8a3a2a'; x.beginPath(); x.moveTo(cx-r*0.3,cy+r*0.3); x.quadraticCurveTo(cx,cy+r*0.62,cx+r*0.3,cy+r*0.3); x.quadraticCurveTo(cx,cy+r*0.4,cx-r*0.3,cy+r*0.3); x.fill(); x.fillStyle='#e0527a'; x.beginPath(); x.ellipse(cx+r*0.08,cy+r*0.52,r*0.13,r*0.12,0,0,7); x.fill(); x.strokeStyle='rgba(0,0,0,0.2)'; x.lineWidth=lw(0.03); x.beginPath(); x.moveTo(cx+r*0.08,cy+r*0.45); x.lineTo(cx+r*0.08,cy+r*0.62); x.stroke(); }
   else if(p.mouth==='kiss'){ x.fillStyle='#d9607a'; x.beginPath(); x.ellipse(cx,cy+r*0.42,r*0.14,r*0.11,0,0,7); x.fill(); x.fillStyle='#8a3a2a'; x.beginPath(); x.arc(cx,cy+r*0.42,r*0.05,0,7); x.fill(); }
+  else if(p.mouth==='bigsmile'){ x.fillStyle='#8a3a2a'; x.beginPath(); x.moveTo(cx-r*0.48,cy+r*0.22); x.quadraticCurveTo(cx,cy+r*0.9,cx+r*0.48,cy+r*0.22); x.quadraticCurveTo(cx,cy+r*0.34,cx-r*0.48,cy+r*0.22); x.fill(); x.fillStyle='#fff'; x.beginPath(); x.moveTo(cx-r*0.4,cy+r*0.25); x.lineTo(cx+r*0.4,cy+r*0.25); x.quadraticCurveTo(cx,cy+r*0.5,cx-r*0.4,cy+r*0.25); x.fill(); x.strokeStyle='rgba(0,0,0,0.12)'; x.lineWidth=lw(0.02); for(let k=-2;k<=2;k++){ x.beginPath(); x.moveTo(cx+k*r*0.14,cy+r*0.25); x.lineTo(cx+k*r*0.14,cy+r*(0.37-Math.abs(k)*0.03)); x.stroke(); } }
+  else if(p.mouth==='fangs'){ x.fillStyle='#8a3a2a'; x.beginPath(); x.moveTo(cx-r*0.32,cy+r*0.3); x.quadraticCurveTo(cx,cy+r*0.62,cx+r*0.32,cy+r*0.3); x.quadraticCurveTo(cx,cy+r*0.4,cx-r*0.32,cy+r*0.3); x.fill(); x.fillStyle='#fff'; for(const sd of [-1,1]){ x.beginPath(); x.moveTo(cx+sd*r*0.22,cy+r*0.3); x.lineTo(cx+sd*r*0.14,cy+r*0.3); x.lineTo(cx+sd*r*0.18,cy+r*0.56); x.closePath(); x.fill(); } }
+  else if(p.mouth==='buck'){ x.fillStyle='#8a3a2a'; x.beginPath(); x.moveTo(cx-r*0.3,cy+r*0.3); x.quadraticCurveTo(cx,cy+r*0.6,cx+r*0.3,cy+r*0.3); x.quadraticCurveTo(cx,cy+r*0.4,cx-r*0.3,cy+r*0.3); x.fill(); x.fillStyle='#fff'; x.fillRect(cx-r*0.13,cy+r*0.32,r*0.12,r*0.22); x.fillRect(cx+r*0.01,cy+r*0.32,r*0.12,r*0.22); x.strokeStyle='rgba(0,0,0,0.15)'; x.lineWidth=lw(0.02); x.strokeRect(cx-r*0.13,cy+r*0.32,r*0.12,r*0.22); x.strokeRect(cx+r*0.01,cy+r*0.32,r*0.12,r*0.22); }
+  else if(p.mouth==='gap'){ x.fillStyle='#8a3a2a'; x.beginPath(); x.moveTo(cx-r*0.36,cy+r*0.28); x.quadraticCurveTo(cx,cy+r*0.75,cx+r*0.36,cy+r*0.28); x.closePath(); x.fill(); x.fillStyle='#fff'; x.beginPath(); x.moveTo(cx-r*0.3,cy+r*0.3); x.lineTo(cx+r*0.3,cy+r*0.3); x.quadraticCurveTo(cx,cy+r*0.5,cx-r*0.3,cy+r*0.3); x.fill(); x.fillStyle='#8a3a2a'; x.fillRect(cx-r*0.04,cy+r*0.3,r*0.08,r*0.1); }
+  else if(p.mouth==='whistle'){ x.fillStyle='#8a3a2a'; x.beginPath(); x.ellipse(cx+r*0.02,cy+r*0.42,r*0.08,r*0.1,0,0,7); x.fill(); x.strokeStyle='rgba(255,255,255,0.7)'; x.lineWidth=lw(0.03); x.beginPath(); x.arc(cx+r*0.3,cy+r*0.3,r*0.06,0,7); x.moveTo(cx+r*0.48,cy+r*0.2); x.arc(cx+r*0.42,cy+r*0.2,r*0.06,0,7); x.stroke(); }
+  else if(p.mouth==='sadopen'){ x.fillStyle='#8a3a2a'; x.beginPath(); x.moveTo(cx-r*0.28,cy+r*0.5); x.quadraticCurveTo(cx,cy+r*0.22,cx+r*0.28,cy+r*0.5); x.quadraticCurveTo(cx,cy+r*0.62,cx-r*0.28,cy+r*0.5); x.fill(); x.fillStyle='#fff'; x.beginPath(); x.moveTo(cx-r*0.18,cy+r*0.42); x.quadraticCurveTo(cx,cy+r*0.3,cx+r*0.18,cy+r*0.42); x.quadraticCurveTo(cx,cy+r*0.4,cx-r*0.18,cy+r*0.42); x.fill(); x.fillStyle='rgba(120,180,255,0.8)'; x.beginPath(); x.ellipse(cx+r*0.6,cy+r*0.22,r*0.05,r*0.1,0,0,7); x.fill(); }
   else if(p.mouth==='braces'){ x.fillStyle='#8a3a2a'; x.beginPath(); x.moveTo(cx-r*0.36,cy+r*0.28); x.quadraticCurveTo(cx,cy+r*0.75,cx+r*0.36,cy+r*0.28); x.closePath(); x.fill(); x.fillStyle='#fff'; x.beginPath(); x.moveTo(cx-r*0.3,cy+r*0.3); x.lineTo(cx+r*0.3,cy+r*0.3); x.quadraticCurveTo(cx,cy+r*0.5,cx-r*0.3,cy+r*0.3); x.fill(); x.strokeStyle='#8a8f9a'; x.lineWidth=lw(0.035); x.beginPath(); x.moveTo(cx-r*0.27,cy+r*0.36); x.quadraticCurveTo(cx,cy+r*0.44,cx+r*0.27,cy+r*0.36); x.stroke(); x.fillStyle='#5b8def'; for(let i=-2;i<=2;i++){ x.beginPath(); x.arc(cx+i*r*0.11,cy+r*0.37+Math.abs(i)*-r*0.01+r*0.02,r*0.02,0,7); x.fill(); } }
   else { x.strokeStyle='#8a3a2a'; x.lineWidth=lw(0.08); x.beginPath(); x.moveTo(cx-r*0.25,cy+r*0.4); x.lineTo(cx+r*0.25,cy+r*0.4); x.stroke(); }
   // Schnauz
@@ -2155,6 +2170,16 @@ function drawAvatarHead(x, cx, cy, s, p, view){
     for(const sd of [-1,1]){ x.beginPath(); if(g==='round') x.arc(cx+sd*r*0.35,cy-r*0.03,r*0.27,0,7); else if(g==='square') x.roundRect(cx+sd*r*0.35-r*0.27,cy-r*0.28,r*0.54,r*0.5,r*0.08); else if(g==='pilot'){ x.moveTo(cx+sd*r*0.08,cy-r*0.28); x.lineTo(cx+sd*r*0.64,cy-r*0.28); x.quadraticCurveTo(cx+sd*r*0.66,cy+r*0.28,cx+sd*r*0.36,cy+r*0.28); x.quadraticCurveTo(cx+sd*r*0.1,cy+r*0.28,cx+sd*r*0.08,cy-r*0.28); } else x.ellipse(cx+sd*r*0.35,cy-r*0.03,r*0.28,r*0.24,0,0,7);
       if(g==='sun'||g==='pilot'){ x.fillStyle= g==='pilot'? 'rgba(40,30,60,0.75)' : '#1a1a1a'; x.fill(); x.fillStyle='rgba(255,255,255,0.3)'; } x.stroke(); }
     x.beginPath(); x.moveTo(cx-r*0.08,cy-r*0.08); x.lineTo(cx+r*0.08,cy-r*0.08); x.stroke(); x.beginPath(); x.moveTo(cx-r*0.62,cy-r*0.1); x.lineTo(cx-r*0.95*fw,cy-r*0.02); x.moveTo(cx+r*0.62,cy-r*0.1); x.lineTo(cx+r*0.95*fw,cy-r*0.02); x.stroke(); }
+  if(['cateye','reading','monocle','goggles','heart','star','3d','nerd'].includes(g)){ x.lineCap='round'; x.lineJoin='round';
+    const bridge=(y)=>{ x.beginPath(); x.moveTo(cx-r*0.08,y); x.lineTo(cx+r*0.08,y); x.stroke(); }, arms=(y)=>{ x.beginPath(); x.moveTo(cx-r*0.62,y); x.lineTo(cx-r*0.95*fw,y+r*0.08); x.moveTo(cx+r*0.62,y); x.lineTo(cx+r*0.95*fw,y+r*0.08); x.stroke(); };
+    if(g==='cateye'){ x.strokeStyle='#8a2a5a'; x.lineWidth=lw(0.07); for(const sd of [-1,1]){ x.beginPath(); x.moveTo(cx+sd*r*0.1,cy+r*0.12); x.quadraticCurveTo(cx+sd*r*0.1,cy-r*0.25,cx+sd*r*0.45,cy-r*0.25); x.lineTo(cx+sd*r*0.68,cy-r*0.4); x.quadraticCurveTo(cx+sd*r*0.66,cy+r*0.18,cx+sd*r*0.1,cy+r*0.12); x.stroke(); } bridge(cy-r*0.1); arms(cy-r*0.2); }
+    else if(g==='reading'){ x.strokeStyle='#5a4a3a'; x.lineWidth=lw(0.06); for(const sd of [-1,1]){ x.beginPath(); x.moveTo(cx+sd*r*0.1,cy+r*0.02); x.lineTo(cx+sd*r*0.6,cy+r*0.02); x.quadraticCurveTo(cx+sd*r*0.6,cy+r*0.32,cx+sd*r*0.35,cy+r*0.32); x.quadraticCurveTo(cx+sd*r*0.1,cy+r*0.32,cx+sd*r*0.1,cy+r*0.02); x.stroke(); } bridge(cy+r*0.04); arms(cy+r*0.02); }
+    else if(g==='monocle'){ x.strokeStyle='#d4a52a'; x.lineWidth=lw(0.07); x.beginPath(); x.arc(cx+r*0.35,cy-r*0.03,r*0.28,0,7); x.stroke(); x.fillStyle='rgba(200,235,255,0.25)'; x.fill(); x.lineWidth=lw(0.03); x.beginPath(); x.moveTo(cx+r*0.55,cy+r*0.18); x.quadraticCurveTo(cx+r*0.7,cy+r*0.5,cx+r*0.6,cy+r*0.8); x.stroke(); }
+    else if(g==='goggles'){ x.fillStyle='rgba(60,160,255,0.55)'; x.beginPath(); x.roundRect(cx-r*0.72,cy-r*0.3,r*1.44,r*0.5,r*0.22); x.fill(); x.strokeStyle='#ff7a1a'; x.lineWidth=lw(0.09); x.stroke(); x.fillStyle='rgba(255,255,255,0.4)'; x.beginPath(); x.roundRect(cx-r*0.6,cy-r*0.24,r*0.5,r*0.1,r*0.05); x.fill(); x.strokeStyle='#ff7a1a'; x.lineWidth=lw(0.1); x.beginPath(); x.moveTo(cx-r*0.72,cy-r*0.08); x.lineTo(cx-r*0.98*fw,cy-r*0.08); x.moveTo(cx+r*0.72,cy-r*0.08); x.lineTo(cx+r*0.98*fw,cy-r*0.08); x.stroke(); }
+    else if(g==='heart'){ x.strokeStyle='#e0527a'; x.lineWidth=lw(0.06); x.fillStyle='rgba(255,120,160,0.35)'; for(const sd of [-1,1]){ const hx=cx+sd*r*0.36, hy=cy-r*0.08, hs=r*0.3; x.beginPath(); x.moveTo(hx,hy+hs*0.9); x.bezierCurveTo(hx-hs*1.2,hy,hx-hs*0.6,hy-hs*0.9,hx,hy-hs*0.3); x.bezierCurveTo(hx+hs*0.6,hy-hs*0.9,hx+hs*1.2,hy,hx,hy+hs*0.9); x.fill(); x.stroke(); } bridge(cy-r*0.05); arms(cy-r*0.1); }
+    else if(g==='star'){ x.strokeStyle='#f5c531'; x.lineWidth=lw(0.05); x.fillStyle='rgba(255,220,80,0.35)'; for(const sd of [-1,1]){ const hx=cx+sd*r*0.36, hy=cy-r*0.03; x.beginPath(); for(let k=0;k<10;k++){ const a=-Math.PI/2+k*Math.PI/5, rr=k%2?r*0.14:r*0.32; x.lineTo(hx+Math.cos(a)*rr,hy+Math.sin(a)*rr); } x.closePath(); x.fill(); x.stroke(); } bridge(cy-r*0.05); arms(cy-r*0.1); }
+    else if(g==='3d'){ x.strokeStyle='#eee'; x.lineWidth=lw(0.06); x.fillStyle='rgba(255,40,40,0.55)'; x.beginPath(); x.roundRect(cx-r*0.64,cy-r*0.26,r*0.54,r*0.44,r*0.05); x.fill(); x.stroke(); x.fillStyle='rgba(40,160,255,0.55)'; x.beginPath(); x.roundRect(cx+r*0.1,cy-r*0.26,r*0.54,r*0.44,r*0.05); x.fill(); x.stroke(); bridge(cy-r*0.08); arms(cy-r*0.15); }
+    else if(g==='nerd'){ x.strokeStyle='#111'; x.lineWidth=lw(0.12); for(const sd of [-1,1]){ x.beginPath(); x.roundRect(cx+sd*r*0.35-r*0.27,cy-r*0.26,r*0.54,r*0.46,r*0.06); x.stroke(); } x.lineWidth=lw(0.08); bridge(cy-r*0.1); arms(cy-r*0.15); x.fillStyle='#fff'; x.fillRect(cx-r*0.06,cy-r*0.14,r*0.12,r*0.08); } }
   drawCreature(x,cx,cy,r,fw,fh,p,skin,false);
   drawHeadwear(x,cx,cy,r,fw,fh,p,cap,false);
 }
@@ -2202,7 +2227,7 @@ const Avatar = { pending:null, editing:null, urlCache:{},
     const needCapColor=['cap','beanie','helmet','band'].includes(e.headwear);
     let body='';
     if(Avatar.tab==='face') body = row('Gesichtsform',opts(AV_FACE,'face')) + row('Hautfarbe',colors(AV_SKIN,'skin')) + row('Nase',opts(AV_NOSE,'nose')) + row('Ohren',opts(AV_EARS,'ears')) + row('Besonderes',opts(AV_CREATURE,'creature'));
-    else if(Avatar.tab==='eyes') body = row('Augenform',opts(AV_EYESHAPE,'eyeShape')) + row('Augenfarbe',colors(AV_EYE.map(v=>v[0]),'eye')) + row('Augenbrauen',opts([['0','Fein'],['1','Normal'],['2','Buschig']],'brows'));
+    else if(Avatar.tab==='eyes') body = row('Augenform',opts(AV_EYESHAPE,'eyeShape')) + row('Augenfarbe',colors(AV_EYE.map(v=>v[0]),'eye')) + row('Augenbrauen',opts(AV_BROWS,'browShape')) + row('Brauenstärke',opts([['0','Fein'],['1','Normal'],['2','Buschig']],'brows'));
     else if(Avatar.tab==='mouth') body = row('Mund',opts(AV_MOUTH,'mouth')) + row('Schnauz',opts(AV_MUST,'moustache')) + row('Bart',opts(AV_BEARD,'beard'));
     else if(Avatar.tab==='hair') body = row('Frisur',opts(AV_STYLES,'hair')) + row('Haarfarbe',colors(AV_HAIR,'hairColor'));
     else body = row('Brille',opts(AV_GLASSES,'glasses')) + row('Kopfbedeckung',opts(AV_HEAD,'headwear')) + (needCapColor? row('Farbe der Kopfbedeckung',colors(AV_CAP,'capColor')) : '') + row('Extras',toggles([['freckles','Sommersprossen'],['earrings','Ohrringe']]));
@@ -2214,7 +2239,7 @@ const Avatar = { pending:null, editing:null, urlCache:{},
       const x=b.querySelector('canvas').getContext('2d'); drawAvatarHead(x,56,66,50,q,'front'); }
     for(const b of box.querySelectorAll('.avopt,.avcolor')){ b.onclick=()=>{ const k=b.dataset.k, v=b.dataset.v; if(v==='toggle') e[k]=!e[k]; else if(num.includes(k)) e[k]=+v; else e[k]=v; Avatar.openEditor(e,true); }; }
     for(const t of box.querySelectorAll('.avtab')){ t.onclick=()=>{ Avatar.tab=t.dataset.tab; Avatar.openEditor(e); }; }
-    $('btnAvatarRandom').onclick=()=>{ const pick=a=>a[Math.floor(Math.random()*a.length)]; e.hair=pick(AV_STYLES)[0]; e.hairColor=Math.floor(Math.random()*8); e.skin=Math.floor(Math.random()*AV_SKIN.length); e.face=pick(AV_FACE)[0]; e.eye=Math.floor(Math.random()*AV_EYE.length); e.eyeShape=pick(AV_EYESHAPE)[0]; e.nose=pick(AV_NOSE)[0]; e.ears=pick(AV_EARS)[0]; e.creature=Math.random()<0.3? pick(AV_CREATURE)[0] : 'none'; e.mouth=pick(AV_MOUTH)[0]; e.brows=Math.floor(Math.random()*3); e.moustache=Math.random()<0.3? pick(AV_MUST)[0] : 'none'; e.beard=Math.random()<0.3? pick(AV_BEARD)[0] : 'none'; e.glasses=Math.random()<0.3? pick(AV_GLASSES)[0] : 'none'; e.headwear=Math.random()<0.4? pick(AV_HEAD)[0] : 'none'; e.capColor=Math.floor(Math.random()*AV_CAP.length); e.freckles=Math.random()<0.2; e.earrings=Math.random()<0.15; Avatar.openEditor(e); };
+    $('btnAvatarRandom').onclick=()=>{ const pick=a=>a[Math.floor(Math.random()*a.length)]; e.hair=pick(AV_STYLES)[0]; e.hairColor=Math.floor(Math.random()*8); e.skin=Math.floor(Math.random()*AV_SKIN.length); e.face=pick(AV_FACE)[0]; e.eye=Math.floor(Math.random()*AV_EYE.length); e.eyeShape=pick(AV_EYESHAPE)[0]; e.nose=pick(AV_NOSE)[0]; e.ears=pick(AV_EARS)[0]; e.creature=Math.random()<0.3? pick(AV_CREATURE)[0] : 'none'; e.mouth=pick(AV_MOUTH)[0]; e.brows=Math.floor(Math.random()*3); e.browShape=Math.random()<0.5? 'normal' : pick(AV_BROWS)[0]; e.moustache=Math.random()<0.3? pick(AV_MUST)[0] : 'none'; e.beard=Math.random()<0.3? pick(AV_BEARD)[0] : 'none'; e.glasses=Math.random()<0.3? pick(AV_GLASSES)[0] : 'none'; e.headwear=Math.random()<0.4? pick(AV_HEAD)[0] : 'none'; e.capColor=Math.floor(Math.random()*AV_CAP.length); e.freckles=Math.random()<0.2; e.earrings=Math.random()<0.15; Avatar.openEditor(e); };
     $('btnAvatarOk').onclick=()=>{ Avatar.pending=Avatar.editing; Avatar.editing=null; box.style.display='none'; const n=$('nameInput').value.trim(); if(n){ Avatar.save(n,Avatar.pending); } Avatar.drawPreview(); };
     Avatar.drawPreview(); },
   remove(){ Avatar.pending=null; Avatar.editing=null; $('avatarEditor').style.display='none'; Avatar.save($('nameInput').value,null); Avatar.drawPreview(); }
@@ -2304,6 +2329,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.14.0','2026-10-02','Avatar: 8 neue Brillen (Katzenauge, Lesebrille, Monokel, Skibrille, Herz, Stern, 3D, Nerd), 6 Brauenformen, 6 neue Münder (breites Lachen, Vampir, Hasenzähne, Zahnlücke, Pfeifen, Jammern).'],
  ['3.13.1','2026-10-02','Konfigurator: Beim Auswählen bleibt die Liste an der gleichen Stelle, statt nach oben zu springen.'],
  ['3.13.0','2026-10-02','Avatar: Hautfarben Grün, Gelb, Blau und Lila. Ohren von Katze, Hase, Bär und Alien, Schweine- und Katzennase. Neue Rubrik „Besonderes“: Tentakel, Fühler, Hörner, Schnurrhaare, drittes Auge, Einhorn.'],
  ['3.12.0','2026-10-02','Avatar bei der Namenseingabe und im Konfigurator größer. Ranglisten-Einträge lassen sich antippen: großer Avatar mit allen Werten (Platz, Punkte, Zeit, Items, Turbos, Fahrzeug, Datum).'],

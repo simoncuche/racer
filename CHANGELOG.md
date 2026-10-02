@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.14.0 (2026-10-02)
+
+Avatar: 8 neue Brillen (Katzenauge, Lesebrille, Monokel, Skibrille, Herz, Stern, 3D, Nerd), 6 Brauenformen, 6 neue Münder (breites Lachen, Vampir, Hasenzähne, Zahnlücke, Pfeifen, Jammern).
+
 ## 3.13.1 (2026-10-02)
 
 Konfigurator: Beim Auswählen bleibt die Liste an der gleichen Stelle, statt nach oben zu springen.
