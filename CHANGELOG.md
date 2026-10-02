@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.16.0 (2026-10-02)
+
+Zweites Geheimfahrzeug: eine Rakete mit 250 km/h, die sich nur träge lenken lässt. Ranglisten-Detail zeigt das Fahrzeug mit dem Avatar des Spielers.
+
 ## 3.15.1 (2026-10-02)
 
 Autowahl: dunkler Verlauf hinter den Buttons entfernt.

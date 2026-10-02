@@ -45,6 +45,7 @@
   .card .desc{font-size:12px;opacity:.85;margin-top:3px;line-height:1.3}
   .card.secret{background:linear-gradient(160deg,rgba(90,70,10,.85),rgba(20,30,60,.85));box-shadow:0 0 18px rgba(255,207,63,.35)}
   .card.secret .title::after{content:' ✈️'}
+  .card.secret[data-id="rocket"] .title::after{content:' 🚀'}
   @keyframes reveal{0%{transform:scale(.3) rotate(-20deg);opacity:0}70%{transform:scale(1.08) rotate(3deg);opacity:1}100%{transform:scale(1) rotate(0)}}
   .card.reveal{animation:reveal .8s cubic-bezier(.2,.8,.3,1.2)}
   .card input{width:100%;margin-top:6px;padding:6px 10px;border-radius:10px;border:2px solid rgba(255,255,255,.3);background:rgba(0,0,0,.3);color:#fff;font-size:16px;text-align:center;user-select:text;-webkit-user-select:text}
@@ -181,7 +182,10 @@
 <!-- Ranglisten-Detail -->
 <div id="rankDetail" class="hidden" style="position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--panel);border-radius:20px;padding:16px 18px;width:min(92vw,360px);text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5)">
-    <canvas id="rdAvatar" width="400" height="400" style="width:min(50vw,200px);height:min(50vw,200px);border-radius:50%;background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.5)"></canvas>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px">
+      <canvas id="rdAvatar" width="400" height="400" style="width:min(40vw,170px);height:min(40vw,170px);border-radius:50%;background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.5)"></canvas>
+      <canvas id="rdVehicle" width="300" height="220" style="width:min(36vw,150px);height:auto;border-radius:12px;background:linear-gradient(#bfe3ff,#e9d9b7)"></canvas>
+    </div>
     <div id="rdName" style="font-size:clamp(20px,6vw,28px);font-weight:900;margin-top:8px"></div>
     <div id="rdRank" style="opacity:.85;font-size:14px;margin:2px 0 8px"></div>
     <table id="rdStats" style="margin:0 auto;font-size:15px"></table>
@@ -207,7 +211,7 @@
 
 <script>
 'use strict';
-const VERSION='3.15.1', VERSION_DATE='2026-10-02';
+const VERSION='3.16.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -288,8 +292,15 @@ const DRIVERS = {
   plane:{ id:'plane', defName:'Pilot', carName:'Gelber Doppeldecker', carColor:'#f5c518', dark:'#b58900', light:'#ffe066',
          hair:'#5a3a22', shirt:'#7a4a22', shirtPrint:'#ffffff', skin:'#f1c9a5', type:'plane', secret:true,
          desc:'Geheimes Fahrzeug! Nur 60 km/h (Turbo 100). Mit ▲▼ steigt und sinkt er: tief sammeln, hoch über Bäume und Häuser, unter Brücken durch.',
-         maxSpeedF:60/110, offRoadF:1.0, accelF:0.7, grip:0.9, size:1.2 }
+         maxSpeedF:60/110, offRoadF:1.0, accelF:0.7, grip:0.9, size:1.2 },
+  rocket:{ id:'rocket', defName:'Pilot', carName:'Silberne Rakete', carColor:'#d8dde6', dark:'#8a909c', light:'#ffffff',
+         hair:'#5a3a22', shirt:'#2a2a3a', shirtPrint:'#ffffff', skin:'#f1c9a5', type:'rocket', secret:true,
+         desc:'Zweites Geheimfahrzeug! 250 km/h, dafür extrem träge Lenkung – früh einlenken!',
+         maxSpeedF:250/110, offRoadF:0.5, accelF:0.6, grip:0.3, size:1.05 }
 };
+const Rocket = { active:false, unlock(){ const fresh=!Rocket.active; Rocket.active=true; if(G.state==='select'){ renderDrivers(); const card=document.querySelector('.card[data-id="rocket"]'); if(card){ card.classList.add('reveal'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); } }
+    if(fresh){ Audio.init(); Audio.resume(); Audio.fanfare(true); menuToast('🚀 Rakete freigeschaltet!',2500); } } };
+function unlockNextSecret(){ if(!Plane.unlocked()) Plane.unlock(); else Rocket.unlock(); } // 1. Schütteln: Doppeldecker, 2. Schütteln: Rakete
 const Plane = { // Easter Egg: Doppeldecker, freigeschaltet durch Schütteln im Autowahl-Bildschirm
   active:false, // gilt nur für die gerade geöffnete Autowahl – beim nächsten Öffnen muss man wieder schütteln
   unlocked(){ return Plane.active; },
@@ -301,7 +312,7 @@ const Shake = { hits:0, last:0, listening:false,
   onMotion(e){ if(G.state!=='select') return; const a=e.acceleration&&e.acceleration.x!==null ? e.acceleration : null; const g=e.accelerationIncludingGravity;
     let strong=false; if(a){ strong=Math.hypot(a.x||0,a.y||0,a.z||0)>14; } else if(g){ strong=Math.abs(Math.hypot(g.x||0,g.y||0,g.z||0)-9.81)>13; }
     const now=performance.now(); if(now-Shake.last>1500) Shake.hits=0;
-    if(strong && now-Shake.last>150){ Shake.hits++; Shake.last=now; if(Shake.hits>=3){ Shake.hits=0; Plane.unlock(); } } },
+    if(strong && now-Shake.last>150){ Shake.hits++; Shake.last=now; if(Shake.hits>=3){ Shake.hits=0; unlockNextSecret(); } } },
   arm(){ if(Shake.listening || !window.DeviceMotionEvent) return; const go=()=>{ if(!Shake.listening){ window.addEventListener('devicemotion',Shake.onMotion); Shake.listening=true; } };
     try{ if(typeof DeviceMotionEvent.requestPermission==='function') DeviceMotionEvent.requestPermission().then(r=>{ if(r==='granted') go(); }).catch(()=>{}); else go(); }catch(err){} }
 };
@@ -922,8 +933,43 @@ function drawPlaneBack(x, cw, ch, d, yaw=0){ // Doppeldecker von hinten, neigt s
   tire(x,-w*0.15,0,w*0.07,h*0.12,false); tire(x,w*0.15,0,w*0.07,h*0.12,false);
   x.restore();
 }
+function drawRocketBack(x, cw, ch, d, yaw=0){ // Rakete von hinten: Düse mit Flamme, Flossen, Bullauge mit Pilot
+  const w=260, h=260, steer=Math.sign(yaw)*Math.min(1,Math.abs(yaw)*2); const c=d.carColor, red='#e2231a';
+  x.save(); x.translate(cw/2, ch-8); x.translate(0,-h*0.5); x.rotate(yaw*0.12); x.translate(0,h*0.5);
+  // Flamme
+  const fl=x.createLinearGradient(0,-h*0.1,0,h*0.02); fl.addColorStop(0,'#fff3a0'); fl.addColorStop(0.5,'#ff9b2a'); fl.addColorStop(1,'rgba(255,60,30,0)'); x.fillStyle=fl; x.beginPath(); x.moveTo(-w*0.14,-h*0.1); x.quadraticCurveTo(0,h*0.12,w*0.14,-h*0.1); x.fill();
+  // Flossen
+  x.fillStyle=red; for(const sd of [-1,1]){ x.beginPath(); x.moveTo(sd*w*0.17,-h*0.5); x.lineTo(sd*w*0.46,-h*0.12); x.lineTo(sd*w*0.46,-h*0.06); x.lineTo(sd*w*0.17,-h*0.12); x.closePath(); x.fill(); }
+  x.fillStyle=shade(red,0.8); x.beginPath(); x.moveTo(-w*0.04,-h*0.55); x.lineTo(-w*0.04,-h*0.1); x.lineTo(w*0.04,-h*0.1); x.lineTo(w*0.04,-h*0.55); x.fill();
+  // Düse
+  x.fillStyle='#3a3f4a'; x.beginPath(); x.moveTo(-w*0.12,-h*0.18); x.lineTo(w*0.12,-h*0.18); x.lineTo(w*0.16,-h*0.08); x.lineTo(-w*0.16,-h*0.08); x.closePath(); x.fill();
+  // Rumpf
+  const bg=x.createLinearGradient(-w*0.17,0,w*0.17,0); bg.addColorStop(0,shade(c,0.7)); bg.addColorStop(0.4,'#ffffff'); bg.addColorStop(1,shade(c,0.75)); x.fillStyle=bg;
+  x.beginPath(); x.moveTo(-w*0.17,-h*0.18); x.lineTo(-w*0.17,-h*0.75); x.quadraticCurveTo(0,-h*1.1,w*0.17,-h*0.75); x.lineTo(w*0.17,-h*0.18); x.closePath(); x.fill();
+  x.fillStyle=red; x.beginPath(); x.moveTo(-w*0.17,-h*0.75); x.quadraticCurveTo(0,-h*1.1,w*0.17,-h*0.75); x.lineTo(w*0.17,-h*0.8); x.quadraticCurveTo(0,-h*1.0,-w*0.17,-h*0.8); x.fill();
+  x.fillStyle=red; x.fillRect(-w*0.17,-h*0.3,w*0.34,h*0.05);
+  // Bullauge mit Pilot
+  x.fillStyle='#1a1a2a'; x.beginPath(); x.arc(0,-h*0.6,w*0.11,0,7); x.fill(); x.save(); x.beginPath(); x.arc(0,-h*0.6,w*0.11,0,7); x.clip(); drawKidBack(x, 0, -h*0.52, w*0.075, d, steer); x.restore();
+  x.strokeStyle='#8a909c'; x.lineWidth=4; x.beginPath(); x.arc(0,-h*0.6,w*0.11,0,7); x.stroke(); x.fillStyle='rgba(200,235,255,0.25)'; x.beginPath(); x.arc(0,-h*0.6,w*0.11,0,7); x.fill();
+  x.fillStyle='#222'; x.font=`bold ${Math.floor(h*0.04)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('SX 1',0,-h*0.24);
+  x.restore();
+}
+function drawRocketFront(x, w, h, d){ // Rakete von vorne mit Pilot im Bullauge
+  const c=d.carColor, red='#e2231a';
+  x.fillStyle='rgba(0,0,0,0.25)'; x.beginPath(); x.ellipse(0,0,w*0.42,h*0.06,0,0,7); x.fill();
+  const fl=x.createLinearGradient(0,-h*0.12,0,h*0.02); fl.addColorStop(0,'#fff3a0'); fl.addColorStop(0.5,'#ff9b2a'); fl.addColorStop(1,'rgba(255,60,30,0)'); x.fillStyle=fl; x.beginPath(); x.moveTo(-w*0.16,-h*0.12); x.quadraticCurveTo(0,h*0.14,w*0.16,-h*0.12); x.fill();
+  x.fillStyle=red; for(const sd of [-1,1]){ x.beginPath(); x.moveTo(sd*w*0.2,-h*0.62); x.lineTo(sd*w*0.56,-h*0.14); x.lineTo(sd*w*0.56,-h*0.06); x.lineTo(sd*w*0.2,-h*0.14); x.closePath(); x.fill(); }
+  x.fillStyle='#3a3f4a'; x.beginPath(); x.moveTo(-w*0.14,-h*0.22); x.lineTo(w*0.14,-h*0.22); x.lineTo(w*0.19,-h*0.1); x.lineTo(-w*0.19,-h*0.1); x.closePath(); x.fill();
+  const bg=x.createLinearGradient(-w*0.2,0,w*0.2,0); bg.addColorStop(0,shade(c,0.7)); bg.addColorStop(0.4,'#ffffff'); bg.addColorStop(1,shade(c,0.75)); x.fillStyle=bg;
+  x.beginPath(); x.moveTo(-w*0.2,-h*0.22); x.lineTo(-w*0.2,-h*1.0); x.quadraticCurveTo(0,-h*1.45,w*0.2,-h*1.0); x.lineTo(w*0.2,-h*0.22); x.closePath(); x.fill();
+  x.fillStyle=red; x.beginPath(); x.moveTo(-w*0.2,-h*1.0); x.quadraticCurveTo(0,-h*1.45,w*0.2,-h*1.0); x.lineTo(w*0.2,-h*1.06); x.quadraticCurveTo(0,-h*1.33,-w*0.2,-h*1.06); x.fill(); x.fillRect(-w*0.2,-h*0.36,w*0.4,h*0.06);
+  x.fillStyle='#1a1a2a'; x.beginPath(); x.arc(0,-h*0.78,w*0.15,0,7); x.fill(); x.save(); x.beginPath(); x.arc(0,-h*0.78,w*0.15,0,7); x.clip(); drawKidFront(x,0,-h*0.6,w*0.11,d); x.restore();
+  x.strokeStyle='#8a909c'; x.lineWidth=5; x.beginPath(); x.arc(0,-h*0.78,w*0.15,0,7); x.stroke(); x.fillStyle='rgba(200,235,255,0.2)'; x.beginPath(); x.arc(0,-h*0.78,w*0.15,0,7); x.fill();
+  x.fillStyle='rgba(255,255,255,0.35)'; x.beginPath(); x.arc(-w*0.05,-h*0.84,w*0.04,0,7); x.fill();
+}
 function drawVehicleBack(x, w, h, d, yaw=0){
   if(d.type==='plane') return drawPlaneBack(x,w,h,d,yaw);
+  if(d.type==='rocket') return drawRocketBack(x,w,h,d,yaw);
   // yaw -1..1: das Auto bleibt von hinten zu sehen, nur die eingeschlagenen Vorderräder lugen auf der Kurvenseite leicht hervor
   const steer=Math.sign(yaw)*Math.min(1,Math.abs(yaw)*2), a=Math.abs(yaw), dir=Math.sign(yaw);
   const cw=w; w=260;
@@ -1063,6 +1109,7 @@ function drawVehicleFront(x, w, h, d){
   x.save(); x.translate(w/2,h*0.96); x.scale(0.7,0.7);
   const c=d.carColor;
   if(d.type==='plane'){ drawPlaneFront(x,w,h,d); x.restore(); return; }
+  if(d.type==='rocket'){ drawRocketFront(x,w,h,d); x.restore(); return; }
   const bodyGrad=(y0,y1)=>{ const g=x.createLinearGradient(0,y0,0,y1); g.addColorStop(0,shade(c,1.25)); g.addColorStop(0.4,c); g.addColorStop(1,shade(c,0.62)); return g; };
   x.fillStyle='rgba(0,0,0,0.25)'; x.beginPath(); x.ellipse(0,0,w*0.44,h*0.06,0,0,7); x.fill();
   if(d.type==='sport'){
@@ -1192,7 +1239,7 @@ function drawGoat(x,w,h,f){ x.save(); x.translate(w/2,h);
   x.strokeStyle='#e2231a'; x.lineWidth=3; x.beginPath(); x.moveTo(-w*0.12,-h*0.62); x.quadraticCurveTo(0,-h*0.5,w*0.12,-h*0.62); x.stroke(); x.fillStyle='#d4a52a'; x.beginPath(); x.arc(0,-h*0.5,w*0.05,0,7); x.fill();
   x.restore(); }
 
-function buildCarSprites(){ for(const d of Object.values(DRIVERS)){ const [cw,ch] = d.type==='plane' ? [380,300] : [300,260]; /* mehr Rand, damit die geneigten Flügel nicht abgeschnitten werden */ for(let s=-2;s<=2;s++) makeSprite('car_'+d.id+'_'+s,cw,ch,(x,w,h)=>drawVehicleBack(x,w,h,d,s/2)); } }
+function buildCarSprites(){ for(const d of Object.values(DRIVERS)){ const [cw,ch] = d.type==='plane' ? [380,300] : d.type==='rocket' ? [300,300] : [300,260]; /* mehr Rand, damit die geneigten Flügel nicht abgeschnitten werden */ for(let s=-2;s<=2;s++) makeSprite('car_'+d.id+'_'+s,cw,ch,(x,w,h)=>drawVehicleBack(x,w,h,d,s/2)); } }
 function buildSprites(){
   makeSprite('palm',120,220,(x,w,h)=>drawPalm(x,w,h,1));
   makeSprite('palm2',120,250,(x,w,h)=>{x.translate(0,0);drawPalm(x,w,h,1.1);});
@@ -1550,7 +1597,7 @@ function setState(s){
   const racing = s==='race'||s==='pause';
   for(const id of ['hud','prog','topbtns','controls']) $(id).classList.toggle('hidden', !racing);
   $('msg').classList.toggle('hidden', s!=='race');
-  if(s==='name') renderName(); if(s==='select'){ Plane.active=false; if(DRIVERS[G.driver].secret) G.driver='girl'; $('selectTitle').textContent=playerName()+', welches Auto?'; renderDrivers(); } if(s==='stages') renderStages(); if(s==='rankpick') renderRankPick(); if(s==='ranking') renderRanking(); if(s==='changes') renderChanges();
+  if(s==='name') renderName(); if(s==='select'){ Plane.active=false; Rocket.active=false; if(DRIVERS[G.driver].secret) G.driver='girl'; $('selectTitle').textContent=playerName()+', welches Auto?'; renderDrivers(); } if(s==='stages') renderStages(); if(s==='rankpick') renderRankPick(); if(s==='ranking') renderRanking(); if(s==='changes') renderChanges();
 }
 function popMsg(text){ const m=$('msg'); m.textContent=text; m.classList.remove('pop'); void m.offsetWidth; if(text) m.classList.add('pop'); }
 function showToast(text,sec){ const t=$('toast'); t.textContent=text; t.style.opacity=1; G.toastT=sec; }
@@ -1648,8 +1695,9 @@ function update(dt){
   updateRival(dt); updateTraffic(dt);
   G.position += dt*G.speed; if(G.position>=T.length) G.position-=T.length;
   // Lenken
-  G.playerX += dx*clamp(inp.steer,-1,1);
-  G.steerVis += (clamp(inp.steer,-1,1)-G.steerVis)*Math.min(1,dt*7);
+  G.steerVis += (clamp(inp.steer,-1,1)-G.steerVis)*Math.min(1,dt*(d.type==='rocket'?1.6:7)); // die Rakete reagiert träge
+  G.playerX += dx*(d.type==='rocket' ? G.steerVis : clamp(inp.steer,-1,1));
+  if(d.type==='rocket' && G.carRect && G.speed>G.maxSpeed*0.2 && G.countdown<=0){ const c=G.carRect; for(let i=0;i<2;i++) FX.add({x:c.x+rnd(-c.w*0.08,c.w*0.08),y:c.bottom-c.h*0.04,vx:rnd(-30,30),vy:rnd(80,200),life:rnd(0.15,0.3),max:0.3,size:rnd(5,10),color:['#fff3a0','#ffcf3f','#ff7a1a'][Math.floor(rnd(0,3))]}); }
   if(Math.abs(G.steerVis)>0.55 && speedPct>0.6 && G.carRect && d.type!=='plane'){ const c=G.carRect; for(const side of [-1,1]) FX.add({x:c.x+side*c.w*0.36,y:c.bottom-c.h*0.02,vx:rnd(-30,30)-G.steerVis*60,vy:rnd(10,50),life:rnd(0.3,0.6),max:0.6,size:rnd(4,8),grow:true,color:'rgba(230,230,230,0.5)'}); }
   G.playerX -= dx*speedPct*playerSegment.curve*0.1;
   // Gas-Automatik: beschleunigt von allein bis KMH_MAX, mit Boost kurzzeitig bis KMH_BOOST
@@ -1994,15 +2042,16 @@ function rankingTable(stageId, highlightId, limit, list, extra){
   if(!list.length) return '<div style="opacity:.7">Noch keine Zeiten</div>';
   const rows=list.map((e,i)=>({e,i})); if(extra) rows.push({sep:true},{e:extra.e,i:extra.rank-1});
   rankingTable.rows=rows.filter(r=>!r.sep).map(r=>({e:r.e,rank:r.i+1,stageId})); // für die Detailansicht
-  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr class="rankrow" data-i="${rankingTable.rows.findIndex(r=>r.e===e)}" style="cursor:pointer;${(e.id===highlightId||e.ts===highlightId||e.hl||Online.pkey(e.name)===Online.pkey(playerName()))?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.avatar? `<img src="${Avatar.dataUrl(e.avatar)}" style="width:26px;height:26px;vertical-align:middle;margin-right:2px">` : (e.driver==='girl'?'🚗':e.driver==='plane'?'✈️':'🚙')} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · ${(STAGES.find(x=>x.id===stageId)||{}).itemIcon||'🦐'}${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
+  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr class="rankrow" data-i="${rankingTable.rows.findIndex(r=>r.e===e)}" style="cursor:pointer;${(e.id===highlightId||e.ts===highlightId||e.hl||Online.pkey(e.name)===Online.pkey(playerName()))?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.avatar? `<img src="${Avatar.dataUrl(e.avatar)}" style="width:26px;height:26px;vertical-align:middle;margin-right:2px">` : (e.driver==='girl'?'🚗':e.driver==='plane'?'✈️':e.driver==='rocket'?'🚀':'🚙')} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · ${(STAGES.find(x=>x.id===stageId)||{}).itemIcon||'🦐'}${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
 }
 function showRankDetail(row){ // großer Avatar mit allen Werten eines Ranglisten-Eintrags
   const e=row.e, st=STAGES.find(x=>x.id===row.stageId)||{}; const box=$('rankDetail'); box.classList.remove('hidden');
-  const medal=['🥇','🥈','🥉'][row.rank-1]||('Platz '+row.rank); const veh = e.driver==='girl'?'🚗 Roter Flitzer':e.driver==='plane'?'✈️ Gelber Doppeldecker':'🚙 Blauer Jeep';
+  const medal=['🥇','🥈','🥉'][row.rank-1]||('Platz '+row.rank); const veh = e.driver==='girl'?'🚗 Roter Flitzer':e.driver==='plane'?'✈️ Gelber Doppeldecker':e.driver==='rocket'?'🚀 Silberne Rakete':'🚙 Blauer Jeep';
   $('rdName').textContent=e.name; $('rdRank').textContent=medal+' · '+(st.emoji||'')+' '+(st.name||'');
   $('rdStats').innerHTML=[['⭐ Punkte',Ranking.score(e)],['⏱️ Zeit',fmtTime(e.time)],[(st.itemIcon||'🦐')+' '+(st.itemName||'Items'),e.items||0],['🔥 Turbos',e.boosts||0],['Fahrzeug',veh],['📅 Datum',e.date||'–']].map(([k,v])=>`<tr><td style="text-align:left;opacity:.8;padding:3px 10px 3px 0">${k}</td><td style="text-align:right;font-weight:700">${v}</td></tr>`).join('');
   const c=$('rdAvatar'), x=c.getContext('2d'); x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,400,400); x.setTransform(400/128,0,0,400/128,0,0);
   if(e.avatar) drawAvatarHead(x,64,70,44,e.avatar,'front'); else { x.font='70px Arial'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(e.driver==='girl'?'🚗':e.driver==='plane'?'✈️':'🚙',64,66); }
+  const vc=$('rdVehicle'), vx=vc.getContext('2d'); vx.clearRect(0,0,300,220); const vd=Object.assign({},DRIVERS[e.driver]||DRIVERS.girl,{avatar:e.avatar||null}); drawVehicleFront(vx,300,220,vd); // das Fahrzeug mit dem Avatar des Spielers
 }
 document.addEventListener('click',ev=>{ const tr=ev.target.closest&&ev.target.closest('tr.rankrow'); if(tr && rankingTable.rows){ const row=rankingTable.rows[+tr.dataset.i]; if(row) showRankDetail(row); } });
 function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -2266,9 +2315,9 @@ function saveName(){ const n=$('nameInput').value.trim().slice(0,14); if(!n) ret
 function renderDrivers(){
   const box=$('drivers'); box.innerHTML='';
   if(DRIVERS[G.driver].secret && !Plane.unlocked()){ G.driver='girl'; }
-  box.classList.toggle('three', Plane.unlocked());
+  box.classList.toggle('three', Plane.unlocked()||Rocket.active);
   for(const d of Object.values(DRIVERS)){
-    if(d.secret && !Plane.unlocked()) continue;
+    if(d.id==='plane' && !Plane.unlocked()) continue; if(d.id==='rocket' && !Rocket.active) continue;
     const card=document.createElement('div'); card.className='card'+(G.driver===d.id?' sel':'')+(d.secret?' secret':''); card.dataset.id=d.id;
     d.avatar=Avatar.paramsFor(playerName()); const c=mkCanvas(300,220); drawVehicleFront(c.getContext('2d'),300,220,d);
     card.appendChild(c); const txt=document.createElement('div'); txt.className='text'; const t=document.createElement('div'); t.className='title'; t.textContent=d.carName; txt.appendChild(t); const ds=document.createElement('div'); ds.className='desc'; ds.textContent=d.desc; txt.appendChild(ds); card.appendChild(txt);
@@ -2288,7 +2337,7 @@ function renderStages(){
 $('btnStart').onclick=()=>{ Audio.init(); Audio.resume(); setState('name'); };
 $('btnNameBack').onclick=()=>setState('title');
 $('btnNameNext').onclick=()=>{ if(saveName()){ Shake.arm(); setState('select'); } else $('nameInput').focus(); };
-$('selectTitle').addEventListener('click',()=>{ const now=performance.now(); if(now-($('selectTitle')._t||0)>2000) $('selectTitle')._n=0; $('selectTitle')._t=now; $('selectTitle')._n=($('selectTitle')._n||0)+1; if($('selectTitle')._n>=5){ $('selectTitle')._n=0; Plane.unlock(); } });
+$('selectTitle').addEventListener('click',()=>{ const now=performance.now(); if(now-($('selectTitle')._t||0)>2000) $('selectTitle')._n=0; $('selectTitle')._t=now; $('selectTitle')._n=($('selectTitle')._n||0)+1; if($('selectTitle')._n>=5){ $('selectTitle')._n=0; unlockNextSecret(); } });
 $('nameInput').addEventListener('input',()=>{ const ok=!!$('nameInput').value.trim(); $('btnNameNext').disabled=!ok; $('btnNameNext').style.opacity=ok?1:.5; for(const ch of $('nameChips').querySelectorAll('.chip')) ch.classList.toggle('sel',ch.textContent===$('nameInput').value); });
 $('nameInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('btnNameNext').click(); } });
 $('nameInput').addEventListener('input',()=>{ if(!Avatar.editing) Avatar.drawPreview(); });
@@ -2339,6 +2388,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.16.0','2026-10-02','Zweites Geheimfahrzeug: eine Rakete mit 250 km/h, die sich nur träge lenken lässt. Ranglisten-Detail zeigt das Fahrzeug mit dem Avatar des Spielers.'],
  ['3.15.1','2026-10-02','Autowahl: dunkler Verlauf hinter den Buttons entfernt.'],
  ['3.15.0','2026-10-02','Avatar: 10 neue Kopfbedeckungen (Zylinder, Baskenmütze, Piratenhut, Kochmütze, Partyhut, Zauberhut, Wikingerhelm, Weihnachtsmütze, Kopfhörer, Fischerhut). Fahrer in der Autowahl größer.'],
  ['3.14.0','2026-10-02','Avatar: 8 neue Brillen (Katzenauge, Lesebrille, Monokel, Skibrille, Herz, Stern, 3D, Nerd), 6 Brauenformen, 6 neue Münder (breites Lachen, Vampir, Hasenzähne, Zahnlücke, Pfeifen, Jammern).'],
