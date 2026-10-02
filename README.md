@@ -1,13 +1,13 @@
 # 🌴 Mallorca Rallye
 
 Ein Rennspiel für zwei Kinder und ihre Flitzer: Der **rote Sportwagen** (SX 158) und der
-**blaue Jeep** (SX 1718) rasen quer über Mallorca. Von der Kathedrale in Palma über die Ebene Es Pla
-nach Artà, die Küstenstraße hinauf zum Leuchtturm am Cap de Formentor und durch
+**blaue Jeep** (SX 1718) rasen quer über Mallorca und einmal durch die Schweiz. Von der Kathedrale in Palma über die Ebene Es Pla
+nach Artà, von der Luzerner Kapellbrücke dem Sempachersee entlang nach Sursee und durch
 Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **2.3.0**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **2.4.0**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -69,8 +69,8 @@ Der Name landet in der Rangliste. Das jeweils andere Auto fährt als Gegner mit.
 
 | Strecke | Unterwegs |
 |---|---|
-| 🏰 Palma → Artà | Kathedrale, Windmühlen von Sant Jordi, Mandelbäume und Schafe auf der Ebene Es Pla, Algaida, Montuïri, Manacor, Weinberge, Steinbrücken, Talaiot und die Wallfahrtskirche hoch über Artà |
-| 🌊 Pollença → Formentor | Hafenort mit Café, Strandhütten, Klippen, Pinien, Serpentinen, Mirador, Leuchtturm |
+| 🏰 Palma → Artà | Kathedrale, spanische Fahnen, Windmühlen von Sant Jordi, Mandelbäume und Schafe auf der Ebene Es Pla, Algaida, Montuïri, Manacor, Weinberge, Steinbrücken, Talaiot und die Wallfahrtskirche hoch über Artà |
+| 🇨🇭 Luzern → Sursee | Kapellbrücke mit Wasserturm, Chalets, Tannen, Kühe mit Glocke, Schweizer Fahnen, Luftseilbahnen mit fahrender Gondel, Berge mit Schneekuppe direkt an der Straße, Sempachersee mit Segelbooten am Straßenrand, Emmen, Rothenburg, Sempach; Schneeberge im Hintergrund und graue Straßenkante statt Rot-Weiß |
 | 🏖️ Santanyí → Es Trenc | Windmühlen, Mandelbäume, Weinberge, Sonnenblumen, Kakteen, Schafe, Ses Salines, Colònia, Dünen und Strand |
 
 Die Strecken werden mit einem festen Zufallsgenerator je Strecke aufgebaut und sind damit auf allen

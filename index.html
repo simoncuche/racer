@@ -154,7 +154,7 @@
 
 <script>
 'use strict';
-const VERSION='2.3.0', VERSION_DATE='2026-10-02';
+const VERSION='2.4.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -505,6 +505,70 @@ function drawTalaiot(x,w,h){ x.save(); x.translate(w/2,h);
 function drawCliff(x,w,h){ x.fillStyle='#b9ad98'; x.beginPath(); x.moveTo(0,h); x.lineTo(w*0.05,h*0.3); x.lineTo(w*0.3,h*0.05); x.lineTo(w*0.6,h*0.15); x.lineTo(w*0.85,h*0.0); x.lineTo(w,h*0.4); x.lineTo(w,h); x.fill();
   x.fillStyle='#d6cbb6'; x.beginPath(); x.moveTo(w*0.3,h*0.05); x.lineTo(w*0.6,h*0.15); x.lineTo(w*0.5,h*0.6); x.lineTo(w*0.2,h*0.5); x.fill(); x.fillStyle='#8a7a5a'; x.beginPath(); x.moveTo(w*0.85,0); x.lineTo(w,h*0.4); x.lineTo(w*0.8,h*0.7); x.fill();
   x.fillStyle='#5f8a4a'; for(let i=0;i<5;i++){ x.beginPath(); x.arc(w*0.1+i*w*0.2,h*0.95,w*0.07,0,7); x.fill(); } }
+
+// ---------- Schweiz: Kapellbrücke, Chalet, Tanne, Kuh, Luftseilbahn, Schneeberg, Fahnen ----------
+function drawKapellbruecke(x,w,h){ x.save(); x.translate(0,h);
+  // Wasserturm (achteckig, Steinturm mit spitzem Dach)
+  x.fillStyle='#b9a98a'; x.fillRect(w*0.04,-h*0.72,w*0.14,h*0.72); x.fillStyle='rgba(0,0,0,0.12)'; x.fillRect(w*0.13,-h*0.72,w*0.05,h*0.72);
+  x.fillStyle='#8a5a3a'; x.beginPath(); x.moveTo(w*0.02,-h*0.72); x.lineTo(w*0.11,-h*0.98); x.lineTo(w*0.2,-h*0.72); x.fill();
+  x.fillStyle='#3a3a3a'; for(let i=0;i<3;i++) x.fillRect(w*0.09,-h*0.62+i*h*0.16,w*0.04,h*0.06);
+  // Brücke: Pfeiler, gedeckter Gang mit Holzgitter und Blumenkästen
+  x.fillStyle='#7a6a5a'; for(let i=0;i<6;i++) x.fillRect(w*0.22+i*w*0.15,-h*0.3,w*0.03,h*0.3);
+  x.fillStyle='#8f6a44'; x.fillRect(w*0.2,-h*0.56,w*0.8,h*0.28);
+  x.strokeStyle='#5a3a24'; x.lineWidth=2; for(let i=0;i<16;i++){ x.beginPath(); x.moveTo(w*0.21+i*w*0.05,-h*0.52); x.lineTo(w*0.21+i*w*0.05+w*0.05,-h*0.3); x.moveTo(w*0.21+i*w*0.05+w*0.05,-h*0.52); x.lineTo(w*0.21+i*w*0.05,-h*0.3); x.stroke(); }
+  x.fillStyle='#5a3a24'; x.beginPath(); x.moveTo(w*0.18,-h*0.56); x.lineTo(w*0.6,-h*0.72); x.lineTo(w*1.0,-h*0.56); x.fill();
+  x.fillStyle='#e05a7a'; for(let i=0;i<12;i++){ x.beginPath(); x.arc(w*0.24+i*w*0.065,-h*0.31,w*0.012,0,7); x.fill(); } x.fillStyle='#3a8a3a'; for(let i=0;i<12;i++){ x.beginPath(); x.arc(w*0.26+i*w*0.065,-h*0.29,w*0.01,0,7); x.fill(); }
+  // Wasser darunter
+  x.fillStyle='rgba(70,140,200,0.7)'; x.fillRect(0,-h*0.1,w,h*0.1); x.restore(); }
+function drawChalet(x,w,h){ x.save(); x.translate(w/2,h);
+  x.fillStyle='#e9dcc3'; x.fillRect(-w*0.42,-h*0.4,w*0.84,h*0.4);
+  x.fillStyle='#8a5a34'; x.fillRect(-w*0.42,-h*0.7,w*0.84,h*0.3); x.fillStyle='rgba(0,0,0,0.12)'; x.fillRect(-w*0.42,-h*0.7,w*0.1,h*0.7);
+  x.fillStyle='#5a3a24'; x.beginPath(); x.moveTo(-w*0.55,-h*0.66); x.lineTo(0,-h*0.98); x.lineTo(w*0.55,-h*0.66); x.lineTo(w*0.5,-h*0.62); x.lineTo(0,-h*0.9); x.lineTo(-w*0.5,-h*0.62); x.fill();
+  x.fillStyle='#6a4a2a'; x.fillRect(-w*0.44,-h*0.44,w*0.88,h*0.04); for(let i=0;i<9;i++) x.fillRect(-w*0.42+i*w*0.105,-h*0.42,w*0.02,h*0.06);
+  x.fillStyle='#e2231a'; for(let i=0;i<8;i++){ x.beginPath(); x.arc(-w*0.38+i*w*0.11,-h*0.46,w*0.025,0,7); x.fill(); }
+  x.fillStyle='#7aa8d8'; for(const wx of [-w*0.3,w*0.1]){ x.fillRect(wx,-h*0.64,w*0.2,h*0.14); x.fillStyle='#fff'; x.fillRect(wx+w*0.09,-h*0.64,w*0.02,h*0.14); x.fillStyle='#7aa8d8'; } x.fillStyle='#7aa8d8'; x.fillRect(-w*0.3,-h*0.3,w*0.16,h*0.14); x.fillStyle='#6a4a2a'; x.beginPath(); x.roundRect(w*0.08,-h*0.24,w*0.18,h*0.24,[w*0.05,w*0.05,0,0]); x.fill();
+  x.restore(); }
+function drawFir(x,w,h){ x.save(); x.translate(w/2,h);
+  x.fillStyle='#5a3a24'; x.fillRect(-w*0.06,-h*0.18,w*0.12,h*0.18);
+  for(let i=0;i<4;i++){ const y=-h*0.15-i*h*0.2, hw=w*(0.48-i*0.1); x.fillStyle=i%2?'#1f6a3a':'#2a7d45'; x.beginPath(); x.moveTo(-hw,y); x.lineTo(0,y-h*0.3); x.lineTo(hw,y); x.fill(); }
+  x.restore(); }
+function drawCow(x,w,h){ x.save(); x.translate(w/2,h);
+  x.fillStyle='rgba(0,0,0,0.25)'; x.beginPath(); x.ellipse(0,2,w*0.42,h*0.05,0,0,7); x.fill();
+  x.fillStyle='#4a3a2a'; for(const lx of [-w*0.32,-w*0.14,w*0.08,w*0.26]) x.fillRect(lx,-h*0.3,w*0.09,h*0.3);
+  x.fillStyle='#f4efe6'; x.beginPath(); x.roundRect(-w*0.42,-h*0.7,w*0.84,h*0.44,14); x.fill();
+  x.fillStyle='#6a4a30'; x.beginPath(); x.ellipse(-w*0.18,-h*0.5,w*0.14,h*0.12,0.3,0,7); x.fill(); x.beginPath(); x.ellipse(w*0.2,-h*0.42,w*0.1,h*0.1,-0.4,0,7); x.fill();
+  x.fillStyle='#f4efe6'; x.beginPath(); x.roundRect(-w*0.2,-h*0.98,w*0.4,h*0.36,10); x.fill(); x.fillStyle='#e8b4a0'; x.beginPath(); x.ellipse(0,-h*0.68,w*0.12,h*0.07,0,0,7); x.fill();
+  x.fillStyle='#222'; x.beginPath(); x.arc(-w*0.08,-h*0.85,w*0.03,0,7); x.fill(); x.beginPath(); x.arc(w*0.08,-h*0.85,w*0.03,0,7); x.fill();
+  x.fillStyle='#e8b4a0'; x.beginPath(); x.ellipse(-w*0.24,-h*0.9,w*0.08,h*0.04,0.5,0,7); x.fill(); x.beginPath(); x.ellipse(w*0.24,-h*0.9,w*0.08,h*0.04,-0.5,0,7); x.fill();
+  x.strokeStyle='#d9c9a8'; x.lineWidth=3; x.beginPath(); x.moveTo(-w*0.12,-h*0.98); x.lineTo(-w*0.18,-h*1.08); x.moveTo(w*0.12,-h*0.98); x.lineTo(w*0.18,-h*1.08); x.stroke();
+  x.strokeStyle='#8a3a2a'; x.lineWidth=3; x.beginPath(); x.moveTo(-w*0.1,-h*0.64); x.quadraticCurveTo(0,-h*0.52,w*0.1,-h*0.64); x.stroke(); x.fillStyle='#d4a52a'; x.beginPath(); x.arc(0,-h*0.52,w*0.05,0,7); x.fill();
+  x.restore(); }
+function drawCableCar(x,w,h,f){ // Luftseilbahn: zwei Masten, Seil, Gondel wandert (f = 0..3)
+  x.save(); x.translate(0,h);
+  x.strokeStyle='#555'; x.lineWidth=5; x.beginPath(); x.moveTo(w*0.1,0); x.lineTo(w*0.1,-h*0.7); x.moveTo(w*0.9,0); x.lineTo(w*0.9,-h*0.95); x.stroke();
+  x.fillStyle='#777'; x.fillRect(w*0.04,-h*0.72,w*0.12,h*0.03); x.fillRect(w*0.84,-h*0.97,w*0.12,h*0.03);
+  x.strokeStyle='#333'; x.lineWidth=2; x.beginPath(); x.moveTo(w*0.1,-h*0.7); x.quadraticCurveTo(w*0.5,-h*0.72,w*0.9,-h*0.95); x.stroke();
+  const t=0.2+f*0.2, gx=w*0.1+(w*0.8)*t, gy=-h*0.7-(h*0.25)*t+ (4*t*(1-t))*h*0.02;
+  x.strokeStyle='#333'; x.lineWidth=2; x.beginPath(); x.moveTo(gx,gy); x.lineTo(gx,gy+h*0.06); x.stroke();
+  x.fillStyle='#e2231a'; x.beginPath(); x.roundRect(gx-w*0.07,gy+h*0.06,w*0.14,h*0.14,4); x.fill(); x.fillStyle='#9fd0f0'; x.fillRect(gx-w*0.055,gy+h*0.08,w*0.11,h*0.06);
+  x.restore(); }
+function drawAlp(x,w,h){ x.save(); x.translate(w/2,h); // Berg direkt an der Straße, mit Schneekuppe
+  x.fillStyle='#7d8a90'; x.beginPath(); x.moveTo(-w*0.5,0); x.lineTo(-w*0.28,-h*0.5); x.lineTo(-w*0.1,-h*0.4); x.lineTo(w*0.05,-h*0.98); x.lineTo(w*0.22,-h*0.62); x.lineTo(w*0.36,-h*0.74); x.lineTo(w*0.5,0); x.fill();
+  x.fillStyle='#9aa7ad'; x.beginPath(); x.moveTo(w*0.05,-h*0.98); x.lineTo(w*0.22,-h*0.62); x.lineTo(w*0.36,-h*0.74); x.lineTo(w*0.5,0); x.lineTo(w*0.12,0); x.fill();
+  x.fillStyle='#fff'; x.beginPath(); x.moveTo(w*0.05,-h*0.98); x.lineTo(w*0.14,-h*0.78); x.lineTo(w*0.08,-h*0.74); x.lineTo(w*0.0,-h*0.8); x.lineTo(-w*0.06,-h*0.72); x.lineTo(-w*0.03,-h*0.82); x.fill();
+  x.beginPath(); x.moveTo(w*0.36,-h*0.74); x.lineTo(w*0.42,-h*0.6); x.lineTo(w*0.34,-h*0.62); x.lineTo(w*0.3,-h*0.66); x.fill();
+  x.fillStyle='#4f7a3a'; x.beginPath(); x.moveTo(-w*0.5,0); x.lineTo(-w*0.36,-h*0.2); x.lineTo(-w*0.1,-h*0.1); x.lineTo(w*0.2,-h*0.22); x.lineTo(w*0.5,0); x.fill();
+  x.fillStyle='#2a7d45'; for(let i=0;i<7;i++){ const px=-w*0.42+i*w*0.14; x.beginPath(); x.moveTo(px-w*0.04,-h*0.02); x.lineTo(px,-h*0.14); x.lineTo(px+w*0.04,-h*0.02); x.fill(); }
+  x.restore(); }
+function drawFlag(x,w,h,kind){ x.save(); x.translate(w/2,h);
+  x.fillStyle='#777'; x.fillRect(-w*0.04,-h,w*0.08,h); x.fillStyle='#999'; x.beginPath(); x.arc(0,-h,w*0.07,0,7); x.fill();
+  x.save(); x.translate(w*0.04,-h*0.97);
+  const fw=w*0.9, fh=h*0.3;
+  const wave=(ctx2)=>{ ctx2.beginPath(); ctx2.moveTo(0,0); ctx2.quadraticCurveTo(fw*0.3,-fh*0.08,fw*0.5,0); ctx2.quadraticCurveTo(fw*0.75,fh*0.1,fw,0); ctx2.lineTo(fw,fh); ctx2.quadraticCurveTo(fw*0.75,fh*1.1,fw*0.5,fh); ctx2.quadraticCurveTo(fw*0.3,fh*0.92,0,fh); ctx2.closePath(); };
+  wave(x); x.save(); x.clip();
+  if(kind==='es'){ x.fillStyle='#c60b1e'; x.fillRect(0,-fh*0.2,fw,fh*1.4); x.fillStyle='#ffc400'; x.fillRect(0,fh*0.25,fw,fh*0.5); x.fillStyle='#c60b1e'; x.fillRect(fw*0.22,fh*0.36,fw*0.1,fh*0.28); x.fillStyle='#ffc400'; x.fillRect(fw*0.24,fh*0.4,fw*0.06,fh*0.2); }
+  else { x.fillStyle='#da291c'; x.fillRect(0,-fh*0.2,fw,fh*1.4); x.fillStyle='#fff'; x.fillRect(fw*0.5-fw*0.065,fh*0.15,fw*0.13,fh*0.7); x.fillRect(fw*0.5-fw*0.22,fh*0.5-fh*0.13,fw*0.44,fh*0.26); }
+  x.restore(); x.strokeStyle='rgba(0,0,0,0.25)'; x.lineWidth=1; wave(x); x.stroke(); x.restore(); x.restore(); }
 // Fahrzeug von hinten (Spieler & Rivale) – steer: -1..1 (Blick leicht auf die Außenseite)
 function shade(hex,f){ const n=parseInt(hex.slice(1),16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255; r=clamp(Math.round(r*f),0,255); g=clamp(Math.round(g*f),0,255); b=clamp(Math.round(b*f),0,255); return `rgb(${r},${g},${b})`; }
 function tire(x,cx,cy,tw,th,knobby){ // cx,cy = Mitte unten
@@ -780,6 +844,13 @@ function buildSprites(){
   makeSprite('lamp',40,200,drawLamp);
   makeSprite('cliff',300,220,drawCliff);
   makeSprite('talaiot',240,200,drawTalaiot);
+  makeSprite('kapellbruecke',520,220,drawKapellbruecke);
+  makeSprite('chalet',200,170,drawChalet); makeSprite('chalet2',170,190,drawChalet);
+  makeSprite('fir',110,210,drawFir); makeSprite('fir2',90,160,drawFir);
+  makeSprite('cow',100,80,drawCow);
+  for(const f of [0,1,2,3]) makeSprite('cablecar_'+f,420,360,(x,w,h)=>drawCableCar(x,w,h,f));
+  makeSprite('alp',620,420,drawAlp);
+  makeSprite('flag_es',70,200,(x,w,h)=>drawFlag(x,w,h,'es')); makeSprite('flag_ch',70,200,(x,w,h)=>drawFlag(x,w,h,'ch'));
   for(const f of [0,1]){ makeSprite('bus_'+f,140,180,(x,w,h)=>drawBus(x,w,h,f)); makeSprite('scooter_'+f,70,115,(x,w,h)=>drawScooter(x,w,h,f)); makeSprite('cyclist_'+f,70,115,(x,w,h)=>drawCyclist(x,w,h,f)); makeSprite('goat_'+f,90,85,(x,w,h)=>drawGoat(x,w,h,f)); }
   for(const d of Object.values(DRIVERS)){
     for(let s=-2;s<=2;s++) makeSprite('car_'+d.id+'_'+s,300,260,(x,w,h)=>drawVehicleBack(x,w,h,d,s/2));
@@ -799,17 +870,24 @@ const STAGES = [
       t.curve(80,5,-30); t.fill(480,560,'wall',1.15,0.6); t.mix(480,560,['vineyard','cactus'],1.6,0.25); t.sCurve(120,5,20); t.fill(560,680,'olive',1.7,0.3); t.mix(560,680,['sunflowers','sheep'],1.7,0.2);
       t.straight(60); t.town(600,660,true); t.sprite(615,1.3,'cafe'); t.sprite(640,-1.3,'cafe'); t.mix(600,660,['lamp'],1.15,0.15); t.over(690,'bridge');
       t.curve(70,-4,30); t.fill(680,760,'almond',1.6,0.3); t.mix(680,760,['wall','rock'],1.3,0.3); t.far(680,760,'mountain',40); t.hill(60,60); t.curve(60,4,30); t.fill(760,840,'pine',1.6,0.3); t.mix(760,840,['rock','agave'],1.4,0.3); t.far(760,840,'mountain2',35); t.sprite(800,-2.4,'talaiot');
-      t.hill(50,40); t.straight(70); t.fill(840,900,'wall',1.15,0.6); t.mix(840,900,['pine','cactus'],1.6,0.25); t.town(880,915,true); t.sprite(905,-1.9,'church'); t.sprite(910,1.8,'church'); t.sprite(895,1.4,'cafe'); t.far(840,920,'mountain',30); }
+      t.hill(50,40); t.straight(70); t.fill(840,900,'wall',1.15,0.6); t.mix(840,900,['pine','cactus'],1.6,0.25); t.town(880,915,true); t.sprite(905,-1.9,'church'); t.sprite(910,1.8,'church'); t.sprite(895,1.4,'cafe'); t.far(840,920,'mountain',30);
+      t.mix(5,915,['flag_es'],1.2,0.025); }
   },
-  { id:'formentor', name:'Pollença → Formentor', emoji:'🌊', desc:'Küstenstraße mit Klippen, Pinien und Meerblick bis zum Leuchtturm.',
-    sky:['#3f9ff0','#a9dcff'], fog:'#bfe2ff', grass:['#c7b98c','#bdae80'], rumble:['#fff','#c33'], road:['#727276','#6b6b6f'], lane:'#f4f4f4',
-    sea:true, mountains:0.6, rivalSpeed:0.84, itemName:'Meeresfrüchte', towns:[[0,'Port de Pollença'],[0.45,'Mirador'],[1,'Cap de Formentor']],
-    build(t){ t.straight(30); t.fill(2,30,'palm',1.5,0.4); t.sprite(5,1.8,'parasol'); t.sprite(12,1.9,'parasol'); t.sprite(20,1.7,'boat'); t.town(4,28,true); t.sprite(8,1.3,'cafe'); t.mix(2,30,['beachhut','parasol'],1.6,0.2,false);
-      t.curve(50,4,20); t.fill(30,80,'pine',1.6,0.3); t.mix(30,80,['lamp','cactus'],1.2,0.1); t.sCurve(90,6,40); t.fill(80,170,'rock',1.25,0.35); t.fill(80,170,'agave',1.5,0.3,true); t.mix(80,170,['cliff'],1.7,0.1); t.far(80,170,'mountain',40);
-      t.hill(50,70); t.curve(70,-5,0); t.fill(170,290,'pine',1.7,0.35); t.mix(170,290,['sheep','cactus'],1.4,0.15); t.over(240,'bridge'); t.straight(40); t.sprite(300,1.5,'parasol'); t.sprite(305,1.9,'boat'); t.sprite(295,-1.4,'cafe'); t.mix(290,320,['beachhut'],1.7,0.3);
-      t.sCurve(110,-7,-30); t.fill(290,400,'rock',1.2,0.4); t.far(330,400,'mountain2',35); t.hill(60,90); t.curve(60,5,-40); t.fill(400,520,'pine',1.8,0.3); t.mix(400,520,['cliff','rock'],1.6,0.15); t.far(400,520,'mountain',30);
-      t.sCurve(100,5,50); t.fill(520,620,'agave',1.4,0.35); t.fill(520,620,'rock',1.3,0.3,true); t.over(570,'bridge'); t.mix(520,620,['sheep'],1.6,0.1);
-      t.hill(50,-80); t.curve(80,-4,20); t.fill(620,700,'pine',1.6,0.3); t.far(620,700,'mountain2',40); t.straight(70); t.fill(700,760,'rock',1.3,0.3); t.mix(700,760,['cliff','cactus'],1.5,0.2); t.sprite(765,-1.6,'lighthouse'); t.sprite(750,1.6,'boat'); }
+  { id:'luzern', name:'Luzern → Sursee', emoji:'🇨🇭', desc:'Von der Kapellbrücke in Luzern vorbei an Chalets, Kühen und einer Luftseilbahn, dem Sempachersee entlang bis Sursee. Schneeberge inklusive.',
+    sky:['#4e9ae6','#dff0ff'], fog:'#e6f0fa', grass:['#5f9a3f','#579136'], rumble:['#b4b4b4','#a8a8a8'], road:['#5e5e62','#58585c'], lane:'#f4f4f4',
+    sea:true, mountains:0.75, snow:true, rivalSpeed:0.84, itemName:'Meeresfrüchte', towns:[[0,'Luzern'],[0.2,'Emmen'],[0.4,'Rothenburg'],[0.62,'Sempach'],[1,'Sursee']],
+    build(t){ const ch=['chalet','chalet2','house1','chalet'];
+      t.straight(40); t.sprite(14,-1.2,'kapellbruecke'); t.sprite(12,1.5,'church'); t.town(10,38,false,ch); t.sprite(24,1.3,'cafe'); t.mix(4,40,['lamp','flag_ch'],1.2,0.15); t.far(0,60,'alp',30);
+      t.curve(60,3,10); t.fill(40,100,'fir',1.6,0.35); t.mix(40,100,['cow','flag_ch'],1.4,0.15); t.sprite(70,1.25,'cablecar'); t.far(60,160,'alp',28);
+      t.straight(50); t.town(105,135,true,ch); t.sprite(120,1.3,'cafe'); t.fill(135,160,'fir',1.6,0.3); t.hill(50,40); t.curve(70,-4,20); t.fill(160,290,'fir',1.7,0.35); t.mix(160,290,['cow','chalet'],1.6,0.15); t.sprite(200,-1.25,'cablecar'); t.sprite(240,1.4,'alp'); t.over(250,'bridge');
+      t.sCurve(100,4,-30); t.fill(290,390,'fir2',1.5,0.35); t.mix(290,390,['cow','flag_ch'],1.3,0.15); t.town(330,360,true,ch); t.far(290,390,'alp',30);
+      t.hill(40,-40); t.straight(40); t.fill(390,430,'fir',1.6,0.3); t.sprite(410,1.25,'cablecar');
+      // Sempachersee rechts der Straße mit Booten, links Chalets und Kühe
+      t.curve(80,-3,-20); t.water(430,560,1); t.mix(430,560,['boat','parasol'],2.4,0.12,true); for(let i=432;i<560;i+=9) t.sprites.push({seg:Math.round(i*K),offset:2.3+rnd(0,1.6),name:'boat'});
+      t.fill(430,560,'fir',1.5,0.3,true); t.mix(430,560,['cow','chalet2','flag_ch'],1.6,0.2,true); t.town(520,550,true,ch);
+      t.sCurve(100,3,20); t.fill(560,660,'fir',1.6,0.35); t.mix(560,660,['cow','flag_ch'],1.4,0.15); t.sprite(600,-1.4,'alp'); t.far(560,760,'alp',32); t.over(640,'bridge');
+      t.hill(50,50); t.curve(60,-4,0); t.fill(660,760,'fir2',1.6,0.35); t.mix(660,760,['chalet','cow'],1.7,0.15); t.sprite(720,1.25,'cablecar');
+      t.straight(80); t.fill(760,830,'fir',1.6,0.3); t.town(800,840,true,ch); t.sprite(820,1.3,'cafe'); t.sprite(835,-1.9,'church'); t.mix(760,840,['flag_ch','lamp'],1.2,0.2); t.far(760,840,'alp',28); }
   },
   { id:'estrenc', name:'Santanyí → Es Trenc', emoji:'🏖️', desc:'Flaches Land mit Windmühlen und Mandelbäumen, dann Dünen und Strand.',
     sky:['#49a9ff','#d6efff'], fog:'#e3f0ff', grass:['#c9b36b','#bfa961'], rumble:['#fff','#e2231a'], road:['#7a7670','#737069'], lane:'#f4f4f4',
@@ -828,7 +906,7 @@ function buildOrangeTree(){ const o=SPR.olive; makeSprite('orangeTree',o.w,o.h,(
 
 // Streckenbauer
 class TrackBuilder{
-  constructor(){ this.segments=[]; this.sprites=[]; }
+  constructor(){ this.segments=[]; this.sprites=[]; this.waters=[]; }
   lastY(){ return this.segments.length? this.segments[this.segments.length-1].p2.world.y : 0; }
   addSegment(curve,y){
     const n=this.segments.length;
@@ -847,9 +925,10 @@ class TrackBuilder{
   hill(n,y){ this.addRoad(n/3|0,n/3|0,n/3|0,0,y); }
   sprite(seg,offset,name){ this.sprites.push({seg:Math.round(seg*K),offset,name}); }
   over(seg,name){ this.sprites.push({seg:Math.round(seg*K),offset:0,ox:-0.5,name}); } // Brücke/Bogen über der Straße
-  town(from,to,withChurch){ const houses=['house1','house2','house3','house4']; for(let s=Math.round(from*K);s<Math.round(to*K);s+=5){ for(const side of [-1,1]){ if(rnd(0,1)<0.8) this.sprites.push({seg:s,offset:side*(1.35+rnd(0,0.5)),name:houses[Math.floor(rnd(0,4))]}); } if(s%15===0) this.sprites.push({seg:s+2,offset:(s%30?1:-1)*1.2,name:'lamp'}); }
+  town(from,to,withChurch,houses){ houses=houses||['house1','house2','house3','house4']; for(let s=Math.round(from*K);s<Math.round(to*K);s+=5){ for(const side of [-1,1]){ if(rnd(0,1)<0.8) this.sprites.push({seg:s,offset:side*(1.35+rnd(0,0.5)),name:houses[Math.floor(rnd(0,4))]}); } if(s%15===0) this.sprites.push({seg:s+2,offset:(s%30?1:-1)*1.2,name:'lamp'}); }
     if(withChurch) this.sprites.push({seg:Math.round((from+to)/2*K),offset:-1.9,name:'church'}); }
   mix(from,to,names,dist,density,oneSide){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=Math.max(1,Math.round(1/density))){ if(rnd(0,1)<0.85){ const side=oneSide? -1 : (rnd(0,1)<0.5?-1:1); this.sprites.push({seg:s,offset:side*(dist+rnd(0,0.9)),name:names[Math.floor(rnd(0,names.length))]}); } } }
+  water(from,to,side){ for(let s=Math.round(from*K);s<Math.round(to*K);s++){ this.waters.push({seg:s,side}); } } // See neben der Straße
   far(from,to,name,every){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=every){ this.sprites.push({seg:s,offset:(rnd(0,1)<0.5?-1:1)*rnd(3.2,4.5),name}); } }
   fill(from,to,name,dist,density,oneSide){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=Math.max(1,Math.round(1/density))){ if(rnd(0,1)<0.85){ const side=oneSide? -1 : (rnd(0,1)<0.5?-1:1); this.sprites.push({seg:s,offset:side*(dist+rnd(0,0.8)),name}); } } }
 }
@@ -865,7 +944,8 @@ function buildTrack(stage){
   for(let i=finishIndex-30;i<finishIndex+60;i++){ if(!t.segments[i]) continue; t.segments[i].crowd=[];
     for(const side of [-1,1]){ const n = i<finishIndex? 2 : 1; for(let k=0;k<n;k++){ if(rnd(0,1)<0.8) t.segments[i].crowd.push({offset:side*(1.2+k*0.3+rnd(0,0.15)), kind:SEAFOOD[Math.floor(rnd(0,SEAFOOD.length))], phase:rnd(0,6), speed:rnd(4,7)}); } } }
   const segs=t.segments;
-  for(const s of t.sprites){ if(segs[s.seg]) segs[s.seg].sprites.push({offset:s.offset,ox:s.ox,sprite:SPR[s.name]}); }
+  for(const s of t.sprites){ if(!segs[s.seg]) continue; const anim = SPR[s.name+'_0'] ? [0,1,2,3].map(i=>SPR[s.name+'_'+i]).filter(Boolean) : null; segs[s.seg].sprites.push({offset:s.offset,ox:s.ox,sprite:anim?anim[0]:SPR[s.name],anim,phase:rnd(0,4)}); }
+  for(const w of t.waters){ if(segs[w.seg]) segs[w.seg].water=w.side; }
   // Sammelgegenstände
   for(let i=30;i<finishIndex-10;i+=rnd(24,40)|0){ const lane=[-0.6,-0.2,0.2,0.6][Math.floor(rnd(0,4))]; const kind=SEAFOOD[Math.floor(rnd(0,SEAFOOD.length))]; segs[i].items.push({offset:lane,sprite:SPR[kind[0]],kind,taken:false,phase:rnd(0,6)}); }
   // Boost-Felder: alle ~110 Segmente, 4 Segmente lang, in einer von drei Spuren
@@ -1146,6 +1226,12 @@ function drawSegment(w,lanes,x1,y1,w1,x2,y2,w2,fog,seg){
   const r1=w1/Math.max(6,2*lanes), r2=w2/Math.max(6,2*lanes), l1=w1/Math.max(32,8*lanes), l2=w2/Math.max(32,8*lanes);
   const grass = col===2? '#d9d9d9' : st.grass[col];
   ctx.fillStyle=grass; ctx.fillRect(0,y2,w,y1-y2);
+  if(seg.water){ // See auf einer Seite: Uferstreifen + Wasser bis zum Bildrand
+    const sd=seg.water, e1=x1+sd*(w1+r1), e2=x2+sd*(w2+r2), edge= sd>0 ? w : 0, s1=e1+sd*w1*0.5, s2=e2+sd*w2*0.5;
+    poly(e1,y1,s1,y1,s2,y2,e2,y2,'#d9cfa0');
+    const wg = col? '#3f8fd0':'#4596d6'; poly(s1,y1,edge,y1,edge,y2,s2,y2,wg);
+    if(fog>0.4){ ctx.fillStyle='rgba(255,255,255,0.35)'; const n=3; for(let i=0;i<n;i++){ const t=(i+0.5)/n; const lx=lerp(s1,edge,t), ly=lerp(y1,y2,0.5); ctx.fillRect(lx-4,ly,8,1); } }
+  }
   const rumble = col===2 ? '#333' : st.rumble[col];
   poly(x1-w1-r1,y1,x1-w1,y1,x2-w2,y2,x2-w2-r2,y2,rumble);
   poly(x1+w1+r1,y1,x1+w1,y1,x2+w2,y2,x2+w2+r2,y2,rumble);
@@ -1205,6 +1291,10 @@ function drawBackground(playerY){
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,horizon); ctx.clip(); // Hintergrund nie unter den Horizont zeichnen
   ctx.fillStyle=st.sea? '#7c8fa6' : '#6f8599'; ctx.beginPath(); ctx.moveTo(0,horizon+2);
   for(let px=0;px<=W;px+=8){ const i=Math.floor(((px/W)*64 + G.hillOffset*64 + 4096))%256; ctx.lineTo(px, horizon + lift - mh - bgMountains[i]*st.mountains*(H/640)); } ctx.lineTo(W,horizon+2); ctx.fill();
+  if(st.snow){ // Schneekuppen: dieselbe Bergform, nur oberhalb der Schneegrenze
+    const snowLine = horizon+lift-mh - 38*st.mountains*(H/640); // nur die Gipfel bekommen Schnee
+    ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,snowLine); ctx.clip(); ctx.fillStyle='#f7fbff'; ctx.beginPath(); ctx.moveTo(0,horizon+2);
+    for(let px=0;px<=W;px+=8){ const i=Math.floor(((px/W)*64 + G.hillOffset*64 + 4096))%256; ctx.lineTo(px, horizon + lift - mh - bgMountains[i]*st.mountains*(H/640)); } ctx.lineTo(W,horizon+2); ctx.fill(); ctx.restore(); }
   ctx.fillStyle=st.sea? '#92a8bd':'#88a08e'; ctx.beginPath(); ctx.moveTo(0,horizon+2);
   for(let px=0;px<=W;px+=8){ const i=Math.floor(((px/W)*64 + G.hillOffset*96 + 20 + 4096))%256; ctx.lineTo(px, horizon + lift*0.6 - mh*0.55 - bgHills[i]*(H/640)); } ctx.lineTo(W,horizon+2); ctx.fill();
   // Meer (Streifen am Horizont)
@@ -1242,7 +1332,7 @@ function render(){
   for(let n=DRAW_DIST-1;n>0;n--){
     const seg=segs[(baseSegment.index+n)%segs.length];
     if(seg.p1.camera.z<=cameraDepth) continue;
-    for(const sp of seg.sprites){ const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*sp.offset*ROAD_W*PW/2; drawSprite(sp.sprite,scale,sx,seg.p1.screen.y,(sp.ox!==undefined?sp.ox:(sp.offset<0?-1:0)),-1,seg.clip); }
+    for(const sp of seg.sprites){ const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*sp.offset*ROAD_W*PW/2; const img = sp.anim ? sp.anim[Math.floor(G.time*1.5+sp.phase)%sp.anim.length] : sp.sprite; drawSprite(img,scale,sx,seg.p1.screen.y,(sp.ox!==undefined?sp.ox:(sp.offset<0?-1:0)),-1,seg.clip); }
     for(const it of seg.items){ if(it.taken) continue; const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*it.offset*ROAD_W*PW/2; const bob=Math.sin(G.time*5+it.phase)*0.15; drawItem(it,scale*1.15,sx,seg.p1.screen.y-scale*W*ROAD_W*SPRITE_SCALE*22*(0.5+bob),seg.clip); }
     if(seg.crowd) for(const m of seg.crowd){ const scale=seg.p1.screen.scale; const sx=seg.p1.screen.x+scale*m.offset*ROAD_W*PW/2; drawCheer(m,scale*1.5,sx,seg.p1.screen.y,seg.clip); }
     // Fahrzeuge in diesem Segment
