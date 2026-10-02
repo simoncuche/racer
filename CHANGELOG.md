@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.15.1 (2026-10-02)
+
+Autowahl: dunkler Verlauf hinter den Buttons entfernt.
+
 ## 3.15.0 (2026-10-02)
 
 Avatar: 10 neue Kopfbedeckungen (Zylinder, Baskenmütze, Piratenhut, Kochmütze, Partyhut, Zauberhut, Wikingerhelm, Weihnachtsmütze, Kopfhörer, Fischerhut). Fahrer in der Autowahl größer.

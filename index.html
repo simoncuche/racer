@@ -29,7 +29,7 @@
   .btn.secondary{background:#e9eef5;box-shadow:0 5px 0 #8e99a8,0 8px 18px rgba(0,0,0,.4)}
   .btn.secondary:active{box-shadow:0 2px 0 #8e99a8}
   .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:720px}
-  .row.sticky{position:sticky;bottom:0;padding:12px 0 8px;background:linear-gradient(rgba(10,30,60,0),rgba(10,30,60,.9) 35%);z-index:2}
+  .row.sticky{position:sticky;bottom:0;padding:12px 0 8px;z-index:2}
   #drivers{flex-direction:column;align-items:stretch;max-width:560px}
   #drivers .card{flex:none;max-width:none;display:flex;align-items:center;gap:12px;text-align:left;padding:8px 12px 8px 8px}
   #drivers .card canvas{flex:none;width:clamp(96px,30vw,150px);height:auto;aspect-ratio:300/220;margin:0}
@@ -207,7 +207,7 @@
 
 <script>
 'use strict';
-const VERSION='3.15.0', VERSION_DATE='2026-10-02';
+const VERSION='3.15.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -2339,6 +2339,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.15.1','2026-10-02','Autowahl: dunkler Verlauf hinter den Buttons entfernt.'],
  ['3.15.0','2026-10-02','Avatar: 10 neue Kopfbedeckungen (Zylinder, Baskenmütze, Piratenhut, Kochmütze, Partyhut, Zauberhut, Wikingerhelm, Weihnachtsmütze, Kopfhörer, Fischerhut). Fahrer in der Autowahl größer.'],
  ['3.14.0','2026-10-02','Avatar: 8 neue Brillen (Katzenauge, Lesebrille, Monokel, Skibrille, Herz, Stern, 3D, Nerd), 6 Brauenformen, 6 neue Münder (breites Lachen, Vampir, Hasenzähne, Zahnlücke, Pfeifen, Jammern).'],
  ['3.13.1','2026-10-02','Konfigurator: Beim Auswählen bleibt die Liste an der gleichen Stelle, statt nach oben zu springen.'],
