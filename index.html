@@ -174,7 +174,7 @@
 
 <script>
 'use strict';
-const VERSION='3.7.0', VERSION_DATE='2026-10-02';
+const VERSION='3.8.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -852,9 +852,9 @@ function tire(x,cx,cy,tw,th,knobby){ // cx,cy = Mitte unten
   x.fillStyle='#2b2b2b'; x.beginPath(); x.roundRect(cx-tw*0.36,cy-th*0.92,tw*0.72,th*0.84,tw*0.18); x.fill();
   x.fillStyle='#111'; const rows=knobby?6:8; for(let i=0;i<rows;i++){ const yy=cy-th*0.88+i*(th*0.78/rows); if(knobby){ x.fillRect(cx-tw*0.36,yy,tw*0.3,th*0.06); x.fillRect(cx+tw*0.06,yy+th*0.03,tw*0.3,th*0.06); } else x.fillRect(cx-tw*0.34,yy,tw*0.68,th*0.025); }
 }
-function drawPlaneBack(x, cw, h, d, yaw=0){ // Doppeldecker von hinten, neigt sich beim Lenken in die Kurve
-  const w=260, steer=Math.sign(yaw)*Math.min(1,Math.abs(yaw)*2); const c=d.carColor, red='#d9262c';
-  x.save(); x.translate(cw/2, h-8); x.translate(0,-h*0.5); x.rotate(yaw*0.3); x.translate(0,h*0.5);
+function drawPlaneBack(x, cw, ch, d, yaw=0){ // Doppeldecker von hinten, neigt sich beim Lenken in die Kurve
+  const w=260, h=260, steer=Math.sign(yaw)*Math.min(1,Math.abs(yaw)*2); const c=d.carColor, red='#d9262c';
+  x.save(); x.translate(cw/2, ch-8); x.translate(0,-h*0.5); x.rotate(yaw*0.3); x.translate(0,h*0.5);
   // Propellerscheibe ganz vorne (hinter allem): Unschärfe-Kreis und drei Blätter
   x.fillStyle='rgba(90,90,90,0.28)'; x.beginPath(); x.ellipse(0,-h*0.6,w*0.2,h*0.2,0,0,7); x.fill();
   x.strokeStyle='rgba(50,50,50,0.55)'; x.lineWidth=5; for(let i=0;i<3;i++){ const a=i*Math.PI*2/3+0.4; x.beginPath(); x.moveTo(0,-h*0.6); x.lineTo(Math.cos(a)*w*0.19,-h*0.6+Math.sin(a)*h*0.19); x.stroke(); }
@@ -1146,7 +1146,7 @@ function drawGoat(x,w,h,f){ x.save(); x.translate(w/2,h);
   x.strokeStyle='#e2231a'; x.lineWidth=3; x.beginPath(); x.moveTo(-w*0.12,-h*0.62); x.quadraticCurveTo(0,-h*0.5,w*0.12,-h*0.62); x.stroke(); x.fillStyle='#d4a52a'; x.beginPath(); x.arc(0,-h*0.5,w*0.05,0,7); x.fill();
   x.restore(); }
 
-function buildCarSprites(){ for(const d of Object.values(DRIVERS)){ for(let s=-2;s<=2;s++) makeSprite('car_'+d.id+'_'+s,300,260,(x,w,h)=>drawVehicleBack(x,w,h,d,s/2)); } }
+function buildCarSprites(){ for(const d of Object.values(DRIVERS)){ const [cw,ch] = d.type==='plane' ? [380,300] : [300,260]; /* mehr Rand, damit die geneigten Flügel nicht abgeschnitten werden */ for(let s=-2;s<=2;s++) makeSprite('car_'+d.id+'_'+s,cw,ch,(x,w,h)=>drawVehicleBack(x,w,h,d,s/2)); } }
 function buildSprites(){
   makeSprite('palm',120,220,(x,w,h)=>drawPalm(x,w,h,1));
   makeSprite('palm2',120,250,(x,w,h)=>{x.translate(0,0);drawPalm(x,w,h,1.1);});
@@ -1372,6 +1372,22 @@ function crashFx(side, hard){ // Aufprall: Blitz, Druckwelle, Funken, Trümmer, 
   for(let i=0;i<14;i++) FX.add({x:cx+rnd(-c.w*0.5,c.w*0.5),y:c.bottom-rnd(0,c.h*0.2),vx:rnd(-160,160),vy:rnd(-110,-20),life:rnd(0.5,1.0),max:1.0,size:rnd(6,14),grow:true,color:'rgba(190,180,160,0.7)'});
   G.crashT=1.2; G.shake=hard?1.6:1.2; G.flashT=0.22; G.crashSide=side; G.playerX+=side*0.12; Audio.crash();
   if(navigator.vibrate){ try{ navigator.vibrate(hard?[90,40,130]:[80]); }catch(err){} } // Android; iPhone kennt keine Vibration im Browser
+}
+function planeCollisions(seg, startPosition){ // Doppeldecker: Randobjekte je nach Höhe, Brücken unter- oder überfliegen, Tunnel nur tief
+  const d=DRIVERS[G.driver]; if(G.crashT>0) return;
+  const bump=(side,hard,msg,alt)=>{ G.speed=G.maxSpeed/5; G.position=Math.max(0,startPosition-SEG_LEN*0.2); crashFx(side,hard); if(alt!==undefined) G.alt=alt; showToast(msg,0.9); };
+  if(seg.tunnel){ // in den Berg geflogen? Im Tunnel ist die Decke tief
+    if(seg.tunnelStart && G.alt>0.45){ bump(0,true,'In den Berg! ⛰️',0.3); return; }
+    G.alt=Math.min(G.alt,0.4);
+  }
+  for(const sp of seg.sprites){
+    if(sp.offset===0){ // Brücke/Tor über der Straße: tief darunter durch oder hoch darüber hinweg
+      if(sp.ox!==-0.5 || sp.sprite===SPR.archFinish || sp.sprite===SPR.santsalvador_big) continue;
+      if(G.alt>0.45 && G.alt<0.85){ bump(0,true,'Brücke! 🌉',0.35); return; } continue; }
+    const spriteW=sp.sprite.w*SPRITE_SCALE; if(!overlap(G.playerX,0.9,sp.offset+spriteW/2*(sp.offset>0?1:-1),spriteW)) continue;
+    const needAlt=clamp((sp.sprite.h-80)/300,0.25,0.85); // kleine Büsche: knapp drüber; Bäume und Häuser: hoch fliegen
+    if(G.alt<needAlt){ bump(G.playerX>0?-1:1,false,'Autsch! ✈️'); sp.hitT=0.9; G.hitSprite=sp; return; }
+  }
 }
 function startFx(){ // LOS!: Reifen qualmen, kurzer Ruck
   const c=G.carRect; if(!c) return; G.shake=Math.max(G.shake,0.5);
@@ -1605,9 +1621,10 @@ function update(dt){
     // Kollision mit Randobjekten
     for(const sp of playerSegment.sprites){ if(sp.offset===0) continue; const spriteW=sp.sprite.w*SPRITE_SCALE; if(overlap(G.playerX,0.6,sp.offset+spriteW/2*(sp.offset>0?1:-1),spriteW)){ G.speed=G.maxSpeed/6; G.position=Math.max(0,startPosition); crashFx(G.playerX>0?-1:1,false); sp.hitT=0.9; G.hitSprite=sp; showToast('Autsch! 🌵',0.8); break; } }
   }
-  // Kollision mit Verkehr/Rivale (nach dem Ziel nicht mehr)
-  if(!G.finished && !flying) for(const c of G.traffic){ const seg=findSegment(c.z); if(seg===playerSegment && G.speed>c.speed && overlap(G.playerX,0.5,c.offset,Math.min(0.45,c.sprite.w*SPRITE_SCALE*0.8))){ const side=(G.playerX<c.offset?-1:1); G.speed=c.speed*0.9; G.position=Math.max(0,startPosition-SEG_LEN*0.3); crashFx(side,true); c.kick=-side; c.kickT=0.9; c.baseOffset=clamp(c.baseOffset-side*0.25,-0.9,0.9); showToast('Krach! 💥',0.8); } }
-  if(!G.finished && !flying){ const r=G.rival; const seg=findSegment(r.z); if(seg===playerSegment && G.speed>r.speed && overlap(G.playerX,0.55,r.offset,0.4)){ const side=(G.playerX<r.offset?-1:1); G.speed=r.speed*0.9; crashFx(side,true); r.kick=-side; r.kickT=0.9; } }
+  if(flying && !G.finished) planeCollisions(playerSegment, startPosition);
+  // Kollision mit Verkehr/Rivale (nach dem Ziel nicht mehr); der Doppeldecker nur im Tiefflug
+  if(!G.finished && (!flying || G.alt<0.4)) for(const c of G.traffic){ const seg=findSegment(c.z); if(seg===playerSegment && G.speed>c.speed && overlap(G.playerX,0.5,c.offset,Math.min(0.45,c.sprite.w*SPRITE_SCALE*0.8))){ const side=(G.playerX<c.offset?-1:1); G.speed=c.speed*0.9; G.position=Math.max(0,startPosition-SEG_LEN*0.3); crashFx(side,true); c.kick=-side; c.kickT=0.9; c.baseOffset=clamp(c.baseOffset-side*0.25,-0.9,0.9); showToast('Krach! 💥',0.8); } }
+  if(!G.finished && (!flying || G.alt<0.4)){ const r=G.rival; const seg=findSegment(r.z); if(seg===playerSegment && G.speed>r.speed && overlap(G.playerX,0.55,r.offset,0.4)){ const side=(G.playerX<r.offset?-1:1); G.speed=r.speed*0.9; crashFx(side,true); r.kick=-side; r.kickT=0.9; } }
   // Gegenstände einsammeln
   if(low) for(const it of playerSegment.items){ if(!it.taken && Math.abs(G.playerX-it.offset)<0.35){ it.taken=true; G.items++; Audio.pickup(); showToast(it.kind[2]+' '+it.kind[1]+'! 😋',0.7); pickupFx(it.kind[2]); } }
   G.playerX=clamp(G.playerX,-2.2,2.2); G.speed=clamp(G.speed,0,G.maxSpeed+TOP_SPEED*(BOOST_F-1));
@@ -1814,7 +1831,7 @@ function render(){
   const carH = carW*spr.h/spr.w;
   const bottom = H*HORIZON() + pScale*camH()*H/2;
   const carX = W/2 + sv*carW*0.06; // Auto rutscht leicht in Lenkrichtung
-  const hover = d.type==='plane' ? carH*(0.45+G.alt*1.9)+Math.sin(G.time*2.2)*carH*0.06 : 0; // der Doppeldecker schwebt, Höhe wählbar
+  const hover = d.type==='plane' ? carH*(0.4+G.alt*1.65)+Math.sin(G.time*2.2)*carH*0.05 : 0; // der Doppeldecker schwebt, Höhe wählbar
   G.carRect={x:carX,bottom:bottom-hover,w:carW,h:carH};
   ctx.save(); ctx.translate(carX,bottom);
   if(hover){ const sh=1-G.alt*0.45; ctx.fillStyle='rgba(0,0,0,'+(0.3*(1-G.alt*0.5))+')'; ctx.beginPath(); ctx.ellipse(0,0,carW*0.4*sh,carH*0.08*sh,0,0,7); ctx.fill(); ctx.translate(0,-hover); ctx.scale(1,1+0.14*G.altV); }
@@ -2164,6 +2181,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.8.0','2026-10-02','Doppeldecker: Hindernisse hängen jetzt von der Flughöhe ab. Tief fliegen heißt Verkehr und Büsche treffen, hoch fliegen heißt Bäume und Häuser überfliegen. Brücken kann man unter- oder überfliegen, in den Tunnel muss man tief hinein. Flügel werden in Kurven nicht mehr abgeschnitten.'],
  ['3.7.0','2026-10-02','Ortstafeln doppelt so groß, der Name passt immer vollständig drauf. Vor dem Ziel in Artà: Altstadt mit Sandsteinhäusern, Pfarrkirche und der Wallfahrtskirche Sant Salvador auf dem Hügel mit Zypressentreppe.'],
  ['3.6.1','2026-10-02','Rangliste: Ergebnisse mit dem Doppeldecker wurden von den Firestore-Regeln abgelehnt und als „Kein Netz“ gemeldet. Regeln ergänzt, abgelehnte Ergebnisse werden jetzt klar von fehlendem Netz unterschieden. ✈️ in der Rangliste.'],
  ['3.6.0','2026-10-02','Doppeldecker: Neigung beim Lenken korrigiert, er kann jetzt hoch- und runterfliegen (▲▼-Buttons in der Mitte, Pfeiltasten oder Handy nach vorne/hinten kippen). Items und Turbo-Felder gibt es nur im Tiefflug. Das Geheimfahrzeug muss jedes Mal neu entdeckt werden.'],

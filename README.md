@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **3.7.0**, sie steht unten auf dem Startbildschirm. Ein Tipp auf die Versionszeile öffnet den Versionsverlauf; ausführlich steht er in `CHANGELOG.md`.
+Handy, am Tablet und am Computer. Aktuelle Version: **3.8.0**, sie steht unten auf dem Startbildschirm. Ein Tipp auf die Versionszeile öffnet den Versionsverlauf; ausführlich steht er in `CHANGELOG.md`.
 
 ## Spielen
 
@@ -64,11 +64,10 @@ Rangliste neben dem Namen; gespeichert und geteilt werden nur die Merkmale als k
 ### Geheimes drittes Fahrzeug
 
 Im Autowahl-Bildschirm ist ein **gelber Doppeldecker** versteckt. Wie man ihn hervorholt, wird hier
-nicht verraten, und er muss bei jedem Öffnen der Autowahl neu entdeckt werden. Er fliegt über alle
-Hindernisse und den ganzen Verkehr hinweg und wird auch neben der Straße nicht langsamer, schafft
+nicht verraten, und er muss bei jedem Öffnen der Autowahl neu entdeckt werden. Er wird auch neben der Straße nicht langsamer, schafft
 aber nur 60 km/h (Turbo 100). Beim Lenken legt er sich in die Kurve, mit den ▲▼-Buttons in der
 Mitte, den Pfeiltasten oder durch Kippen des Handys nach vorne und hinten steigt und sinkt er.
-Meeresfrüchte und Turbo-Felder erwischt er nur im Tiefflug.
+Meeresfrüchte und Turbo-Felder erwischt er nur im Tiefflug, dort trifft er aber auch Verkehr und Büsche. Bäume und Häuser muss er hoch überfliegen, Brücken kann er unter- oder überfliegen, in den Tunnel muss er tief hinein.
 
 ### Tempo und Boost
 

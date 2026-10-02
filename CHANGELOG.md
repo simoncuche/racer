@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.8.0 (2026-10-02)
+
+Doppeldecker: Hindernisse hängen jetzt von der Flughöhe ab. Tief fliegen heißt Verkehr und Büsche treffen, hoch fliegen heißt Bäume und Häuser überfliegen. Brücken kann man unter- oder überfliegen, in den Tunnel muss man tief hinein. Flügel werden in Kurven nicht mehr abgeschnitten.
+
 ## 3.7.0 (2026-10-02)
 
 Ortstafeln doppelt so groß, der Name passt immer vollständig drauf. Vor dem Ziel in Artà: Altstadt mit Sandsteinhäusern, Pfarrkirche und der Wallfahrtskirche Sant Salvador auf dem Hügel mit Zypressentreppe.
