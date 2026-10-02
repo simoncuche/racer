@@ -183,7 +183,7 @@
 
 <script>
 'use strict';
-const VERSION='3.10.1', VERSION_DATE='2026-10-02';
+const VERSION='3.10.2', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -211,6 +211,7 @@ const FIREBASE = { apiKey:"AIzaSyDb3q49oXxxdjVmSW2xGnsuUQYkZbJj-t4", projectId:"
 const SEASON='s2'; // Saison hochzählen = alle Ranglisten starten leer (alte Einträge bleiben unsichtbar in der Datenbank)
 const colKey=stageId=>stageId+'_'+SEASON;
 const Online = {
+  fetch(url,opts){ const ac=('AbortController' in window)? new AbortController() : null; const t=ac? setTimeout(()=>ac.abort(),12000) : 0; return fetch(url,Object.assign({},opts,ac?{signal:ac.signal}:{})).finally(()=>clearTimeout(t)); }, // 12 s Zeitlimit, damit nichts ewig lädt
   base(){ return `https://firestore.googleapis.com/v1/projects/${FIREBASE.projectId}/databases/(default)/documents`; },
   enc(e){ return { fields:{ name:{stringValue:String(e.name).slice(0,14)}, driver:{stringValue:e.driver}, stage:{stringValue:colKey(e.stage)}, time:{doubleValue:Number(e.time)}, items:{integerValue:String(e.items|0)}, boosts:{integerValue:String(e.boosts|0)}, won:{booleanValue:!!e.won}, score:{integerValue:String(e.score|0)}, date:{stringValue:e.date||''}, ts:{integerValue:String(e.id||Date.now())}, ...(e.avatar? {avatar:{stringValue:Avatar.encode(e.avatar).slice(0,2000)}} : {}) } }; },
   dec(doc){ const f=doc.fields||{}; const v=k=>{ const x=f[k]||{}; return x.stringValue ?? (x.integerValue!==undefined? Number(x.integerValue) : x.doubleValue ?? x.booleanValue); };
@@ -220,14 +221,14 @@ const Online = {
   async all(stageId){ // alle Einträge mit Avatar, je Spieler nur das beste Ergebnis, absteigend sortiert (kurz gecacht)
     const now=Date.now(); const c=Online._cache&&Online._cache[stageId]; if(c && now-c.t<4000) return c.list;
     const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}], limit:1000 } };
-    const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const r=await Online.fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); const best=new Map();
     for(const x of rows){ if(!x.document||!Online.hasAvatar(x.document)) continue; const e=Online.dec(x.document); const k=Online.pkey(e.name); const b=best.get(k); if(!b || e.score>b.score || (e.score===b.score && e.time<b.time)) best.set(k,e); }
     const list=[...best.values()].sort((a,b)=>b.score-a.score || a.time-b.time); (Online._cache=Online._cache||{})[stageId]={t:now,list}; return list; },
   async count(stageId){ return (await Online.all(stageId)).length; },
   async add(entry){ // schreibt ein Ergebnis; schlägt es fehl, landet es in der Warteschlange
     Online.lastError=null;
-    try{ const r=await fetch(`${Online.base()}/scores_${colKey(entry.stage)}?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Online.enc(entry))});
+    try{ const r=await Online.fetch(`${Online.base()}/scores_${colKey(entry.stage)}?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Online.enc(entry))});
       if(!r.ok){ Online.lastError='HTTP '+r.status; throw new Error('HTTP '+r.status); } if(Online._cache) delete Online._cache[entry.stage]; return true; }
     catch(err){ if(!Online.lastError) Online.lastError='net'; const q=store('queue')||[]; if(!q.some(e=>e.id===entry.id)) q.push(entry); store('queue',q.slice(-50)); return false; }
   },
@@ -1984,12 +1985,12 @@ function renderRanking(){
   box.innerHTML = `<div class="card stage" style="max-width:none;cursor:default;font-size:14px"><div class="title">${st.emoji} ${st.name}</div><div id="rankMode" style="opacity:.8;font-size:13px;margin:4px 0 6px">🌍 wird geladen …</div><div id="rank_${st.id}" style="opacity:.7">…</div></div>`;
   const want=rankStage;
   const TOPN=30, me=playerName();
-  Online.flush().then(()=>Online.all(st.id)).then(all=>{ if(rankStage!==want) return;
+  Online.flush().catch(()=>{}).then(()=>Online.all(st.id)).then(all=>{ if(rankStage!==want) return;
     const list=all.slice(0,TOPN); const myRank=all.findIndex(e=>Online.pkey(e.name)===Online.pkey(me))+1;
     const extra = (myRank>TOPN) ? { e:all[myRank-1], rank:myRank } : null;
     const el=$('rank_'+st.id); if(el) el.innerHTML=rankingTable(st.id,null,TOPN,list,extra);
     const m=$('rankMode'); if(m) m.textContent=!all.length? '🌍 Noch niemand hat diese Strecke gefahren' : (myRank? `🌍 Du bist auf Platz ${myRank} von ${all.length}` : `🌍 ${all.length} Spieler – jeder mit seinem besten Ergebnis`) + (all.length>TOPN? ` · die ${TOPN} Besten` : '');
-  }).catch(()=>{ if(rankStage!==want) return; const m=$('rankMode'); if(m) m.textContent='📵 Kein Netz – die Rangliste braucht eine Internetverbindung'; const el=$('rank_'+st.id); if(el) el.textContent='nicht verfügbar'; });
+  }).catch(err=>{ if(rankStage!==want) return; const why = err&&err.name==='AbortError' ? 'Zeitüberschreitung' : (err&&err.message)||'unbekannt'; const m=$('rankMode'); if(m) m.textContent='📵 Rangliste konnte nicht geladen werden ('+why+')'; const el=$('rank_'+st.id); if(el){ el.innerHTML='<button class="btn secondary" id="btnRankRetry" style="padding:8px 16px;font-size:15px;margin-top:6px">🔄 Nochmals versuchen</button>'; $('btnRankRetry').onclick=()=>renderRanking(); } });
 }
 // ---------- Fahrerkopf: Comic-Kopf im Spielstil aus wählbaren Merkmalen ----------
 const AV_SKIN=['#fde3c8','#f1c9a5','#d9a26f','#b97b4c','#8a5a3a','#5a3a26'];
@@ -2210,6 +2211,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.10.2','2026-10-02','Home-Screen-App: Rangliste robuster. Anfragen haben ein Zeitlimit, Fehler werden mit Ursache und „Nochmals versuchen“ angezeigt, die App prüft beim Öffnen auf eine neue Version.'],
  ['3.10.1','2026-10-02','Autowahl: breite, flache Karten untereinander mit Bild links und Text rechts – auch mit drei Fahrzeugen ohne Scrollen.'],
  ['3.10.0','2026-10-02','Rangliste: jeder Spieler nur einmal (sein bestes Ergebnis), Anzeige der 30 Besten, eigener Platz auch außerhalb der 30. Avatar-Vorschau bei der Namenseingabe größer.'],
  ['3.9.2','2026-10-02','Autowahl: Der Kopf des Fahrers ragt leicht über die Windschutzscheibe. Mit drei Fahrzeugen bleiben Zurück/Weiter unten immer sichtbar, die Karten werden kompakter.'],
@@ -2281,7 +2283,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   // Wenn ein neuer Service Worker übernimmt, die Seite einmal neu laden, damit sofort die neue Version läuft
   let hadController = !!navigator.serviceWorker.controller, reloaded=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(hadController && !reloaded){ reloaded=true; location.reload(); } hadController=true; });
-  navigator.serviceWorker.register('sw.js').then(reg=>{ reg.update().catch(()=>{}); }).catch(()=>{});
+  navigator.serviceWorker.register('sw.js').then(reg=>{ reg.update().catch(()=>{}); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); }); }).catch(()=>{});
 }
 </script>
 </body>

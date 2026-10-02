@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.10.2 (2026-10-02)
+
+Home-Screen-App: Rangliste robuster. Anfragen haben ein Zeitlimit, Fehler werden mit Ursache und „Nochmals versuchen“ angezeigt, die App prüft beim Öffnen auf eine neue Version.
+
 ## 3.10.1 (2026-10-02)
 
 Autowahl: breite, flache Karten untereinander mit Bild links und Text rechts – auch mit drei Fahrzeugen ohne Scrollen.
