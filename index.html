@@ -154,7 +154,7 @@
 
 <script>
 'use strict';
-const VERSION='2.5.1', VERSION_DATE='2026-10-02';
+const VERSION='2.6.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -919,17 +919,31 @@ const STAGES = [
     sky:['#4e9ae6','#dff0ff'], fog:'#e6f0fa', grass:['#5f9a3f','#579136'], rumble:['#b4b4b4','#a8a8a8'], road:['#5e5e62','#58585c'], lane:'#f4f4f4',
     sea:true, mountains:0.75, snow:true, rivalSpeed:0.84, items:'swiss', itemName:'Spezialitäten', itemIcon:'🧀', crowd:[['cow'],['marmot'],['cow'],['marmot']], towns:[[0,'Luzern'],[0.2,'Emmen'],[0.4,'Rothenburg'],[0.62,'Sempach'],[1,'Sursee']],
     build(t){ const ch=['chalet','chalet2','house1','chalet'];
+      // Luzern, flach am See
       t.straight(40); t.sprite(14,-1.2,'kapellbruecke'); t.sprite(12,1.5,'church'); t.town(10,38,false,ch); t.sprite(24,1.3,'cafe'); t.mix(4,40,['lamp','flag_ch'],1.2,0.15); t.far(0,60,'alp',30);
-      t.curve(60,3,10); t.fill(40,100,'fir',1.6,0.35); t.mix(40,100,['cow','flag_ch','marmot'],1.4,0.18); t.sprite(70,1.25,'cablecar'); t.far(60,160,'alp',28);
-      t.straight(50); t.town(105,135,true,ch); t.sprite(120,1.3,'cafe'); t.fill(135,160,'fir',1.6,0.3); t.hill(50,40); t.curve(70,-4,20); t.fill(160,290,'fir',1.7,0.35); t.mix(160,290,['cow','chalet','marmot'],1.6,0.18); t.sprite(200,-1.25,'cablecar'); t.sprite(240,1.4,'alp'); t.over(250,'bridge');
-      t.sCurve(100,4,-30); t.fill(290,390,'fir2',1.5,0.35); t.mix(290,390,['cow','flag_ch'],1.3,0.15); t.town(330,360,true,ch); t.far(290,390,'alp',30);
-      t.hill(40,-40); t.straight(40); t.fill(390,430,'fir',1.6,0.3); t.sprite(410,1.25,'cablecar');
-      // Sempachersee rechts der Straße mit Booten, links Chalets und Kühe
-      t.curve(80,-3,-20); t.water(430,560,1); t.mix(430,560,['boat','parasol'],2.4,0.12,true); for(let i=432;i<560;i+=9) t.sprites.push({seg:Math.round(i*K),offset:2.3+rnd(0,1.6),name:'boat'});
-      t.fill(430,560,'fir',1.5,0.3,true); t.mix(430,560,['cow','chalet2','flag_ch'],1.6,0.2,true); t.town(520,550,true,ch);
-      t.sCurve(100,3,20); t.fill(560,660,'fir',1.6,0.35); t.mix(560,660,['cow','flag_ch','marmot'],1.4,0.18); t.sprite(600,-1.4,'alp'); t.far(560,760,'alp',32); t.over(640,'bridge');
-      t.hill(50,50); t.curve(60,-4,0); t.fill(660,760,'fir2',1.6,0.35); t.mix(660,760,['chalet','cow','marmot'],1.7,0.18); t.sprite(720,1.25,'cablecar');
-      t.straight(80); t.fill(760,830,'fir',1.6,0.3); t.town(800,840,true,ch); t.sprite(820,1.3,'cafe'); t.sprite(835,-1.9,'church'); t.mix(760,840,['flag_ch','lamp'],1.2,0.2); t.far(760,840,'alp',28); }
+      // Erster Anstieg mit Kurven, Seilbahn am Hang
+      t.curve(60,3,60); t.fill(40,100,'fir',1.6,0.35); t.mix(40,100,['cow','flag_ch','marmot'],1.4,0.18); t.sprite(70,1.25,'cablecar'); t.far(60,160,'alp',28);
+      t.sCurve(80,4,70); t.fill(100,180,'fir',1.7,0.3); t.town(130,160,true,ch); t.sprite(150,1.3,'cafe'); t.mix(100,180,['cow','marmot'],1.5,0.15);
+      // Abfahrt ins Tal
+      t.curve(60,-4,-90); t.fill(180,240,'fir',1.6,0.35); t.mix(180,240,['marmot','rock'],1.4,0.2); t.sprite(200,-1.25,'cablecar');
+      t.hill(40,-60); t.fill(240,280,'fir2',1.5,0.3);
+      // Viadukt über das Tal
+      t.straight(50); t.viaduct(282,328); t.far(280,330,'alp',25);
+      // Serpentinen hinauf zum Pass
+      t.curve(50,6,80); t.fill(330,380,'fir2',1.5,0.3); t.mix(330,380,['rock','marmot'],1.4,0.25); t.sprite(360,1.4,'alp');
+      t.curve(50,-6,80); t.fill(380,430,'rock',1.3,0.3); t.mix(380,430,['marmot','fir2'],1.5,0.25); t.sprite(410,1.25,'cablecar');
+      t.curve(50,6,60); t.fill(430,480,'rock',1.3,0.35); t.far(380,500,'alp',22); t.sprite(470,-1.4,'alp'); t.town(455,475,true,ch);
+      // Passhöhe und lange Abfahrt zum Sempachersee
+      t.straight(30); t.mix(480,510,['rock','flag_ch'],1.3,0.3); t.over(495,'bridge');
+      t.curve(60,-4,-120); t.fill(510,570,'fir2',1.5,0.3); t.mix(510,570,['marmot','rock'],1.4,0.2);
+      t.sCurve(80,-5,-100); t.fill(570,650,'fir',1.6,0.35); t.mix(570,650,['cow','chalet2'],1.6,0.15); t.sprite(600,-1.4,'alp');
+      // Sempachersee rechts, Dorf Sempach links
+      t.curve(80,-3,-20); t.water(650,770,1); for(let i=652;i<770;i+=9) t.sprites.push({seg:Math.round(i*K),offset:2.3+rnd(0,1.6),name:'boat'});
+      t.fill(650,770,'fir',1.5,0.3,true); t.mix(650,770,['cow','chalet2','flag_ch'],1.6,0.2,true); t.town(730,760,true,ch);
+      // Hügel hinauf, hinunter und nochmals hinauf nach Sursee
+      t.hill(50,90); t.fill(770,820,'fir',1.6,0.35); t.mix(770,820,['cow','marmot'],1.4,0.18); t.sprite(800,1.25,'cablecar');
+      t.hill(50,-80); t.fill(820,870,'fir2',1.6,0.3); t.mix(820,870,['chalet','cow'],1.7,0.15); t.over(850,'bridge');
+      t.curve(60,3,80); t.fill(870,930,'fir',1.6,0.3); t.town(900,935,true,ch); t.sprite(915,1.3,'cafe'); t.sprite(930,-1.9,'church'); t.mix(870,935,['flag_ch','lamp'],1.2,0.2); t.far(870,940,'alp',26); }
   },
   { id:'estrenc', name:'Santanyí → Es Trenc', emoji:'🏖️', desc:'Flaches Land mit Windmühlen und Mandelbäumen, dann Dünen und Strand.',
     sky:['#49a9ff','#d6efff'], fog:'#e3f0ff', grass:['#c9b36b','#bfa961'], rumble:['#fff','#e2231a'], road:['#7a7670','#737069'], lane:'#f4f4f4',
@@ -948,7 +962,7 @@ function buildOrangeTree(){ const o=SPR.olive; makeSprite('orangeTree',o.w,o.h,(
 
 // Streckenbauer
 class TrackBuilder{
-  constructor(){ this.segments=[]; this.sprites=[]; this.waters=[]; }
+  constructor(){ this.segments=[]; this.sprites=[]; this.waters=[]; this.viaducts=[]; }
   lastY(){ return this.segments.length? this.segments[this.segments.length-1].p2.world.y : 0; }
   addSegment(curve,y){
     const n=this.segments.length;
@@ -971,6 +985,7 @@ class TrackBuilder{
     if(withChurch) this.sprites.push({seg:Math.round((from+to)/2*K),offset:-1.9,name:'church'}); }
   mix(from,to,names,dist,density,oneSide){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=Math.max(1,Math.round(1/density))){ if(rnd(0,1)<0.85){ const side=oneSide? -1 : (rnd(0,1)<0.5?-1:1); this.sprites.push({seg:s,offset:side*(dist+rnd(0,0.9)),name:names[Math.floor(rnd(0,names.length))]}); } } }
   water(from,to,side){ for(let s=Math.round(from*K);s<Math.round(to*K);s++){ this.waters.push({seg:s,side}); } } // See neben der Straße
+  viaduct(from,to){ for(let s=Math.round(from*K);s<Math.round(to*K);s++){ this.viaducts.push(s); } } // Straße auf einer Brücke über ein Tal
   far(from,to,name,every){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=every){ this.sprites.push({seg:s,offset:(rnd(0,1)<0.5?-1:1)*rnd(3.2,4.5),name}); } }
   fill(from,to,name,dist,density,oneSide){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=Math.max(1,Math.round(1/density))){ if(rnd(0,1)<0.85){ const side=oneSide? -1 : (rnd(0,1)<0.5?-1:1); this.sprites.push({seg:s,offset:side*(dist+rnd(0,0.8)),name}); } } }
 }
@@ -990,6 +1005,7 @@ function buildTrack(stage){
   const segs=t.segments;
   for(const s of t.sprites){ if(!segs[s.seg]) continue; const anim = SPR[s.name+'_0'] ? [0,1,2,3].map(i=>SPR[s.name+'_'+i]).filter(Boolean) : null; segs[s.seg].sprites.push({offset:s.offset,ox:s.ox,sprite:anim?anim[0]:SPR[s.name],anim,phase:rnd(0,4)}); }
   for(const w of t.waters){ if(segs[w.seg]) segs[w.seg].water=w.side; }
+  for(const v of t.viaducts){ if(segs[v]) segs[v].viaduct=true; }
   // Sammelgegenstände
   for(let i=30;i<finishIndex-10;i+=rnd(24,40)|0){ const lane=[-0.6,-0.2,0.2,0.6][Math.floor(rnd(0,4))]; const kind=itemSet[Math.floor(rnd(0,itemSet.length))]; segs[i].items.push({offset:lane,sprite:SPR[kind[0]],kind,taken:false,phase:rnd(0,6)}); }
   // Boost-Felder: alle ~110 Segmente, 4 Segmente lang, in einer von drei Spuren
@@ -1277,7 +1293,13 @@ function drawSegment(w,lanes,x1,y1,w1,x2,y2,w2,fog,seg){
     const wg = col? '#3f8fd0':'#4596d6'; poly(s1,y1,edge,y1,edge,y2,s2,y2,wg);
     if(fog>0.4){ ctx.fillStyle='rgba(255,255,255,0.35)'; const n=3; for(let i=0;i<n;i++){ const t=(i+0.5)/n; const lx=lerp(s1,edge,t), ly=lerp(y1,y2,0.5); ctx.fillRect(lx-4,ly,8,1); } }
   }
-  const rumble = col===2 ? '#333' : st.rumble[col];
+  if(seg.viaduct){ // Viadukt: tiefes Tal zu beiden Seiten, Brüstung aus Stein mit Pfosten
+    ctx.fillStyle = col? '#3d6b3a':'#43733f'; ctx.fillRect(0,y2,w,y1-y2);
+    const riverY=lerp(y1,y2,0.5); ctx.fillStyle='rgba(90,160,210,0.35)'; ctx.fillRect(0,riverY,x1-w1*2.2,Math.max(1,(y1-y2)*0.25)); ctx.fillRect(x1+w1*2.2,riverY,w,Math.max(1,(y1-y2)*0.25));
+    poly(x1-w1-r1*1.6,y1,x1-w1,y1,x2-w2,y2,x2-w2-r2*1.6,y2, col? '#b9ad98':'#a89c86'); poly(x1+w1+r1*1.6,y1,x1+w1,y1,x2+w2,y2,x2+w2+r2*1.6,y2, col? '#b9ad98':'#a89c86');
+    if(seg.index%2===0){ const ph=Math.max(2,w1*0.06); ctx.fillStyle='#e8e2d4'; ctx.fillRect(x1-w1-r1*1.3-ph*0.3,y1-ph*1.6,ph*0.6,ph*1.6); ctx.fillRect(x1+w1+r1*1.3-ph*0.3,y1-ph*1.6,ph*0.6,ph*1.6); }
+  }
+  const rumble = col===2 ? '#333' : seg.viaduct ? (col? '#8a7e6a':'#7d7260') : st.rumble[col];
   poly(x1-w1-r1,y1,x1-w1,y1,x2-w2,y2,x2-w2-r2,y2,rumble);
   poly(x1+w1+r1,y1,x1+w1,y1,x2+w2,y2,x2+w2+r2,y2,rumble);
   const road = col===2 ? (seg.index%2?'#222':'#eee') : st.road[col];
