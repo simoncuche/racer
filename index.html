@@ -166,7 +166,7 @@
 
 <script>
 'use strict';
-const VERSION='3.0.0', VERSION_DATE='2026-10-02';
+const VERSION='3.0.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -845,11 +845,12 @@ function drawVehicleFront(x, w, h, d){
     x.fillStyle='#f4f4f4'; x.beginPath(); x.roundRect(-w*0.1,-h*0.13,w*0.2,h*0.06,3); x.fill(); x.fillStyle='#222'; x.font=`bold ${Math.floor(h*0.04)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('SX 158',0,-h*0.1);
     x.fillStyle='#d4a52a'; x.beginPath(); x.moveTo(0,-h*0.49); x.lineTo(w*0.02,-h*0.45); x.lineTo(-w*0.02,-h*0.45); x.fill();
     // Windschutzscheibe
-    const gl=x.createLinearGradient(0,-h*0.75,0,-h*0.52); gl.addColorStop(0,'rgba(200,235,255,0.9)'); gl.addColorStop(1,'rgba(150,200,240,0.6)'); x.fillStyle=gl;
+    x.fillStyle='#1a1a1a'; x.beginPath(); x.moveTo(-w*0.32,-h*0.52); x.lineTo(-w*0.26,-h*0.74); x.lineTo(w*0.26,-h*0.74); x.lineTo(w*0.32,-h*0.52); x.fill(); // dunkler Innenraum
+    drawKidFront(x,0,-h*0.6,w*0.2,d); // Fahrer sitzt hinter der Scheibe, der Kopf schaut oben heraus
+    const gl=x.createLinearGradient(0,-h*0.75,0,-h*0.52); gl.addColorStop(0,'rgba(200,235,255,0.55)'); gl.addColorStop(1,'rgba(150,200,240,0.5)'); x.fillStyle=gl;
     x.beginPath(); x.moveTo(-w*0.32,-h*0.52); x.lineTo(-w*0.26,-h*0.74); x.lineTo(w*0.26,-h*0.74); x.lineTo(w*0.32,-h*0.52); x.fill(); x.strokeStyle=shade(c,0.7); x.lineWidth=3; x.stroke();
     x.fillStyle=c; x.beginPath(); x.roundRect(-w*0.42,-h*0.66,w*0.08,h*0.05,3); x.fill(); x.beginPath(); x.roundRect(w*0.34,-h*0.66,w*0.08,h*0.05,3); x.fill();
-    drawKidFront(x,0,-h*0.6,w*0.2,d);
-    x.fillStyle='rgba(255,255,255,0.25)'; x.beginPath(); x.moveTo(-w*0.22,-h*0.73); x.lineTo(-w*0.12,-h*0.73); x.lineTo(-w*0.24,-h*0.54); x.lineTo(-w*0.3,-h*0.54); x.fill();
+    x.fillStyle='rgba(255,255,255,0.3)'; x.beginPath(); x.moveTo(-w*0.22,-h*0.73); x.lineTo(-w*0.12,-h*0.73); x.lineTo(-w*0.24,-h*0.54); x.lineTo(-w*0.3,-h*0.54); x.fill();
   } else {
     tire(x,-w*0.4,0,w*0.2,h*0.38,true); tire(x,w*0.4,0,w*0.2,h*0.38,true);
     x.fillStyle='#1d1d1d'; for(const fx of [-w*0.4,w*0.4]){ x.beginPath(); x.ellipse(fx,-h*0.36,w*0.14,h*0.08,0,Math.PI,0); x.fill(); }
@@ -866,8 +867,10 @@ function drawVehicleFront(x, w, h, d){
     // Überrollbügel, Lichtleiste, Scheibe
     x.strokeStyle='#111'; x.lineWidth=6; x.beginPath(); x.moveTo(-w*0.34,-h*0.6); x.lineTo(-w*0.32,-h*0.92); x.lineTo(w*0.32,-h*0.92); x.lineTo(w*0.34,-h*0.6); x.stroke();
     x.fillStyle='#2a2a2a'; x.beginPath(); x.roundRect(-w*0.28,-h*0.96,w*0.56,h*0.05,3); x.fill(); x.fillStyle='#fff6c0'; for(let i=0;i<7;i++) x.fillRect(-w*0.25+i*w*0.075,-h*0.95,w*0.05,h*0.03);
-    x.fillStyle='rgba(170,215,250,0.6)'; x.fillRect(-w*0.3,-h*0.82,w*0.6,h*0.22); x.strokeStyle='#111'; x.lineWidth=3; x.strokeRect(-w*0.3,-h*0.82,w*0.6,h*0.22);
-    drawKidFront(x,0,-h*0.66,w*0.2,d);
+    x.fillStyle='#1a1a1a'; x.fillRect(-w*0.3,-h*0.82,w*0.6,h*0.22); // dunkler Innenraum
+    drawKidFront(x,0,-h*0.66,w*0.2,d); // Fahrer hinter der Scheibe
+    x.fillStyle='rgba(170,215,250,0.5)'; x.fillRect(-w*0.3,-h*0.82,w*0.6,h*0.22); x.strokeStyle='#111'; x.lineWidth=3; x.strokeRect(-w*0.3,-h*0.82,w*0.6,h*0.22);
+    x.fillStyle='rgba(255,255,255,0.25)'; x.beginPath(); x.moveTo(-w*0.26,-h*0.81); x.lineTo(-w*0.16,-h*0.81); x.lineTo(-w*0.22,-h*0.61); x.lineTo(-w*0.29,-h*0.61); x.fill();
     x.fillStyle='#111'; x.beginPath(); x.roundRect(-w*0.44,-h*0.74,w*0.08,h*0.05,2); x.fill(); x.beginPath(); x.roundRect(w*0.36,-h*0.74,w*0.08,h*0.05,2); x.fill();
   }
   x.restore();
