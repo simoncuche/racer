@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **2.9.0**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **3.0.0**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -56,10 +56,12 @@ funktionieren beide.
 | Schwäche | Wird im Gelände sehr langsam | 5 km/h langsamer |
 
 Vor der Autowahl gibt jedes Kind seinen Namen ein; zuletzt benutzte Namen stehen als Schnellauswahl bereit.
-Dazu kann ein Foto vom eigenen Kopf gewählt werden (Kamera oder Galerie, verschieben und zoomen). Es wird im
-Browser auf 30×30 Pixel verkleinert, auf fünf Farbstufen reduziert und rund ausgeschnitten, so dass der Kopf im
-Stil der Spielgrafik im Auto sitzt, im HUD, im Ergebnis und in der Rangliste neben dem Namen erscheint. Das Foto
-verlässt das Gerät nur als dieses winzige Pixelbild (wenige Kilobyte) im Ranglisten-Eintrag. Das jeweils andere Auto fährt als Gegner mit.
+Dazu kann ein Foto vom eigenen Kopf gewählt werden (Kamera oder Galerie, verschieben und zoomen). Das Spiel
+schätzt daraus im Browser die Merkmale (Hautton, Haarfarbe, Haarlänge, Bart, Schnauz, Cap) und zeichnet einen
+Comic-Kopf aus denselben Bausteinen wie die Spielfiguren; ein kleiner Editor erlaubt, alles anzupassen (Frisur,
+Farben, Gesichtsform, Bart, Schnauz, Brille, Cap oder Hut). Der Kopf sitzt dann im Auto, steht im HUD, im Ergebnis
+und in der Rangliste neben dem Namen. Das Foto selbst verlässt das Gerät nie, gespeichert werden nur die Merkmale
+als kurzer Text. Das jeweils andere Auto fährt als Gegner mit.
 
 ### Tempo und Boost
 
