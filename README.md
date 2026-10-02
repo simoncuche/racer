@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **3.3.0**, sie steht unten auf dem Startbildschirm. Ein Tipp auf die Versionszeile öffnet den Versionsverlauf; ausführlich steht er in `CHANGELOG.md`.
+Handy, am Tablet und am Computer. Aktuelle Version: **3.4.0**, sie steht unten auf dem Startbildschirm. Ein Tipp auf die Versionszeile öffnet den Versionsverlauf; ausführlich steht er in `CHANGELOG.md`.
 
 ## Spielen
 
@@ -60,6 +60,14 @@ Dazu gestaltet jedes Kind seinen Avatar im Konfigurator: zwölf Frisuren, elf Ha
 Gesichtsformen, Augenfarbe, Augenbrauen, vier Münder, sechs Schnäuze, sechs Bärte, fünf Brillen, acht Kopfbedeckungen,
 Sommersprossen und Ohrringe, dazu ein Zufallsknopf. Der Kopf sitzt dann im Auto, steht im HUD, im Ergebnis und in der
 Rangliste neben dem Namen; gespeichert und geteilt werden nur die Merkmale als kurzer Text. Das jeweils andere Auto fährt als Gegner mit.
+
+### Geheimes drittes Fahrzeug
+
+Wer das Handy im Autowahl-Bildschirm kräftig schüttelt (am Computer: fünfmal schnell auf die
+Überschrift tippen), schaltet den **gelben Doppeldecker** frei. Er fliegt über alle Hindernisse und
+den ganzen Verkehr hinweg und wird auch neben der Straße nicht langsamer, schafft aber nur 60 km/h
+(Turbo 100). Beim Lenken legt er sich in die Kurve, der Pilot trägt einen flatternden Schal. Einmal
+freigeschaltet bleibt er auf dem Gerät gespeichert.
 
 ### Tempo und Boost
 

@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.4.0 (2026-10-02)
+
+Geheimes drittes Fahrzeug: Handy im Autowahl-Bildschirm schütteln. Ein gelber Doppeldecker, der über alle Hindernisse und den Verkehr hinwegfliegt, aber nur 60 km/h schafft (Turbo 100).
+
 ## 3.3.0 (2026-10-02)
 
 Tunnel führt durch einen Berg mit Felsportal und Gewölbe. Crashs mit Sprung, Rutscher, Trümmern, Rauch und wackelndem Gegner. Versionsverlauf im Spiel.

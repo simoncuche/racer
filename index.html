@@ -34,6 +34,10 @@
   .card canvas{width:auto;max-width:100%;height:clamp(90px,16vh,170px);display:block;margin:0 auto;border-radius:12px;background:linear-gradient(#bfe3ff,#e9d9b7)}
   .card .title{font-weight:700;font-size:clamp(16px,4.5vw,20px);margin-top:8px}
   .card .desc{font-size:12px;opacity:.85;margin-top:3px;line-height:1.3}
+  .card.secret{background:linear-gradient(160deg,rgba(90,70,10,.85),rgba(20,30,60,.85));box-shadow:0 0 18px rgba(255,207,63,.35)}
+  .card.secret .title::after{content:' ✈️'}
+  @keyframes reveal{0%{transform:scale(.3) rotate(-20deg);opacity:0}70%{transform:scale(1.08) rotate(3deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+  .card.reveal{animation:reveal .8s cubic-bezier(.2,.8,.3,1.2)}
   .card input{width:100%;margin-top:6px;padding:6px 10px;border-radius:10px;border:2px solid rgba(255,255,255,.3);background:rgba(0,0,0,.3);color:#fff;font-size:16px;text-align:center;user-select:text;-webkit-user-select:text}
   .stage{flex:1 1 180px;max-width:240px;text-align:left}
   .stage .best{color:var(--accent);font-size:13px;margin-top:4px}
@@ -169,7 +173,7 @@
 
 <script>
 'use strict';
-const VERSION='3.3.0', VERSION_DATE='2026-10-02';
+const VERSION='3.4.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -240,7 +244,25 @@ const DRIVERS = {
   boy: { id:'boy', defName:'Pilot', carName:'Blauer Jeep', carColor:'#1e8fe0', dark:'#0f5a94', light:'#6cc0ff',
          hair:'#5a3a22', shirt:'#2a5bd7', shirtPrint:'#ffffff', skin:'#f1c9a5', type:'jeep',
          desc:'Blauer Jeep, 105 km/h. Lenkt direkter, ist etwas kleiner und kommt auch neben der Straße gut voran.',
-         maxSpeedF:105/110, offRoadF:0.6, accelF:1.25, grip:1.15, size:0.92 }
+         maxSpeedF:105/110, offRoadF:0.6, accelF:1.25, grip:1.15, size:0.92 },
+  plane:{ id:'plane', defName:'Pilot', carName:'Gelber Doppeldecker', carColor:'#f5c518', dark:'#b58900', light:'#ffe066',
+         hair:'#5a3a22', shirt:'#7a4a22', shirtPrint:'#ffffff', skin:'#f1c9a5', type:'plane', secret:true,
+         desc:'Geheimes Fahrzeug! Nur 60 km/h (Turbo 100), fliegt dafür über alle Hindernisse und den Verkehr hinweg.',
+         maxSpeedF:60/110, offRoadF:1.0, accelF:0.7, grip:0.9, size:1.2 }
+};
+const Plane = { // Easter Egg: Doppeldecker, freigeschaltet durch Schütteln im Autowahl-Bildschirm
+  unlocked(){ return !!store('plane'); },
+  unlock(){ const fresh=!Plane.unlocked(); store('plane',true); if(G.state==='select'){ renderDrivers(); const card=document.querySelector('.card[data-id="plane"]'); if(card){ card.classList.add('reveal'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); } }
+    if(fresh){ Audio.init(); Audio.resume(); Audio.fanfare(true); menuToast('✈️ Geheimes Fahrzeug freigeschaltet!',2500); } }
+};
+function menuToast(text,ms){ const t=$('toast'); t.textContent=text; t.style.opacity=1; clearTimeout(menuToast.h); menuToast.h=setTimeout(()=>{ t.style.opacity=0; },ms||2000); }
+const Shake = { hits:0, last:0, listening:false,
+  onMotion(e){ if(G.state!=='select') return; const a=e.acceleration&&e.acceleration.x!==null ? e.acceleration : null; const g=e.accelerationIncludingGravity;
+    let strong=false; if(a){ strong=Math.hypot(a.x||0,a.y||0,a.z||0)>14; } else if(g){ strong=Math.abs(Math.hypot(g.x||0,g.y||0,g.z||0)-9.81)>13; }
+    const now=performance.now(); if(now-Shake.last>1500) Shake.hits=0;
+    if(strong && now-Shake.last>150){ Shake.hits++; Shake.last=now; if(Shake.hits>=3){ Shake.hits=0; Plane.unlock(); } } },
+  arm(){ if(Shake.listening || !window.DeviceMotionEvent) return; const go=()=>{ if(!Shake.listening){ window.addEventListener('devicemotion',Shake.onMotion); Shake.listening=true; } };
+    try{ if(typeof DeviceMotionEvent.requestPermission==='function') DeviceMotionEvent.requestPermission().then(r=>{ if(r==='granted') go(); }).catch(()=>{}); else go(); }catch(err){} }
 };
 function playerName(){ return (store('player_name')||'').trim() || 'Spieler'; }
 function driverName(d){ return d===DRIVERS[G.driver] ? playerName() : d.carName; } // Spieler heißt wie eingegeben, der Gegner nach seinem Auto
@@ -758,7 +780,38 @@ function tire(x,cx,cy,tw,th,knobby){ // cx,cy = Mitte unten
   x.fillStyle='#2b2b2b'; x.beginPath(); x.roundRect(cx-tw*0.36,cy-th*0.92,tw*0.72,th*0.84,tw*0.18); x.fill();
   x.fillStyle='#111'; const rows=knobby?6:8; for(let i=0;i<rows;i++){ const yy=cy-th*0.88+i*(th*0.78/rows); if(knobby){ x.fillRect(cx-tw*0.36,yy,tw*0.3,th*0.06); x.fillRect(cx+tw*0.06,yy+th*0.03,tw*0.3,th*0.06); } else x.fillRect(cx-tw*0.34,yy,tw*0.68,th*0.025); }
 }
+function drawPlaneBack(x, cw, h, d, yaw=0){ // Doppeldecker von hinten, neigt sich beim Lenken in die Kurve
+  const w=260, steer=Math.sign(yaw)*Math.min(1,Math.abs(yaw)*2); const c=d.carColor, red='#d9262c';
+  x.save(); x.translate(cw/2, h-8); x.translate(0,-h*0.5); x.rotate(-yaw*0.3); x.translate(0,h*0.5);
+  // Propellerscheibe ganz vorne (hinter allem): Unschärfe-Kreis und drei Blätter
+  x.fillStyle='rgba(90,90,90,0.28)'; x.beginPath(); x.ellipse(0,-h*0.6,w*0.2,h*0.2,0,0,7); x.fill();
+  x.strokeStyle='rgba(50,50,50,0.55)'; x.lineWidth=5; for(let i=0;i<3;i++){ const a=i*Math.PI*2/3+0.4; x.beginPath(); x.moveTo(0,-h*0.6); x.lineTo(Math.cos(a)*w*0.19,-h*0.6+Math.sin(a)*h*0.19); x.stroke(); }
+  const wing=(y)=>{ const g=x.createLinearGradient(0,y,0,y+h*0.08); g.addColorStop(0,shade(c,1.2)); g.addColorStop(1,shade(c,0.75)); x.fillStyle=g; x.beginPath(); x.roundRect(-w*0.49,y,w*0.98,h*0.08,4); x.fill();
+    x.fillStyle=red; x.fillRect(-w*0.49,y,w*0.09,h*0.08); x.fillRect(w*0.4,y,w*0.09,h*0.08); x.fillStyle='rgba(255,255,255,0.35)'; x.fillRect(-w*0.4,y+2,w*0.8,2); };
+  wing(-h*0.96); // oberer Flügel
+  // Streben zwischen den Flügeln
+  x.strokeStyle='#4a3a2a'; x.lineWidth=3; for(const sx of [-0.42,-0.3,0.3,0.42]){ x.beginPath(); x.moveTo(w*sx,-h*0.88); x.lineTo(w*sx,-h*0.42); x.stroke(); }
+  x.beginPath(); x.moveTo(-w*0.42,-h*0.88); x.lineTo(-w*0.3,-h*0.42); x.moveTo(w*0.42,-h*0.88); x.lineTo(w*0.3,-h*0.42); x.stroke();
+  x.beginPath(); x.moveTo(-w*0.12,-h*0.88); x.lineTo(-w*0.12,-h*0.76); x.moveTo(w*0.12,-h*0.88); x.lineTo(w*0.12,-h*0.76); x.stroke();
+  wing(-h*0.42); // unterer Flügel
+  // Rumpf
+  const bg=x.createLinearGradient(-w*0.15,0,w*0.15,0); bg.addColorStop(0,shade(c,0.7)); bg.addColorStop(0.4,shade(c,1.15)); bg.addColorStop(1,shade(c,0.8)); x.fillStyle=bg;
+  x.beginPath(); x.roundRect(-w*0.15,-h*0.8,w*0.3,h*0.66,[w*0.15,w*0.15,w*0.07,w*0.07]); x.fill();
+  x.fillStyle='#1a1a1a'; x.beginPath(); x.ellipse(0,-h*0.6,w*0.12,h*0.08,0,0,7); x.fill(); // Cockpitöffnung
+  // Pilot mit Schal
+  drawKidBack(x, 0, -h*0.5, w*0.11, d, steer);
+  x.fillStyle='#f3f0e6'; x.save(); x.translate(-w*0.04,-h*0.6); x.rotate(0.5+steer*0.2); x.beginPath(); x.roundRect(-w*0.02,0,w*0.04,h*0.16,4); x.fill(); x.restore();
+  // Höhenleitwerk und Seitenleitwerk (hinten, dem Betrachter am nächsten)
+  x.fillStyle=shade(c,1.05); x.beginPath(); x.roundRect(-w*0.3,-h*0.25,w*0.6,h*0.06,4); x.fill(); x.fillStyle=red; x.fillRect(-w*0.3,-h*0.25,w*0.07,h*0.06); x.fillRect(w*0.23,-h*0.25,w*0.07,h*0.06);
+  x.fillStyle=red; x.beginPath(); x.moveTo(-w*0.035,-h*0.14); x.lineTo(-w*0.035,-h*0.4); x.quadraticCurveTo(-w*0.02,-h*0.46,w*0.03,-h*0.45); x.lineTo(w*0.045,-h*0.14); x.closePath(); x.fill();
+  x.fillStyle='#fff'; x.font=`bold ${Math.floor(h*0.05)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('SX',0,-h*0.3);
+  // Fahrwerk
+  x.strokeStyle='#333'; x.lineWidth=4; x.beginPath(); x.moveTo(-w*0.08,-h*0.16); x.lineTo(-w*0.14,-h*0.04); x.moveTo(w*0.08,-h*0.16); x.lineTo(w*0.14,-h*0.04); x.moveTo(-w*0.14,-h*0.06); x.lineTo(w*0.14,-h*0.06); x.stroke();
+  tire(x,-w*0.15,0,w*0.07,h*0.12,false); tire(x,w*0.15,0,w*0.07,h*0.12,false);
+  x.restore();
+}
 function drawVehicleBack(x, w, h, d, yaw=0){
+  if(d.type==='plane') return drawPlaneBack(x,w,h,d,yaw);
   // yaw -1..1: das Auto bleibt von hinten zu sehen, nur die eingeschlagenen Vorderräder lugen auf der Kurvenseite leicht hervor
   const steer=Math.sign(yaw)*Math.min(1,Math.abs(yaw)*2), a=Math.abs(yaw), dir=Math.sign(yaw);
   const cw=w; w=260;
@@ -865,9 +918,39 @@ function drawKidBack(x, cx, cy, s, d, steer=0){
   } else { x.fillStyle=d.skin; x.fillRect(cx-s*0.42,cy-s*1.25,s*0.84,s*0.3); x.fillStyle=d.hair; x.fillRect(cx-s*0.6,cy-s*1.75,s*1.2,s*0.5); x.beginPath(); x.arc(cx,cy-s*1.7,s*0.6,Math.PI,0); x.fill(); }
 }
 // Fahrzeug von vorne (Auswahlbildschirm) mit Gesicht
+function drawPlaneFront(x, w, h, d){ // Doppeldecker von vorne mit Pilot im Cockpit und laufendem Propeller
+  const c=d.carColor, red='#d9262c';
+  x.fillStyle='rgba(0,0,0,0.25)'; x.beginPath(); x.ellipse(0,0,w*0.5,h*0.06,0,0,7); x.fill();
+  // Leitwerk hinten (lugt über den Rumpf)
+  x.fillStyle=red; x.beginPath(); x.moveTo(-w*0.04,-h*0.9); x.lineTo(-w*0.02,-h*1.18); x.quadraticCurveTo(0,-h*1.22,w*0.04,-h*1.18); x.lineTo(w*0.05,-h*0.9); x.closePath(); x.fill();
+  x.fillStyle=shade(c,0.9); x.beginPath(); x.roundRect(-w*0.3,-h*0.95,w*0.6,h*0.06,4); x.fill();
+  const wing=(y)=>{ const g=x.createLinearGradient(0,y,0,y+h*0.09); g.addColorStop(0,shade(c,1.2)); g.addColorStop(1,shade(c,0.75)); x.fillStyle=g; x.beginPath(); x.roundRect(-w*0.62,y,w*1.24,h*0.09,5); x.fill();
+    x.fillStyle=red; x.fillRect(-w*0.62,y,w*0.1,h*0.09); x.fillRect(w*0.52,y,w*0.1,h*0.09); x.fillStyle='rgba(255,255,255,0.35)'; x.fillRect(-w*0.5,y+2,w*1.0,2); };
+  // Rumpf mit Cockpit
+  const bg=x.createLinearGradient(-w*0.2,0,w*0.2,0); bg.addColorStop(0,shade(c,0.7)); bg.addColorStop(0.45,shade(c,1.15)); bg.addColorStop(1,shade(c,0.8)); x.fillStyle=bg;
+  x.beginPath(); x.roundRect(-w*0.2,-h*1.0,w*0.4,h*0.8,[w*0.1,w*0.1,w*0.12,w*0.12]); x.fill();
+  x.fillStyle='#1a1a1a'; x.beginPath(); x.ellipse(0,-h*0.88,w*0.15,h*0.1,0,0,7); x.fill();
+  drawKidFront(x,0,-h*0.78,w*0.16,d);
+  x.fillStyle='rgba(200,235,255,0.5)'; x.beginPath(); x.moveTo(-w*0.14,-h*0.9); x.lineTo(-w*0.1,-h*1.03); x.lineTo(w*0.1,-h*1.03); x.lineTo(w*0.14,-h*0.9); x.closePath(); x.fill(); x.strokeStyle='#333'; x.lineWidth=2; x.stroke();
+  // Flügel und Streben
+  wing(-h*1.34);
+  x.strokeStyle='#4a3a2a'; x.lineWidth=3; for(const sx of [-0.48,-0.36,0.36,0.48]){ x.beginPath(); x.moveTo(w*sx,-h*1.25); x.lineTo(w*sx,-h*0.52); x.stroke(); }
+  x.beginPath(); x.moveTo(-w*0.48,-h*1.25); x.lineTo(-w*0.36,-h*0.52); x.moveTo(w*0.48,-h*1.25); x.lineTo(w*0.36,-h*0.52); x.moveTo(-w*0.16,-h*1.25); x.lineTo(-w*0.16,-h*1.0); x.moveTo(w*0.16,-h*1.25); x.lineTo(w*0.16,-h*1.0); x.stroke();
+  wing(-h*0.52);
+  // Fahrwerk
+  x.strokeStyle='#333'; x.lineWidth=4; x.beginPath(); x.moveTo(-w*0.1,-h*0.2); x.lineTo(-w*0.2,-h*0.05); x.moveTo(w*0.1,-h*0.2); x.lineTo(w*0.2,-h*0.05); x.moveTo(-w*0.2,-h*0.07); x.lineTo(w*0.2,-h*0.07); x.stroke();
+  tire(x,-w*0.21,0,w*0.09,h*0.16,false); tire(x,w*0.21,0,w*0.09,h*0.16,false);
+  // Sternmotor und Propeller
+  x.fillStyle='#2b2b2b'; x.beginPath(); x.arc(0,-h*0.42,w*0.19,0,7); x.fill();
+  x.fillStyle='#444'; for(let i=0;i<7;i++){ const a=i/7*Math.PI*2; x.beginPath(); x.arc(Math.cos(a)*w*0.12,-h*0.42+Math.sin(a)*w*0.12,w*0.045,0,7); x.fill(); }
+  x.fillStyle='rgba(140,140,140,0.3)'; x.beginPath(); x.arc(0,-h*0.42,w*0.36,0,7); x.fill();
+  x.save(); x.translate(0,-h*0.42); x.rotate(0.35); x.fillStyle='#5a4632'; for(const r of [0,Math.PI]){ x.save(); x.rotate(r); x.beginPath(); x.ellipse(w*0.19,0,w*0.19,w*0.035,0,0,7); x.fill(); x.restore(); } x.restore();
+  x.fillStyle='#ccc'; x.beginPath(); x.arc(0,-h*0.42,w*0.045,0,7); x.fill(); x.fillStyle=red; x.beginPath(); x.arc(0,-h*0.42,w*0.025,0,7); x.fill();
+}
 function drawVehicleFront(x, w, h, d){
   x.save(); x.translate(w/2,h*0.96); x.scale(0.7,0.7);
   const c=d.carColor;
+  if(d.type==='plane'){ drawPlaneFront(x,w,h,d); x.restore(); return; }
   const bodyGrad=(y0,y1)=>{ const g=x.createLinearGradient(0,y0,0,y1); g.addColorStop(0,shade(c,1.25)); g.addColorStop(0.4,c); g.addColorStop(1,shade(c,0.62)); return g; };
   x.fillStyle='rgba(0,0,0,0.25)'; x.beginPath(); x.ellipse(0,0,w*0.44,h*0.06,0,0,7); x.fill();
   if(d.type==='sport'){
@@ -1392,7 +1475,7 @@ function update(dt){
   // Lenken
   G.playerX += dx*clamp(inp.steer,-1,1);
   G.steerVis += (clamp(inp.steer,-1,1)-G.steerVis)*Math.min(1,dt*7);
-  if(Math.abs(G.steerVis)>0.55 && speedPct>0.6 && G.carRect){ const c=G.carRect; for(const side of [-1,1]) FX.add({x:c.x+side*c.w*0.36,y:c.bottom-c.h*0.02,vx:rnd(-30,30)-G.steerVis*60,vy:rnd(10,50),life:rnd(0.3,0.6),max:0.6,size:rnd(4,8),grow:true,color:'rgba(230,230,230,0.5)'}); }
+  if(Math.abs(G.steerVis)>0.55 && speedPct>0.6 && G.carRect && d.type!=='plane'){ const c=G.carRect; for(const side of [-1,1]) FX.add({x:c.x+side*c.w*0.36,y:c.bottom-c.h*0.02,vx:rnd(-30,30)-G.steerVis*60,vy:rnd(10,50),life:rnd(0.3,0.6),max:0.6,size:rnd(4,8),grow:true,color:'rgba(230,230,230,0.5)'}); }
   G.playerX -= dx*speedPct*playerSegment.curve*0.1;
   // Gas-Automatik: beschleunigt von allein bis KMH_MAX, mit Boost kurzzeitig bis KMH_BOOST
   const accel=G.maxSpeed/5*d.accelF;
@@ -1406,15 +1489,16 @@ function update(dt){
   if(!G.finished && playerSegment.boost && Math.abs(G.playerX-playerSegment.boost.offset)<0.42 && G.boostT<BOOST_SEC-0.5){ G.boostT=BOOST_SEC; G.boosts++; showToast('TURBO! 🔥',0.9); Audio.boost(); }
   // Neben der Straße
   const offRoadLimit=G.maxSpeed*d.offRoadF;
-  if((G.playerX<-1||G.playerX>1)){
+  const flying = d.type==='plane';
+  if((G.playerX<-1||G.playerX>1) && !flying){
     if(G.speed>offRoadLimit && G.boostT<=0) G.speed += -G.maxSpeed*(d.type==='jeep'?0.5:1.0)*dt;
     G.shake=Math.max(G.shake,0.6);
     // Kollision mit Randobjekten
     for(const sp of playerSegment.sprites){ if(sp.offset===0) continue; const spriteW=sp.sprite.w*SPRITE_SCALE; if(overlap(G.playerX,0.6,sp.offset+spriteW/2*(sp.offset>0?1:-1),spriteW)){ G.speed=G.maxSpeed/6; G.position=Math.max(0,startPosition); crashFx(G.playerX>0?-1:1,false); sp.hitT=0.9; G.hitSprite=sp; showToast('Autsch! 🌵',0.8); break; } }
   }
   // Kollision mit Verkehr/Rivale (nach dem Ziel nicht mehr)
-  if(!G.finished) for(const c of G.traffic){ const seg=findSegment(c.z); if(seg===playerSegment && G.speed>c.speed && overlap(G.playerX,0.5,c.offset,Math.min(0.45,c.sprite.w*SPRITE_SCALE*0.8))){ const side=(G.playerX<c.offset?-1:1); G.speed=c.speed*0.9; G.position=Math.max(0,startPosition-SEG_LEN*0.3); crashFx(side,true); c.kick=-side; c.kickT=0.9; c.baseOffset=clamp(c.baseOffset-side*0.25,-0.9,0.9); showToast('Krach! 💥',0.8); } }
-  if(!G.finished){ const r=G.rival; const seg=findSegment(r.z); if(seg===playerSegment && G.speed>r.speed && overlap(G.playerX,0.55,r.offset,0.4)){ const side=(G.playerX<r.offset?-1:1); G.speed=r.speed*0.9; crashFx(side,true); r.kick=-side; r.kickT=0.9; } }
+  if(!G.finished && !flying) for(const c of G.traffic){ const seg=findSegment(c.z); if(seg===playerSegment && G.speed>c.speed && overlap(G.playerX,0.5,c.offset,Math.min(0.45,c.sprite.w*SPRITE_SCALE*0.8))){ const side=(G.playerX<c.offset?-1:1); G.speed=c.speed*0.9; G.position=Math.max(0,startPosition-SEG_LEN*0.3); crashFx(side,true); c.kick=-side; c.kickT=0.9; c.baseOffset=clamp(c.baseOffset-side*0.25,-0.9,0.9); showToast('Krach! 💥',0.8); } }
+  if(!G.finished && !flying){ const r=G.rival; const seg=findSegment(r.z); if(seg===playerSegment && G.speed>r.speed && overlap(G.playerX,0.55,r.offset,0.4)){ const side=(G.playerX<r.offset?-1:1); G.speed=r.speed*0.9; crashFx(side,true); r.kick=-side; r.kickT=0.9; } }
   // Gegenstände einsammeln
   for(const it of playerSegment.items){ if(!it.taken && Math.abs(G.playerX-it.offset)<0.35){ it.taken=true; G.items++; Audio.pickup(); showToast(it.kind[2]+' '+it.kind[1]+'! 😋',0.7); pickupFx(it.kind[2]); } }
   G.playerX=clamp(G.playerX,-2.2,2.2); G.speed=clamp(G.speed,0,G.maxSpeed+TOP_SPEED*(BOOST_F-1));
@@ -1618,8 +1702,10 @@ function render(){
   const carH = carW*spr.h/spr.w;
   const bottom = H*HORIZON() + pScale*camH()*H/2;
   const carX = W/2 + sv*carW*0.06; // Auto rutscht leicht in Lenkrichtung
-  G.carRect={x:carX,bottom,w:carW,h:carH};
+  const hover = d.type==='plane' ? carH*0.7+Math.sin(G.time*2.2)*carH*0.06 : 0; // der Doppeldecker schwebt über der Straße
+  G.carRect={x:carX,bottom:bottom-hover,w:carW,h:carH};
   ctx.save(); ctx.translate(carX,bottom);
+  if(hover){ ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0,0,carW*0.4,carH*0.08,0,0,7); ctx.fill(); ctx.translate(0,-hover); }
   if(G.crashT>0){ const t=1.2-G.crashT, k=clamp(G.crashT/1.2,0,1); // Hüpfer, Rutscher zur Seite, Stauchung beim Aufsetzen, Wackeln
     const hop = t<0.3 ? Math.sin(t/0.3*Math.PI)*carH*0.22 : t<0.5 ? Math.sin((t-0.3)/0.2*Math.PI)*carH*0.07 : 0;
     const squash = (t>=0.28&&t<0.38) ? 0.9 : 1;
@@ -1894,8 +1980,10 @@ function renderName(){
 function saveName(){ const n=$('nameInput').value.trim().slice(0,14); if(!n) return false; store('player_name',n); if(Avatar.pending){ Avatar.save(n,Avatar.pending); Avatar.pending=null; } const names=(store('names')||[]).filter(x=>x!==n); names.unshift(n); store('names',names.slice(0,6)); return true; }
 function renderDrivers(){
   const box=$('drivers'); box.innerHTML='';
+  if(DRIVERS[G.driver].secret && !Plane.unlocked()){ G.driver='girl'; }
   for(const d of Object.values(DRIVERS)){
-    const card=document.createElement('div'); card.className='card'+(G.driver===d.id?' sel':''); card.dataset.id=d.id;
+    if(d.secret && !Plane.unlocked()) continue;
+    const card=document.createElement('div'); card.className='card'+(G.driver===d.id?' sel':'')+(d.secret?' secret':''); card.dataset.id=d.id;
     d.avatar=Avatar.paramsFor(playerName()); const c=mkCanvas(300,220); drawVehicleFront(c.getContext('2d'),300,220,d);
     card.appendChild(c); const t=document.createElement('div'); t.className='title'; t.textContent=d.carName; card.appendChild(t); const ds=document.createElement('div'); ds.className='desc'; ds.textContent=d.desc; card.appendChild(ds);
     card.addEventListener('click',()=>{ G.driver=d.id; store('driver',d.id); renderDrivers(); });
@@ -1913,7 +2001,8 @@ function renderStages(){
 }
 $('btnStart').onclick=()=>{ Audio.init(); Audio.resume(); setState('name'); };
 $('btnNameBack').onclick=()=>setState('title');
-$('btnNameNext').onclick=()=>{ if(saveName()) setState('select'); else $('nameInput').focus(); };
+$('btnNameNext').onclick=()=>{ if(saveName()){ Shake.arm(); setState('select'); } else $('nameInput').focus(); };
+$('selectTitle').addEventListener('click',()=>{ const now=performance.now(); if(now-($('selectTitle')._t||0)>2000) $('selectTitle')._n=0; $('selectTitle')._t=now; $('selectTitle')._n=($('selectTitle')._n||0)+1; if($('selectTitle')._n>=5){ $('selectTitle')._n=0; Plane.unlock(); } });
 $('nameInput').addEventListener('input',()=>{ const ok=!!$('nameInput').value.trim(); $('btnNameNext').disabled=!ok; $('btnNameNext').style.opacity=ok?1:.5; for(const ch of $('nameChips').querySelectorAll('.chip')) ch.classList.toggle('sel',ch.textContent===$('nameInput').value); });
 $('nameInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('btnNameNext').click(); } });
 $('nameInput').addEventListener('input',()=>{ if(!Avatar.editing) Avatar.drawPreview(); });
@@ -1963,6 +2052,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.4.0','2026-10-02','Geheimes drittes Fahrzeug: Handy im Autowahl-Bildschirm schütteln. Ein gelber Doppeldecker, der über alle Hindernisse und den Verkehr hinwegfliegt, aber nur 60 km/h schafft (Turbo 100).'],
  ['3.3.0','2026-10-02','Tunnel führt durch einen Berg mit Felsportal und Gewölbe. Crashs mit Sprung, Rutscher, Trümmern, Rauch und wackelndem Gegner. Versionsverlauf im Spiel.'],
  ['3.2.0','2026-10-02','Avatar-Konfigurator mit Frisuren, Bärten, Schnäuzen, Brillen und Kopfbedeckungen statt Foto. Lange Kapellbrücke über die Reuss. Weniger Publikum im Ziel.'],
  ['3.1.2','2026-10-02','Namenseingabe: kein Durchscheinen bei offener Tastatur, keine Kontakt-Vorschläge.'],
