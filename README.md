@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **2.4.0**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **2.5.0**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -93,7 +93,7 @@ einsammelt, bekommt Funken, ein aufsteigendes „+1“ und einen Eintrag im Erge
 ### Punkte und gemeinsame Rangliste
 
 Jedes Rennen ergibt eine Punktzahl: Zeitbonus `(200 − Sekunden) × 20`, dazu 80 Punkte pro
-Meeresfrucht, 50 pro Turbo und 500 für den Sieg gegen das andere Kind. Die Punkte laufen im HUD live
+Meeresfrucht und 50 pro Turbo. Das andere Auto fährt nur als Verkehr mit, das Duell zählt nicht. Die Punkte laufen im HUD live
 mit.
 
 Die Rangliste ist **online und für alle Handys gemeinsam**: Jedes Ergebnis wird in eine Firebase-Firestore-
@@ -101,8 +101,8 @@ Datenbank geschrieben (Projekt `mallorca-ralley`, eine Sammlung pro Strecke und 
 `scores_arta_s2`). Die Konstante `SEASON` in `index.html` hochzählen leert alle Ranglisten, die alten Einträge
 bleiben in der Datenbank, werden aber nicht mehr angezeigt. Über „Rangliste“ im Startbildschirm wählt man zuerst eine der drei Strecken und sieht dann deren 25 beste
 Punktzahlen aller Spieler; „Zurück“ führt zur Streckenwahl und von dort zum Start. Die Rangliste ist auch
-aus jeder Streckenkarte und aus dem Ergebnis erreichbar. Das Ergebnis
-nennt den eigenen Platz in der gemeinsamen Liste. Ohne Netz werden Ergebnisse in einer
+aus jeder Streckenkarte und aus dem Ergebnis erreichbar. Direkt nach der Zieldurchfahrt steht groß der eigene Platz in der gemeinsamen Rangliste („Platz 3 von 27“), und in der
+vollen Liste ist der eigene Eintrag hervorgehoben, auch wenn er außerhalb der Top 25 liegt. Ohne Netz werden Ergebnisse in einer
 Warteschlange gespeichert und beim nächsten Start nachgereicht. Eine separate lokale Rangliste gibt es
 nicht, ohne Netz zeigt der Ranglisten-Bildschirm nur einen Hinweis.
 
