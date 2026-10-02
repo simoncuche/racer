@@ -140,7 +140,7 @@
 
 <script>
 'use strict';
-const VERSION='2.2.0', VERSION_DATE='2026-10-02';
+const VERSION='2.2.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -159,7 +159,8 @@ const rnd = (a,b)=>a+RNG.fn()*(b-a);
 const easeIn = (a,b,p)=>a+(b-a)*Math.pow(p,2);
 const easeOut = (a,b,p)=>a+(b-a)*(1-Math.pow(1-p,2));
 const easeInOut = (a,b,p)=>a+(b-a)*((-Math.cos(p*Math.PI)/2)+0.5);
-function calcScore(time,items,boosts,won){ return Math.max(0,Math.round((200-time)*20)) + items*100 + (boosts||0)*50 + (won?500:0); }
+const ITEM_POINTS=80; // Punkte pro Meeresfrucht
+function calcScore(time,items,boosts,won){ return Math.max(0,Math.round((200-time)*20)) + items*ITEM_POINTS + (boosts||0)*50 + (won?500:0); }
 function fmtTime(t){const m=Math.floor(t/60),s=Math.floor(t%60),d=Math.floor((t*10)%10);return `${m}:${s<10?'0':''}${s}.${d}`;}
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem('mr_'+k));localStorage.setItem('mr_'+k,JSON.stringify(v));}catch(e){return null;}}
 // Gemeinsame Online-Rangliste über Firebase Firestore (REST, ohne Bibliothek). Pro Strecke eine Sammlung scores_<strecke>.
@@ -1281,7 +1282,7 @@ function showResult(){
     if(!ok){ el.innerHTML='📵 Kein Netz – das Ergebnis wird nachgereicht, sobald wieder Netz da ist'; return; }
     try{ const [r,top]=await Promise.all([Online.rankOf(entry),Online.top(G.stage.id,5)]); el.innerHTML=`🌍 Platz ${r} in der gemeinsamen Rangliste`; $('onlineTop').innerHTML=rankingTable(G.stage.id,entry.id,5,top.map(t=>Object.assign(t,{ hl: t.name===entry.name && t.score===entry.score && t.time===entry.time }))); }
     catch(e){ el.innerHTML='🌍 Ergebnis gespeichert'; } })();
-  $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${driverName(r)}</td><td>${rivalTime}</td></tr><tr><td>🦐 ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · Meeresfrüchte ${G.items*100} · Turbos ${G.boosts*50}${won?' · Sieg 500':''}</td></tr>`
+  $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${driverName(r)}</td><td>${rivalTime}</td></tr><tr><td>🦐 ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · Meeresfrüchte ${G.items*ITEM_POINTS} · Turbos ${G.boosts*50}${won?' · Sieg 500':''}</td></tr>`
     + '<tr><td colspan="2" style="text-align:center;padding-top:6px;font-weight:700" id="onlineRank">🌍 Rangliste wird aktualisiert …</td></tr>'
     + '<tr><td colspan="2" style="text-align:center;padding-top:2px" id="onlineTop"></td></tr>';
   if(won){ const wins=store('wins_'+G.stage.id)||0; store('wins_'+G.stage.id,wins+1); }

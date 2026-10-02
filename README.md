@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **2.2.0**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **2.2.1**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -92,7 +92,7 @@ einsammelt, bekommt Funken, ein aufsteigendes „+1“ und einen Eintrag im Erge
 
 ### Punkte und gemeinsame Rangliste
 
-Jedes Rennen ergibt eine Punktzahl: Zeitbonus `(200 − Sekunden) × 20`, dazu 100 Punkte pro
+Jedes Rennen ergibt eine Punktzahl: Zeitbonus `(200 − Sekunden) × 20`, dazu 80 Punkte pro
 Meeresfrucht, 50 pro Turbo und 500 für den Sieg gegen das andere Kind. Die Punkte laufen im HUD live
 mit.
 
