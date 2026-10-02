@@ -211,7 +211,7 @@
 
 <script>
 'use strict';
-const VERSION='3.16.0', VERSION_DATE='2026-10-02';
+const VERSION='3.16.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -1060,20 +1060,20 @@ function drawVehicleBack(x, w, h, d, yaw=0){
   }
   x.restore();
 }
-function drawKidBack(x, cx, cy, s, d, steer=0){
+function drawKidBack(x, cx, cy, s, d, steer=0){ const sk=(d.avatar&&AV_SKIN[d.avatar.skin])||d.skin; // Hautfarbe wie beim Avatar
   cx += steer*s*0.25; // Kind lehnt sich in die Kurve
   x.fillStyle=d.shirt; x.beginPath(); x.roundRect(cx-s*0.95,cy-s*0.75,s*1.9,s*0.9,s*0.45); x.fill();
   x.fillStyle='rgba(0,0,0,0.12)'; x.fillRect(cx-s*0.95,cy-s*0.1,s*1.9,s*0.25);
-  x.fillStyle=d.skin; x.fillRect(cx-s*1.05,cy-s*0.6,s*0.3,s*0.5); x.fillRect(cx+s*0.75,cy-s*0.6,s*0.3,s*0.5);
-  x.fillStyle=d.skin; x.fillRect(cx-s*0.2,cy-s*1.05,s*0.4,s*0.4);
-  x.fillStyle=d.skin; x.beginPath(); x.arc(cx-s*0.6,cy-s*1.45,s*0.14,0,7); x.fill(); x.beginPath(); x.arc(cx+s*0.6,cy-s*1.45,s*0.14,0,7); x.fill();
+  x.fillStyle=sk; x.fillRect(cx-s*1.05,cy-s*0.6,s*0.3,s*0.5); x.fillRect(cx+s*0.75,cy-s*0.6,s*0.3,s*0.5);
+  x.fillStyle=sk; x.fillRect(cx-s*0.2,cy-s*1.05,s*0.4,s*0.4);
+  x.fillStyle=sk; x.beginPath(); x.arc(cx-s*0.6,cy-s*1.45,s*0.14,0,7); x.fill(); x.beginPath(); x.arc(cx+s*0.6,cy-s*1.45,s*0.14,0,7); x.fill();
   if(d.avatar){ drawAvatarHead(x,cx,cy-s*1.5,s,d.avatar,'back'); return; }
   x.fillStyle=d.hair; x.beginPath(); x.arc(cx,cy-s*1.5,s*0.6,0,7); x.fill();
   if(d.id==='girl'){
     for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; x.beginPath(); x.arc(cx+Math.cos(a)*s*0.52,cy-s*1.5+Math.sin(a)*s*0.52,s*0.2,0,7); x.fill(); }
     x.beginPath(); x.arc(cx,cy-s*2.05,s*0.3,0,7); x.fill();
     x.fillStyle='#e0527a'; x.beginPath(); x.arc(cx+s*0.2,cy-s*1.95,s*0.1,0,7); x.fill();
-  } else { x.fillStyle=d.skin; x.fillRect(cx-s*0.42,cy-s*1.25,s*0.84,s*0.3); x.fillStyle=d.hair; x.fillRect(cx-s*0.6,cy-s*1.75,s*1.2,s*0.5); x.beginPath(); x.arc(cx,cy-s*1.7,s*0.6,Math.PI,0); x.fill(); }
+  } else { x.fillStyle=sk; x.fillRect(cx-s*0.42,cy-s*1.25,s*0.84,s*0.3); x.fillStyle=d.hair; x.fillRect(cx-s*0.6,cy-s*1.75,s*1.2,s*0.5); x.beginPath(); x.arc(cx,cy-s*1.7,s*0.6,Math.PI,0); x.fill(); }
 }
 // Fahrzeug von vorne (Auswahlbildschirm) mit Gesicht
 function drawPlaneFront(x, w, h, d){ // Doppeldecker von vorne mit Pilot im Cockpit und laufendem Propeller
@@ -1163,14 +1163,14 @@ function drawVehicleFront(x, w, h, d){
   }
   x.restore();
 }
-function drawKidFront(x,cx,cy,s,d){
+function drawKidFront(x,cx,cy,s,d){ const sk=(d.avatar&&AV_SKIN[d.avatar.skin])||d.skin; // Hautfarbe wie beim Avatar
   x.fillStyle=d.shirt; x.beginPath(); x.roundRect(cx-s*1.1,cy-s*0.8,s*2.2,s*1.0,s*0.4); x.fill();
-  x.fillStyle=d.skin; x.fillRect(cx-s*0.2,cy-s*1.05,s*0.4,s*0.35);
+  x.fillStyle=sk; x.fillRect(cx-s*0.2,cy-s*1.05,s*0.4,s*0.35);
   if(d.avatar){ drawAvatarHead(x,cx,cy-s*1.45,s,d.avatar,'front'); return; }
   x.fillStyle=d.hair; x.beginPath(); x.arc(cx,cy-s*1.5,s*0.66,0,7); x.fill();
   if(d.id==='girl'){ for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; x.beginPath(); x.arc(cx+Math.cos(a)*s*0.58,cy-s*1.5+Math.sin(a)*s*0.58,s*0.17,0,7); x.fill(); } x.beginPath(); x.arc(cx,cy-s*2.05,s*0.28,0,7); x.fill(); x.fillStyle='#e0527a'; x.beginPath(); x.arc(cx+s*0.18,cy-s*1.95,s*0.09,0,7); x.fill(); }
-  x.fillStyle=d.skin; x.beginPath(); x.ellipse(cx,cy-s*1.4,s*0.52,s*0.58,0,0,7); x.fill();
-  x.fillStyle=d.skin; x.beginPath(); x.arc(cx-s*0.55,cy-s*1.4,s*0.12,0,7); x.fill(); x.beginPath(); x.arc(cx+s*0.55,cy-s*1.4,s*0.12,0,7); x.fill();
+  x.fillStyle=sk; x.beginPath(); x.ellipse(cx,cy-s*1.4,s*0.52,s*0.58,0,0,7); x.fill();
+  x.fillStyle=sk; x.beginPath(); x.arc(cx-s*0.55,cy-s*1.4,s*0.12,0,7); x.fill(); x.beginPath(); x.arc(cx+s*0.55,cy-s*1.4,s*0.12,0,7); x.fill();
   if(d.id==='boy'){ x.fillStyle=d.hair; x.beginPath(); x.moveTo(cx-s*0.6,cy-s*1.6); x.quadraticCurveTo(cx-s*0.2,cy-s*2.0,cx+s*0.6,cy-s*1.65); x.lineTo(cx+s*0.6,cy-s*1.5); x.quadraticCurveTo(cx,cy-s*1.75,cx-s*0.6,cy-s*1.45); x.fill(); }
   x.fillStyle='#fff'; x.beginPath(); x.ellipse(cx-s*0.2,cy-s*1.45,s*0.11,s*0.1,0,0,7); x.fill(); x.beginPath(); x.ellipse(cx+s*0.2,cy-s*1.45,s*0.11,s*0.1,0,0,7); x.fill();
   x.fillStyle='#2a1a10'; x.beginPath(); x.arc(cx-s*0.19,cy-s*1.44,s*0.06,0,7); x.fill(); x.beginPath(); x.arc(cx+s*0.21,cy-s*1.44,s*0.06,0,7); x.fill();
@@ -1805,12 +1805,12 @@ function drawSegment(w,lanes,x1,y1,w1,x2,y2,w2,fog,seg){
   if(seg.startLine){ // Schachbrett-Startlinie über die ganze Straßenbreite
     const n=10; for(let i=0;i<n;i++){ const a=i/n,b=(i+1)/n; poly(lerp(x1-w1,x1+w1,a),y1,lerp(x1-w1,x1+w1,b),y1,lerp(x2-w2,x2+w2,b),y2,lerp(x2-w2,x2+w2,a),y2,(i+seg.index)%2?'#f4f4f4':'#1a1a1a'); }
   }
-  if(seg.boost){ // oranges Boost-Feld mit hellen Streifen
-    const o=seg.boost.offset, bw=0.42;
-    poly(x1+w1*(o-bw),y1,x1+w1*(o+bw),y1,x2+w2*(o+bw),y2,x2+w2*(o-bw),y2, (seg.boost.k+Math.floor(G.time*6))%2 ? '#ff7a1a' : '#ffb21a');
-    // Pfeilspitze nach vorne
-    poly(x1+w1*(o-bw*0.7),y1,x1+w1*o,lerp(y1,y2,0.5),x1+w1*(o+bw*0.7),y1,x1+w1*o,lerp(y1,y2,0.5), 'rgba(255,255,255,0.75)');
+  if(seg.boost){ // Turbo-Feld: vier Pfeile (Chevrons) hintereinander, die nach vorne zeigen
+    const o=seg.boost.offset, bw=0.42, on=(seg.boost.k+Math.floor(G.time*6))%2; const ym=lerp(y1,y2,0.55), xm1=lerp(x1,x2,0.55), wm=lerp(w1,w2,0.55);
+    ctx.fillStyle = on ? '#ff7a1a' : '#ffb21a'; ctx.beginPath(); ctx.moveTo(x1+w1*(o-bw),y1); ctx.lineTo(x2+w2*o,y2); ctx.lineTo(x1+w1*(o+bw),y1); ctx.lineTo(x1+w1*(o+bw*0.45),y1); ctx.lineTo(xm1+wm*o,ym); ctx.lineTo(x1+w1*(o-bw*0.45),y1); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,'+(on?0.55:0.3)+')'; ctx.beginPath(); ctx.moveTo(x1+w1*(o-bw*0.9),y1); ctx.lineTo(x2+w2*o,lerp(y2,y1,0.08)); ctx.lineTo(x1+w1*(o-bw*0.72),y1); ctx.lineTo(x2+w2*o,lerp(y2,y1,0.16)); ctx.closePath(); ctx.fill();
   }
+
   if(fog<1){ ctx.fillStyle=st.fog; ctx.globalAlpha=1-fog; ctx.fillRect(0,y2,w,y1-y2); ctx.globalAlpha=1; }
 }
 function drawItem(it,scale,cx,baseY,clipY){ // dreht sich, pulsiert und funkelt
@@ -2388,6 +2388,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.16.1','2026-10-02','Körper des Fahrers hat dieselbe Hautfarbe wie der Avatar. Turbo-Felder sind jetzt Pfeile.'],
  ['3.16.0','2026-10-02','Zweites Geheimfahrzeug: eine Rakete mit 250 km/h, die sich nur träge lenken lässt. Ranglisten-Detail zeigt das Fahrzeug mit dem Avatar des Spielers.'],
  ['3.15.1','2026-10-02','Autowahl: dunkler Verlauf hinter den Buttons entfernt.'],
  ['3.15.0','2026-10-02','Avatar: 10 neue Kopfbedeckungen (Zylinder, Baskenmütze, Piratenhut, Kochmütze, Partyhut, Zauberhut, Wikingerhelm, Weihnachtsmütze, Kopfhörer, Fischerhut). Fahrer in der Autowahl größer.'],
