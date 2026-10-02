@@ -140,7 +140,7 @@
 
 <script>
 'use strict';
-const VERSION='2.2.1', VERSION_DATE='2026-10-02';
+const VERSION='2.2.2', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -165,23 +165,25 @@ function fmtTime(t){const m=Math.floor(t/60),s=Math.floor(t%60),d=Math.floor((t*
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem('mr_'+k));localStorage.setItem('mr_'+k,JSON.stringify(v));}catch(e){return null;}}
 // Gemeinsame Online-Rangliste über Firebase Firestore (REST, ohne Bibliothek). Pro Strecke eine Sammlung scores_<strecke>.
 const FIREBASE = { apiKey:"AIzaSyDb3q49oXxxdjVmSW2xGnsuUQYkZbJj-t4", projectId:"mallorca-ralley" };
+const SEASON='s2'; // Saison hochzählen = alle Ranglisten starten leer (alte Einträge bleiben unsichtbar in der Datenbank)
+const colKey=stageId=>stageId+'_'+SEASON;
 const Online = {
   base(){ return `https://firestore.googleapis.com/v1/projects/${FIREBASE.projectId}/databases/(default)/documents`; },
-  enc(e){ return { fields:{ name:{stringValue:String(e.name).slice(0,14)}, driver:{stringValue:e.driver}, stage:{stringValue:e.stage}, time:{doubleValue:Number(e.time)}, items:{integerValue:String(e.items|0)}, boosts:{integerValue:String(e.boosts|0)}, won:{booleanValue:!!e.won}, score:{integerValue:String(e.score|0)}, date:{stringValue:e.date||''}, ts:{integerValue:String(e.id||Date.now())} } }; },
+  enc(e){ return { fields:{ name:{stringValue:String(e.name).slice(0,14)}, driver:{stringValue:e.driver}, stage:{stringValue:colKey(e.stage)}, time:{doubleValue:Number(e.time)}, items:{integerValue:String(e.items|0)}, boosts:{integerValue:String(e.boosts|0)}, won:{booleanValue:!!e.won}, score:{integerValue:String(e.score|0)}, date:{stringValue:e.date||''}, ts:{integerValue:String(e.id||Date.now())} } }; },
   dec(doc){ const f=doc.fields||{}; const v=k=>{ const x=f[k]||{}; return x.stringValue ?? (x.integerValue!==undefined? Number(x.integerValue) : x.doubleValue ?? x.booleanValue); };
     return { id:doc.name.split('/').pop(), name:v('name')||'?', driver:v('driver')||'girl', stage:v('stage'), time:Number(v('time'))||0, items:Number(v('items'))||0, boosts:Number(v('boosts'))||0, won:!!v('won'), score:Number(v('score'))||0, date:v('date')||'', online:true }; },
   async add(entry){ // schreibt ein Ergebnis; schlägt es fehl, landet es in der Warteschlange
-    try{ const r=await fetch(`${Online.base()}/scores_${entry.stage}?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Online.enc(entry))});
+    try{ const r=await fetch(`${Online.base()}/scores_${colKey(entry.stage)}?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Online.enc(entry))});
       if(!r.ok) throw new Error('HTTP '+r.status); return true; }
     catch(err){ const q=store('queue')||[]; if(!q.some(e=>e.id===entry.id)) q.push(entry); store('queue',q.slice(-50)); return false; }
   },
   async flush(){ const q=store('queue')||[]; if(!q.length) return; const rest=[]; for(const e of q){ if(!(await Online.add({...e,_retry:true}))) rest.push(e); } store('queue',rest); },
   async top(stageId,n=10){ // beste Punktzahlen einer Strecke
-    const body={ structuredQuery:{ from:[{collectionId:'scores_'+stageId}], orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}], limit:n } };
+    const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}], limit:n } };
     const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document).map(x=>Online.dec(x.document)); },
   async rankOf(entry){ // Platz des Eintrags: Anzahl besserer Punktzahlen + 1
-    const body={ structuredQuery:{ from:[{collectionId:'scores_'+entry.stage}], where:{fieldFilter:{field:{fieldPath:'score'},op:'GREATER_THAN',value:{integerValue:String(entry.score|0)}}}, select:{fields:[{fieldPath:'score'}]}, limit:200 } };
+    const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(entry.stage)}], where:{fieldFilter:{field:{fieldPath:'score'},op:'GREATER_THAN',value:{integerValue:String(entry.score|0)}}}, select:{fields:[{fieldPath:'score'}]}, limit:200 } };
     const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document).length+1; }
 };
@@ -1373,6 +1375,7 @@ $('ver').textContent='Version '+VERSION+' · '+VERSION_DATE;
 G.driver=store('driver')||'girl'; G.stageIdx=clamp(store('stage')||0,0,STAGES.length-1);
 setState('title');
 Tilt.updateUI();
+if(store('season')!==SEASON){ store('queue',[]); for(const st of STAGES){ store('best_'+st.id,null); store('wins_'+st.id,null); } store('season',SEASON); }
 Online.flush().catch(()=>{});
 if(store('tilt') && Tilt.supported){ if(typeof DeviceOrientationEvent.requestPermission==='function'){ $('btnStart').addEventListener('click',()=>Tilt.enable(),{once:true}); } else Tilt.enable(); }
 requestAnimationFrame(frame);

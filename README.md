@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **2.2.1**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **2.2.2**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -97,8 +97,9 @@ Meeresfrucht, 50 pro Turbo und 500 für den Sieg gegen das andere Kind. Die Punk
 mit.
 
 Die Rangliste ist **online und für alle Handys gemeinsam**: Jedes Ergebnis wird in eine Firebase-Firestore-
-Datenbank geschrieben (Projekt `mallorca-ralley`, eine Sammlung pro Strecke, zum Beispiel
-`scores_arta`). Der Ranglisten-Bildschirm hat einen Reiter pro Strecke mit den 25 besten Punktzahlen aller
+Datenbank geschrieben (Projekt `mallorca-ralley`, eine Sammlung pro Strecke und Saison, zum Beispiel
+`scores_arta_s2`). Die Konstante `SEASON` in `index.html` hochzählen leert alle Ranglisten, die alten Einträge
+bleiben in der Datenbank, werden aber nicht mehr angezeigt. Der Ranglisten-Bildschirm hat einen Reiter pro Strecke mit den 25 besten Punktzahlen aller
 Spieler und ist vom Startbildschirm, aus jeder Streckenkarte und aus dem Ergebnis erreichbar. Das Ergebnis
 nennt den eigenen Platz in der gemeinsamen Liste. Ohne Netz werden Ergebnisse in einer
 Warteschlange gespeichert und beim nächsten Start nachgereicht. Eine separate lokale Rangliste gibt es

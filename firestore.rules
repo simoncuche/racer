@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Eine Sammlung pro Strecke: scores_arta, scores_formentor, scores_estrenc
+    // Eine Sammlung pro Strecke: scores_arta_s2, scores_formentor_s2, scores_estrenc_s2 (Strecke + Saison)
     match /{collection}/{doc} {
       allow read: if collection.matches('scores_.*');
       allow create: if collection.matches('scores_.*')
