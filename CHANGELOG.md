@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.17.0 (2026-10-02)
+
+Ranglisten-Detail eines Spielers zeigt alle seine Fahrten auf der Strecke, nicht nur die beste.
+
 ## 3.16.1 (2026-10-02)
 
 Körper des Fahrers hat dieselbe Hautfarbe wie der Avatar. Turbo-Felder sind jetzt Pfeile.
