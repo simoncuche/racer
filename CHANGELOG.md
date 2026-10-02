@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.9.2 (2026-10-02)
+
+Autowahl: Der Kopf des Fahrers ragt leicht über die Windschutzscheibe. Mit drei Fahrzeugen bleiben Zurück/Weiter unten immer sichtbar, die Karten werden kompakter.
+
 ## 3.9.1 (2026-10-02)
 
 Rangliste zeigt nur noch Ergebnisse mit Avatar. Jeder Spieler hat ab jetzt automatisch einen Avatar (Standardgesicht, im Namensbildschirm anpassbar), damit jedes neue Ergebnis eines trägt.

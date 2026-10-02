@@ -29,6 +29,11 @@
   .btn.secondary{background:#e9eef5;box-shadow:0 5px 0 #8e99a8,0 8px 18px rgba(0,0,0,.4)}
   .btn.secondary:active{box-shadow:0 2px 0 #8e99a8}
   .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:720px}
+  .row.sticky{position:sticky;bottom:0;padding:12px 0 8px;background:linear-gradient(rgba(10,30,60,0),rgba(10,30,60,.9) 35%);z-index:2}
+  #drivers.three .card{flex:1 1 30%;max-width:none;min-width:0;padding:6px 6px}
+  #drivers.three .card canvas{height:clamp(64px,11vh,120px)}
+  #drivers.three .card .title{font-size:clamp(13px,3.6vw,16px);margin-top:4px}
+  #drivers.three .card .desc{font-size:10.5px;line-height:1.25}
   .card{flex:1 1 220px;max-width:300px;background:var(--panel);border:3px solid transparent;border-radius:20px;padding:10px 12px;cursor:pointer;transition:transform .12s}
   .card.sel{border-color:var(--accent);transform:scale(1.03);box-shadow:0 0 0 4px rgba(255,207,63,.25)}
   .card canvas{width:auto;max-width:100%;height:clamp(90px,16vh,170px);display:block;margin:0 auto;border-radius:12px;background:linear-gradient(#bfe3ff,#e9d9b7)}
@@ -132,7 +137,7 @@
 <div id="select" class="screen hidden">
   <h2 id="selectTitle">Welches Auto?</h2>
   <div class="row" id="drivers"></div>
-  <div class="row" style="margin-top:14px"><button class="btn secondary" id="btnBackTitle">Zurück</button><button class="btn" id="btnToStages">Weiter</button></div>
+  <div class="row sticky" style="margin-top:14px"><button class="btn secondary" id="btnBackTitle">Zurück</button><button class="btn" id="btnToStages">Weiter</button></div>
 </div>
 
 <!-- Stage select -->
@@ -174,7 +179,7 @@
 
 <script>
 'use strict';
-const VERSION='3.9.1', VERSION_DATE='2026-10-02';
+const VERSION='3.9.2', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -1044,9 +1049,9 @@ function drawVehicleFront(x, w, h, d){
     x.fillStyle='#d4a52a'; x.beginPath(); x.moveTo(0,-h*0.49); x.lineTo(w*0.02,-h*0.45); x.lineTo(-w*0.02,-h*0.45); x.fill();
     // Windschutzscheibe
     x.fillStyle='#1a1a1a'; x.beginPath(); x.moveTo(-w*0.32,-h*0.52); x.lineTo(-w*0.26,-h*0.74); x.lineTo(w*0.26,-h*0.74); x.lineTo(w*0.32,-h*0.52); x.fill(); // dunkler Innenraum
-    x.save(); x.beginPath(); x.moveTo(-w*0.32,-h*0.52); x.lineTo(-w*0.26,-h*0.74); x.lineTo(w*0.26,-h*0.74); x.lineTo(w*0.32,-h*0.52); x.closePath(); x.clip();
+    x.save(); x.beginPath(); x.moveTo(-w*0.32,-h*0.52); x.lineTo(-w*0.26,-h*0.74); x.lineTo(-w*0.26,-h*1.05); x.lineTo(w*0.26,-h*1.05); x.lineTo(w*0.26,-h*0.74); x.lineTo(w*0.32,-h*0.52); x.closePath(); x.clip(); // Scheibe plus Luft darüber: der Kopf darf herausragen
     x.fillStyle='#2a2a2e'; x.beginPath(); x.roundRect(-w*0.12,-h*0.72,w*0.24,h*0.2,6); x.fill(); // Sitz
-    drawKidFront(x,0,-h*0.37,w*0.13,d); x.restore(); // Fahrer sitzt im Auto, Kopf hinter der Scheibe
+    drawKidFront(x,0,-h*0.42,w*0.14,d); x.restore(); // Fahrer sitzt im Auto, der Kopf schaut leicht über die Scheibe
     x.strokeStyle='#111'; x.lineWidth=3; x.beginPath(); x.arc(0,-h*0.5,w*0.08,Math.PI*1.1,Math.PI*1.9); x.stroke(); // Lenkrad
     const gl=x.createLinearGradient(0,-h*0.75,0,-h*0.52); gl.addColorStop(0,'rgba(200,235,255,0.35)'); gl.addColorStop(1,'rgba(150,200,240,0.3)'); x.fillStyle=gl;
     x.beginPath(); x.moveTo(-w*0.32,-h*0.52); x.lineTo(-w*0.26,-h*0.74); x.lineTo(w*0.26,-h*0.74); x.lineTo(w*0.32,-h*0.52); x.fill(); x.strokeStyle=shade(c,0.7); x.lineWidth=3; x.stroke();
@@ -1069,9 +1074,9 @@ function drawVehicleFront(x, w, h, d){
     x.strokeStyle='#111'; x.lineWidth=6; x.beginPath(); x.moveTo(-w*0.34,-h*0.6); x.lineTo(-w*0.32,-h*0.92); x.lineTo(w*0.32,-h*0.92); x.lineTo(w*0.34,-h*0.6); x.stroke();
     x.fillStyle='#2a2a2a'; x.beginPath(); x.roundRect(-w*0.28,-h*0.96,w*0.56,h*0.05,3); x.fill(); x.fillStyle='#fff6c0'; for(let i=0;i<7;i++) x.fillRect(-w*0.25+i*w*0.075,-h*0.95,w*0.05,h*0.03);
     x.fillStyle='#1a1a1a'; x.fillRect(-w*0.3,-h*0.82,w*0.6,h*0.22); // dunkler Innenraum
-    x.save(); x.beginPath(); x.rect(-w*0.3,-h*0.82,w*0.6,h*0.22); x.clip();
+    x.save(); x.beginPath(); x.rect(-w*0.3,-h*1.1,w*0.6,h*0.5); x.clip(); // Scheibe plus Luft darüber
     x.fillStyle='#2a2a2e'; x.beginPath(); x.roundRect(-w*0.12,-h*0.8,w*0.24,h*0.2,6); x.fill(); // Sitz
-    drawKidFront(x,0,-h*0.455,w*0.13,d); x.restore(); // Fahrer sitzt im Jeep, Kopf hinter der Scheibe
+    drawKidFront(x,0,-h*0.5,w*0.14,d); x.restore(); // Fahrer sitzt im Jeep, der Kopf schaut leicht über die Scheibe
     x.strokeStyle='#111'; x.lineWidth=3; x.beginPath(); x.arc(0,-h*0.58,w*0.08,Math.PI*1.1,Math.PI*1.9); x.stroke(); // Lenkrad
     x.fillStyle='rgba(170,215,250,0.3)'; x.fillRect(-w*0.3,-h*0.82,w*0.6,h*0.22); x.strokeStyle='#111'; x.lineWidth=3; x.strokeRect(-w*0.3,-h*0.82,w*0.6,h*0.22);
     x.fillStyle='rgba(255,255,255,0.25)'; x.beginPath(); x.moveTo(-w*0.26,-h*0.81); x.lineTo(-w*0.16,-h*0.81); x.lineTo(-w*0.22,-h*0.61); x.lineTo(-w*0.29,-h*0.61); x.fill();
@@ -2124,6 +2129,7 @@ function saveName(){ const n=$('nameInput').value.trim().slice(0,14); if(!n) ret
 function renderDrivers(){
   const box=$('drivers'); box.innerHTML='';
   if(DRIVERS[G.driver].secret && !Plane.unlocked()){ G.driver='girl'; }
+  box.classList.toggle('three', Plane.unlocked());
   for(const d of Object.values(DRIVERS)){
     if(d.secret && !Plane.unlocked()) continue;
     const card=document.createElement('div'); card.className='card'+(G.driver===d.id?' sel':'')+(d.secret?' secret':''); card.dataset.id=d.id;
@@ -2195,6 +2201,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.9.2','2026-10-02','Autowahl: Der Kopf des Fahrers ragt leicht über die Windschutzscheibe. Mit drei Fahrzeugen bleiben Zurück/Weiter unten immer sichtbar, die Karten werden kompakter.'],
  ['3.9.1','2026-10-02','Rangliste zeigt nur noch Ergebnisse mit Avatar. Jeder Spieler hat ab jetzt automatisch einen Avatar (Standardgesicht, im Namensbildschirm anpassbar), damit jedes neue Ergebnis eines trägt.'],
  ['3.9.0','2026-10-02','Autowahl: Der Avatar sitzt jetzt im Auto hinter der Scheibe statt auf dem Dach. Streckenwahl: Mallorca mit spanischer Flagge 🇪🇸, Weltraum mit Alien.'],
  ['3.8.2','2026-10-02','Kipp-Steuerung auf dem iPad: Hoch- und Querformat werden jetzt aus dem Fenster und der Schwerkraft bestimmt statt aus der vom Gerät gemeldeten Drehung, die beim iPad anders zählt.'],
