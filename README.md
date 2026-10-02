@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **2.2.2**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **2.3.0**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -55,8 +55,8 @@ funktionieren beide.
 | Stärke | Liegt super auf der Straße | Lenkt direkter, etwas kleiner, beschleunigt kräftiger, kommt neben der Straße gut voran |
 | Schwäche | Wird im Gelände sehr langsam | 5 km/h langsamer |
 
-Die Namen der Kinder lassen sich im Auswahlbildschirm eintippen und werden gespeichert. Das jeweils
-andere Kind fährt als Gegner mit.
+Vor der Autowahl gibt jedes Kind seinen Namen ein; zuletzt benutzte Namen stehen als Schnellauswahl bereit.
+Der Name landet in der Rangliste. Das jeweils andere Auto fährt als Gegner mit.
 
 ### Tempo und Boost
 
@@ -99,8 +99,9 @@ mit.
 Die Rangliste ist **online und für alle Handys gemeinsam**: Jedes Ergebnis wird in eine Firebase-Firestore-
 Datenbank geschrieben (Projekt `mallorca-ralley`, eine Sammlung pro Strecke und Saison, zum Beispiel
 `scores_arta_s2`). Die Konstante `SEASON` in `index.html` hochzählen leert alle Ranglisten, die alten Einträge
-bleiben in der Datenbank, werden aber nicht mehr angezeigt. Der Ranglisten-Bildschirm hat einen Reiter pro Strecke mit den 25 besten Punktzahlen aller
-Spieler und ist vom Startbildschirm, aus jeder Streckenkarte und aus dem Ergebnis erreichbar. Das Ergebnis
+bleiben in der Datenbank, werden aber nicht mehr angezeigt. Über „Rangliste“ im Startbildschirm wählt man zuerst eine der drei Strecken und sieht dann deren 25 beste
+Punktzahlen aller Spieler; „Zurück“ führt zur Streckenwahl und von dort zum Start. Die Rangliste ist auch
+aus jeder Streckenkarte und aus dem Ergebnis erreichbar. Das Ergebnis
 nennt den eigenen Platz in der gemeinsamen Liste. Ohne Netz werden Ergebnisse in einer
 Warteschlange gespeichert und beim nächsten Start nachgereicht. Eine separate lokale Rangliste gibt es
 nicht, ohne Netz zeigt der Ranglisten-Bildschirm nur einen Hinweis.

@@ -35,6 +35,8 @@
   .card input{width:100%;margin-top:6px;padding:6px 10px;border-radius:10px;border:2px solid rgba(255,255,255,.3);background:rgba(0,0,0,.3);color:#fff;font-size:16px;text-align:center;user-select:text;-webkit-user-select:text}
   .stage{flex:1 1 180px;max-width:240px;text-align:left}
   .stage .best{color:var(--accent);font-size:13px;margin-top:4px}
+  .chip{appearance:none;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;border-radius:999px;padding:8px 14px;font-size:15px;font-weight:700;cursor:pointer}
+  .chip.sel{background:var(--accent);color:#1a1a1a;border-color:var(--accent)}
   .tab{appearance:none;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;border-radius:12px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;flex:1 1 0}
   .tab.sel{background:var(--accent);color:#1a1a1a;border-color:var(--accent)}
   .stage .rankbtn{margin-top:8px;padding:6px 10px;font-size:13px;border-radius:10px;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;cursor:pointer}
@@ -98,9 +100,17 @@
   <div id="ver"></div>
 </div>
 
+<!-- Name -->
+<div id="name" class="screen hidden">
+  <h2>Wie heißt du?</h2>
+  <input id="nameInput" maxlength="14" placeholder="Dein Name" autocomplete="off" autocapitalize="words" style="width:min(90vw,320px);padding:12px 14px;border-radius:14px;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;font-size:22px;text-align:center;user-select:text;-webkit-user-select:text">
+  <div class="row" id="nameChips" style="margin-top:12px;gap:8px"></div>
+  <div class="row" style="margin-top:16px"><button class="btn secondary" id="btnNameBack">Zurück</button><button class="btn" id="btnNameNext">Weiter</button></div>
+</div>
+
 <!-- Driver select -->
 <div id="select" class="screen hidden">
-  <h2>Wer fährt?</h2>
+  <h2 id="selectTitle">Welches Auto?</h2>
   <div class="row" id="drivers"></div>
   <div class="row" style="margin-top:14px"><button class="btn secondary" id="btnBackTitle">Zurück</button><button class="btn" id="btnToStages">Weiter</button></div>
 </div>
@@ -115,9 +125,13 @@
 </div>
 
 <!-- Rangliste -->
+<div id="rankpick" class="screen hidden">
+  <h2>🏆 Rangliste – welche Strecke?</h2>
+  <div class="row" id="rankPickList"></div>
+  <div class="row" style="margin-top:14px"><button class="btn secondary" id="btnRankPickBack">Zurück</button></div>
+</div>
 <div id="ranking" class="screen hidden">
   <div class="row" style="align-items:center;justify-content:space-between;max-width:520px;flex-wrap:nowrap"><h2 style="margin:0">🏆 Rangliste</h2><button class="btn secondary" id="btnRankBackTop" style="padding:10px 18px;margin:0">Zurück</button></div>
-  <div class="row" id="rankTabs" style="margin-top:10px;gap:6px;max-width:520px"></div>
   <div id="rankList" style="width:100%;max-width:520px;margin-top:10px"></div>
   <div class="row" style="margin-top:14px"><button class="btn secondary" id="btnRankBack">Zurück</button></div>
 </div>
@@ -140,7 +154,7 @@
 
 <script>
 'use strict';
-const VERSION='2.2.2', VERSION_DATE='2026-10-02';
+const VERSION='2.3.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -211,7 +225,8 @@ const DRIVERS = {
          desc:'Blauer Jeep, 105 km/h. Lenkt direkter, ist etwas kleiner und kommt auch neben der Straße gut voran.',
          maxSpeedF:105/110, offRoadF:0.6, accelF:1.25, grip:1.15, size:0.92 }
 };
-function driverName(d){ return (store('name_'+d.id) || d.defName); }
+function playerName(){ return (store('player_name')||'').trim() || 'Spieler'; }
+function driverName(d){ return d===DRIVERS[G.driver] ? playerName() : d.carName; } // Spieler heißt wie eingegeben, der Gegner nach seinem Auto
 
 // ---------- Konstanten der 3D-Darstellung ----------
 const SEG_LEN=200, RUMBLE=3, LANES=2, ROAD_W=2000, FOV=100, CAM_H=1000, DRAW_DIST=240, K=2.5, KMH_MAX=110, KMH_BOOST=150, TOP_SPEED=SEG_LEN*32*(KMH_MAX/120), BOOST_F=KMH_BOOST/KMH_MAX, BOOST_SEC=3.2;
@@ -965,11 +980,11 @@ function startRace(){
 
 function setState(s){
   G.state=s;
-  for(const id of ['title','select','stages','pause','result','ranking']) $(id).classList.toggle('hidden', id!==s);
+  for(const id of ['title','name','select','stages','pause','result','rankpick','ranking']) $(id).classList.toggle('hidden', id!==s);
   const racing = s==='race'||s==='pause';
   for(const id of ['hud','prog','topbtns','controls']) $(id).classList.toggle('hidden', !racing);
   $('msg').classList.toggle('hidden', s!=='race');
-  if(s==='select') renderDrivers(); if(s==='stages') renderStages(); if(s==='ranking') renderRanking();
+  if(s==='name') renderName(); if(s==='select'){ $('selectTitle').textContent=playerName()+', welches Auto?'; renderDrivers(); } if(s==='stages') renderStages(); if(s==='rankpick') renderRankPick(); if(s==='ranking') renderRanking();
 }
 function popMsg(text){ const m=$('msg'); m.textContent=text; m.classList.remove('pop'); void m.offsetWidth; if(text) m.classList.add('pop'); }
 function showToast(text,sec){ const t=$('toast'); t.textContent=text; t.style.opacity=1; G.toastT=sec; }
@@ -991,7 +1006,7 @@ canvas.addEventListener('touchstart',e=>{ if(G.state!=='race') return; for(const
 canvas.addEventListener('touchmove',e=>{ if(G.state!=='race') return; for(const t of e.changedTouches){ touchActive[t.identifier] = t.clientX < window.innerWidth/2 ? 'left':'right'; } },{passive:true});
 const endTouch=e=>{ for(const t of e.changedTouches) delete touchActive[t.identifier]; };
 canvas.addEventListener('touchend',endTouch); canvas.addEventListener('touchcancel',endTouch);
-window.addEventListener('keydown',e=>{ G.keys[e.code]=true; if(e.code==='Escape'||e.code==='KeyP'){ if(G.state==='race') setState('pause'); else if(G.state==='pause') setState('race'); } if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); Audio.init(); Audio.resume(); });
+window.addEventListener('keydown',e=>{ if(e.target && e.target.tagName==='INPUT') return; G.keys[e.code]=true; if(e.code==='Escape'||e.code==='KeyP'){ if(G.state==='race') setState('pause'); else if(G.state==='pause') setState('race'); } if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); Audio.init(); Audio.resume(); });
 window.addEventListener('keyup',e=>{ G.keys[e.code]=false; });
 function readInput(){
   const k=G.keys; const sides=Object.values(touchActive);
@@ -1109,7 +1124,7 @@ function updateRival(dt){
   r.wobble+=dt; const ideal = r.finished ? 0.8*Math.sign(r.offset||1) : steer!==0 ? r.offset+steer*0.9 : Math.sin(r.wobble*0.4)*0.5 - seg.curve*0.06;
   r.offset += clamp(ideal-r.offset,-1,1)*dt*1.2; r.offset=clamp(r.offset,-0.85,0.85);
   r.z += r.speed*dt; if(r.z>=T.length) r.z-=T.length;
-  if(!r.finished && r.z>=T.finishZ){ r.finished=true; G.rivalFinishTime=G.time; if(!G.finished) showToast(driverName(r.driver)+' ist im Ziel!',1.5); }
+  if(!r.finished && r.z>=T.finishZ){ r.finished=true; G.rivalFinishTime=G.time; if(!G.finished) showToast('Der '+r.driver.carName+' ist im Ziel!',1.5); }
 }
 function updateTraffic(dt){ for(const c of G.traffic){ c.z += c.speed*dt; if(c.z>=G.track.length) c.z-=G.track.length;
   // kleine Seitenbewegung: Radfahrer wackeln, Ziegen trotten quer über die Straße
@@ -1274,17 +1289,17 @@ function updateHUD(){
 function showResult(){
   const me=DRIVERS[G.driver], r=G.rival.driver; const won = !(G.rival.finished && G.rivalFinishTime<G.finishTime);
   $('resTitle').textContent = G.stage.towns[G.stage.towns.length-1][1]+' erreicht!';
-  $('resBig').textContent = won? '🥇 '+driverName(me)+' gewinnt!' : '🥈 '+driverName(r)+' war schneller!';
+  $('resBig').textContent = won? '🥇 '+playerName()+' gewinnt!' : '🥈 Der '+r.carName+' war schneller!';
   const bestKey='best_'+G.stage.id; const best=store(bestKey); let isBest=false; if(!best || G.finishTime<best){ store(bestKey,G.finishTime); isBest=true; }
   const rivalTime = G.rival.finished? fmtTime(G.rivalFinishTime) : 'noch unterwegs';
   const score=calcScore(G.finishTime,G.items,G.boosts,won);
-  const {entry,rank} = Ranking.add({ name:driverName(me), driver:me.id, stage:G.stage.id, time:Math.round(G.finishTime*10)/10, items:G.items, boosts:G.boosts, won, score, date:new Date().toISOString().slice(0,10) });
+  const {entry,rank} = Ranking.add({ name:playerName(), driver:me.id, stage:G.stage.id, time:Math.round(G.finishTime*10)/10, items:G.items, boosts:G.boosts, won, score, date:new Date().toISOString().slice(0,10) });
   // online speichern, dann Online-Platz und Online-Top-5 nachladen
   (async()=>{ const ok=await Online.add(entry); const el=$('onlineRank'); if(!el) return;
     if(!ok){ el.innerHTML='📵 Kein Netz – das Ergebnis wird nachgereicht, sobald wieder Netz da ist'; return; }
     try{ const [r,top]=await Promise.all([Online.rankOf(entry),Online.top(G.stage.id,5)]); el.innerHTML=`🌍 Platz ${r} in der gemeinsamen Rangliste`; $('onlineTop').innerHTML=rankingTable(G.stage.id,entry.id,5,top.map(t=>Object.assign(t,{ hl: t.name===entry.name && t.score===entry.score && t.time===entry.time }))); }
     catch(e){ el.innerHTML='🌍 Ergebnis gespeichert'; } })();
-  $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${driverName(r)}</td><td>${rivalTime}</td></tr><tr><td>🦐 ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · Meeresfrüchte ${G.items*ITEM_POINTS} · Turbos ${G.boosts*50}${won?' · Sieg 500':''}</td></tr>`
+  $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${r.carName}</td><td>${rivalTime}</td></tr><tr><td>🦐 ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · Meeresfrüchte ${G.items*ITEM_POINTS} · Turbos ${G.boosts*50}${won?' · Sieg 500':''}</td></tr>`
     + '<tr><td colspan="2" style="text-align:center;padding-top:6px;font-weight:700" id="onlineRank">🌍 Rangliste wird aktualisiert …</td></tr>'
     + '<tr><td colspan="2" style="text-align:center;padding-top:2px" id="onlineTop"></td></tr>';
   if(won){ const wins=store('wins_'+G.stage.id)||0; store('wins_'+G.stage.id,wins+1); }
@@ -1299,10 +1314,14 @@ function rankingTable(stageId, highlightId, limit, list){
 }
 function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 let rankStage=null; // welche Strecke in der Rangliste offen ist
+function renderRankPick(){
+  const box=$('rankPickList'); box.innerHTML='';
+  STAGES.forEach(st=>{ const card=document.createElement('div'); card.className='card stage';
+    card.innerHTML=`<div class="title">${st.emoji} ${st.name}</div><div class="desc">${st.towns.map(t=>t[1]).join(' · ')}</div><div class="best">Rangliste anzeigen ›</div>`;
+    card.addEventListener('click',()=>{ rankStage=st.id; rankReturn='rankpick'; setState('ranking'); }); box.appendChild(card); });
+}
 function renderRanking(){
   if(!rankStage) rankStage=STAGES[G.stageIdx].id;
-  $('rankTabs').innerHTML = STAGES.map(st=>`<button class="tab${st.id===rankStage?' sel':''}" data-st="${st.id}">${st.emoji} ${st.name.replace(' → ','→')}</button>`).join('');
-  for(const b of $('rankTabs').querySelectorAll('.tab')) b.onclick=()=>{ rankStage=b.dataset.st; renderRanking(); };
   const st=STAGES.find(x=>x.id===rankStage), box=$('rankList');
   box.innerHTML = `<div class="card stage" style="max-width:none;cursor:default;font-size:14px"><div class="title">${st.emoji} ${st.name}</div><div id="rankMode" style="opacity:.8;font-size:13px;margin:4px 0 6px">🌍 wird geladen …</div><div id="rank_${st.id}" style="opacity:.7">…</div></div>`;
   const want=rankStage;
@@ -1311,14 +1330,20 @@ function renderRanking(){
     const m=$('rankMode'); if(m) m.textContent=!list.length? '🌍 Noch niemand hat diese Strecke gefahren' : list.length>=25? '🌍 Die 25 Besten aller Handys' : `🌍 ${list.length} ${list.length===1?'Eintrag':'Einträge'} von allen Handys`;
   }).catch(()=>{ if(rankStage!==want) return; const m=$('rankMode'); if(m) m.textContent='📵 Kein Netz – die Rangliste braucht eine Internetverbindung'; const el=$('rank_'+st.id); if(el) el.textContent='nicht verfügbar'; });
 }
+function renderName(){
+  const inp=$('nameInput'); inp.value=store('player_name')||'';
+  const names=(store('names')||[]).filter(n=>n);
+  $('nameChips').innerHTML = names.map(n=>`<button class="chip${n===inp.value?' sel':''}">${escapeHtml(n)}</button>`).join('');
+  for(const ch of $('nameChips').querySelectorAll('.chip')) ch.onclick=()=>{ inp.value=ch.textContent; renderName(); };
+  $('btnNameNext').disabled = !inp.value.trim(); $('btnNameNext').style.opacity = inp.value.trim()? 1 : .5;
+}
+function saveName(){ const n=$('nameInput').value.trim().slice(0,14); if(!n) return false; store('player_name',n); const names=(store('names')||[]).filter(x=>x!==n); names.unshift(n); store('names',names.slice(0,6)); return true; }
 function renderDrivers(){
   const box=$('drivers'); box.innerHTML='';
   for(const d of Object.values(DRIVERS)){
     const card=document.createElement('div'); card.className='card'+(G.driver===d.id?' sel':''); card.dataset.id=d.id;
     const c=mkCanvas(300,220); drawVehicleFront(c.getContext('2d'),300,220,d);
-    const inp=document.createElement('input'); inp.maxLength=14; inp.value=driverName(d); inp.placeholder='Name eingeben';
-    inp.addEventListener('input',()=>store('name_'+d.id,inp.value.trim()||d.defName)); inp.addEventListener('click',e=>e.stopPropagation()); inp.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
-    card.appendChild(c); const t=document.createElement('div'); t.className='title'; t.textContent=d.carName; card.appendChild(t); const ds=document.createElement('div'); ds.className='desc'; ds.textContent=d.desc; card.appendChild(ds); card.appendChild(inp);
+    card.appendChild(c); const t=document.createElement('div'); t.className='title'; t.textContent=d.carName; card.appendChild(t); const ds=document.createElement('div'); ds.className='desc'; ds.textContent=d.desc; card.appendChild(ds);
     card.addEventListener('click',()=>{ G.driver=d.id; store('driver',d.id); renderDrivers(); });
     box.appendChild(card);
   }
@@ -1332,9 +1357,14 @@ function renderStages(){
     card.querySelector('.rankbtn').addEventListener('click',e=>{ e.stopPropagation(); G.stageIdx=i; store('stage',i); rankStage=s.id; rankReturn='stages'; setState('ranking'); });
     box.appendChild(card); });
 }
-$('btnStart').onclick=()=>{ Audio.init(); Audio.resume(); setState('select'); };
-$('btnBackTitle').onclick=()=>setState('title');
-$('btnRanking').onclick=()=>{ rankStage=null; rankReturn='title'; setState('ranking'); };
+$('btnStart').onclick=()=>{ Audio.init(); Audio.resume(); setState('name'); };
+$('btnNameBack').onclick=()=>setState('title');
+$('btnNameNext').onclick=()=>{ if(saveName()) setState('select'); else $('nameInput').focus(); };
+$('nameInput').addEventListener('input',()=>{ const ok=!!$('nameInput').value.trim(); $('btnNameNext').disabled=!ok; $('btnNameNext').style.opacity=ok?1:.5; for(const ch of $('nameChips').querySelectorAll('.chip')) ch.classList.toggle('sel',ch.textContent===$('nameInput').value); });
+$('nameInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('btnNameNext').click(); } });
+$('btnBackTitle').onclick=()=>setState('name');
+$('btnRanking').onclick=()=>setState('rankpick');
+$('btnRankPickBack').onclick=()=>setState('title');
 let rankReturn='title';
 $('btnRankBack').onclick=()=>{ setState(rankReturn); rankReturn='title'; }; $('btnRankBackTop').onclick=()=>{ setState(rankReturn); rankReturn='title'; };
 $('btnToStages').onclick=()=>setState('stages');
