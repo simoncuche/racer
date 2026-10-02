@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.6.1 (2026-10-02)
+
+Rangliste: Ergebnisse mit dem Doppeldecker wurden von den Firestore-Regeln abgelehnt und als „Kein Netz“ gemeldet. Regeln ergänzt, abgelehnte Ergebnisse werden jetzt klar von fehlendem Netz unterschieden. ✈️ in der Rangliste.
+
 ## 3.6.0 (2026-10-02)
 
 Doppeldecker: Neigung beim Lenken korrigiert, er kann jetzt hoch- und runterfliegen (▲▼-Buttons in der Mitte, Pfeiltasten oder Handy nach vorne/hinten kippen). Items und Turbo-Felder gibt es nur im Tiefflug. Das Geheimfahrzeug muss jedes Mal neu entdeckt werden.

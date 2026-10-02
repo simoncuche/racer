@@ -174,7 +174,7 @@
 
 <script>
 'use strict';
-const VERSION='3.6.0', VERSION_DATE='2026-10-02';
+const VERSION='3.6.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -209,9 +209,10 @@ const Online = {
   async count(stageId){ const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], select:{fields:[{fieldPath:'score'}]}, limit:1000 } };
     const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document).length; },
   async add(entry){ // schreibt ein Ergebnis; schlägt es fehl, landet es in der Warteschlange
+    Online.lastError=null;
     try{ const r=await fetch(`${Online.base()}/scores_${colKey(entry.stage)}?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Online.enc(entry))});
-      if(!r.ok) throw new Error('HTTP '+r.status); return true; }
-    catch(err){ const q=store('queue')||[]; if(!q.some(e=>e.id===entry.id)) q.push(entry); store('queue',q.slice(-50)); return false; }
+      if(!r.ok){ Online.lastError='HTTP '+r.status; throw new Error('HTTP '+r.status); } return true; }
+    catch(err){ if(!Online.lastError) Online.lastError='net'; const q=store('queue')||[]; if(!q.some(e=>e.id===entry.id)) q.push(entry); store('queue',q.slice(-50)); return false; }
   },
   async flush(){ const q=store('queue')||[]; if(!q.length) return; const rest=[]; for(const e of q){ if(!(await Online.add({...e,_retry:true}))) rest.push(e); } store('queue',rest); },
   async top(stageId,n=10){ // beste Punktzahlen einer Strecke
@@ -1844,7 +1845,7 @@ function showResult(){
   G.lastEntry=entry;
   // online speichern, dann Platz in der Gesamtrangliste und Top 5 anzeigen
   (async()=>{ const ok=await Online.add(entry); const big=$('resBig'), el=$('onlineRank'); if(!el) return;
-    if(!ok){ big.textContent='📵 Kein Netz'; el.innerHTML='Das Ergebnis wird nachgereicht, sobald wieder Netz da ist'; return; }
+    if(!ok){ const rejected=/^HTTP 4/.test(Online.lastError||''); big.textContent= rejected ? '⚠️ Abgelehnt' : '📵 Kein Netz'; el.innerHTML= rejected ? 'Die Online-Rangliste hat das Ergebnis abgelehnt ('+Online.lastError+'). Meist fehlen in Firebase die aktuellen Regeln aus firestore.rules. Es wird später nochmals versucht.' : 'Das Ergebnis wird nachgereicht, sobald wieder Netz da ist'; return; }
     try{ const [r,total,top]=await Promise.all([Online.rankOf(entry),Online.count(G.stage.id),Online.top(G.stage.id,5)]);
       big.textContent=(r===1?'🥇 ':r===2?'🥈 ':r===3?'🥉 ':'🌍 ')+'Platz '+r+' von '+Math.max(total,r); el.innerHTML=r===1?'Neue Bestmarke auf dieser Strecke!':'in der gemeinsamen Rangliste aller Handys';
       $('onlineTop').innerHTML=rankingTable(G.stage.id,entry.id,5,top); }
@@ -1861,7 +1862,7 @@ function rankingTable(stageId, highlightId, limit, list, extra){
   list = (list || Ranking.forStage(stageId)).slice(0,limit);
   if(!list.length) return '<div style="opacity:.7">Noch keine Zeiten</div>';
   const rows=list.map((e,i)=>({e,i})); if(extra) rows.push({sep:true},{e:extra.e,i:extra.rank-1});
-  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr style="${(e.id===highlightId||e.ts===highlightId||e.hl)?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.avatar? `<img src="${Avatar.dataUrl(e.avatar)}" style="width:26px;height:26px;vertical-align:middle;margin-right:2px">` : (e.driver==='girl'?'🚗':'🚙')} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · ${(STAGES.find(x=>x.id===stageId)||{}).itemIcon||'🦐'}${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
+  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr style="${(e.id===highlightId||e.ts===highlightId||e.hl)?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.avatar? `<img src="${Avatar.dataUrl(e.avatar)}" style="width:26px;height:26px;vertical-align:middle;margin-right:2px">` : (e.driver==='girl'?'🚗':e.driver==='plane'?'✈️':'🚙')} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · ${(STAGES.find(x=>x.id===stageId)||{}).itemIcon||'🦐'}${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
 }
 function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 let rankStage=null; // welche Strecke in der Rangliste offen ist
@@ -2102,6 +2103,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.6.1','2026-10-02','Rangliste: Ergebnisse mit dem Doppeldecker wurden von den Firestore-Regeln abgelehnt und als „Kein Netz“ gemeldet. Regeln ergänzt, abgelehnte Ergebnisse werden jetzt klar von fehlendem Netz unterschieden. ✈️ in der Rangliste.'],
  ['3.6.0','2026-10-02','Doppeldecker: Neigung beim Lenken korrigiert, er kann jetzt hoch- und runterfliegen (▲▼-Buttons in der Mitte, Pfeiltasten oder Handy nach vorne/hinten kippen). Items und Turbo-Felder gibt es nur im Tiefflug. Das Geheimfahrzeug muss jedes Mal neu entdeckt werden.'],
  ['3.5.0','2026-10-02','Startlinie mit Schachbrett vor dem Auto, Streckenposten mit Flagge und Startampel; beim Start qualmen die Reifen. Beim Crash vibriert das Handy (Android).'],
  ['3.4.0','2026-10-02','Ein geheimes drittes Fahrzeug ist versteckt: ein gelber Doppeldecker, der über alle Hindernisse und den Verkehr hinwegfliegt, aber nur 60 km/h schafft (Turbo 100). Wie man ihn findet, wird nicht verraten.'],
