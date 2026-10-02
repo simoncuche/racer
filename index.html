@@ -154,7 +154,7 @@
 
 <script>
 'use strict';
-const VERSION='2.6.0', VERSION_DATE='2026-10-02';
+const VERSION='2.6.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -772,7 +772,6 @@ function drawVehicleFront(x, w, h, d){
 }
 function drawKidFront(x,cx,cy,s,d){
   x.fillStyle=d.shirt; x.beginPath(); x.roundRect(cx-s*1.1,cy-s*0.8,s*2.2,s*1.0,s*0.4); x.fill();
-  if(d.id==='girl'){ x.fillStyle=d.shirtPrint; x.font=`bold ${Math.floor(s*0.35)}px Arial`; x.textAlign='center'; x.fillText('NEW',cx,cy-s*0.3); }
   x.fillStyle=d.skin; x.fillRect(cx-s*0.2,cy-s*1.05,s*0.4,s*0.35);
   x.fillStyle=d.hair; x.beginPath(); x.arc(cx,cy-s*1.5,s*0.66,0,7); x.fill();
   if(d.id==='girl'){ for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; x.beginPath(); x.arc(cx+Math.cos(a)*s*0.58,cy-s*1.5+Math.sin(a)*s*0.58,s*0.17,0,7); x.fill(); } x.beginPath(); x.arc(cx,cy-s*2.05,s*0.28,0,7); x.fill(); x.fillStyle='#e0527a'; x.beginPath(); x.arc(cx+s*0.18,cy-s*1.95,s*0.09,0,7); x.fill(); }
