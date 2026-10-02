@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **1.9.3**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **2.0.0**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -88,12 +88,24 @@ dem Verkehr aus.
 Garnelen, Fische, Krabben, Muscheln und Tintenfische schweben animiert über der Straße. Wer sie
 einsammelt, bekommt Funken, ein aufsteigendes „+1“ und einen Eintrag im Ergebnis.
 
-### Punkte und Rangliste
+### Punkte und gemeinsame Rangliste
 
 Jedes Rennen ergibt eine Punktzahl: Zeitbonus `(200 − Sekunden) × 20`, dazu 100 Punkte pro
 Meeresfrucht, 50 pro Turbo und 500 für den Sieg gegen das andere Kind. Die Punkte laufen im HUD live
-mit. Pro Strecke werden die zehn besten Punktzahlen mit Name, Auto, Zeit, Datum und gesammelten
-Meeresfrüchten gespeichert. Die Rangliste ist über den Startbildschirm erreichbar, nach jedem Rennen steht
+mit.
+
+Die Rangliste ist **online und für alle Handys gemeinsam**: Jedes Ergebnis wird in eine Firebase-Firestore-
+Datenbank geschrieben (Projekt `mallorca-ralley`, eine Sammlung pro Strecke, zum Beispiel
+`scores_tramuntana`). Der Ranglisten-Bildschirm zeigt die zehn besten Punktzahlen aller Spieler, das
+Ergebnis nennt den eigenen Platz in der gemeinsamen Liste. Ohne Netz werden Ergebnisse in einer
+Warteschlange gespeichert und beim nächsten Start nachgereicht, die Rangliste zeigt dann die lokale
+Liste dieses Handys. Lokal bleiben pro Strecke die zehn besten Einträge im Browser (localStorage) und
+als Cookie erhalten.
+
+Die Zugriffsregeln der Datenbank stehen in `firestore.rules`: Lesen ist für alle erlaubt, Schreiben nur
+für vollständige, plausible Einträge (Name bis 14 Zeichen, Zeit 20 bis 1000 Sekunden, Punkte bis 30000),
+Ändern und Löschen ist gesperrt. Sie werden in der Firebase-Konsole unter „Firestore Database“ →
+„Regeln“ eingefügt. Die Rangliste ist über den Startbildschirm erreichbar, nach jedem Rennen steht
 der eigene Platz im Ergebnis. Gespeichert wird im Browser (localStorage) und zusätzlich als Cookie.
 
 ### Sound
@@ -108,6 +120,7 @@ WebAudio erzeugt. Über das Lautsprecher-Symbol abschaltbar.
 | `index.html` | Das komplette Spiel: Layout, Grafik, Strecken, Physik, Sound, Menüs |
 | `manifest.json` | Macht die Seite auf dem Home-Bildschirm zur App (Name, Farben, Vollbild) |
 | `sw.js` | Service Worker für Offline-Betrieb. Fragt zuerst das Netz, liefert ohne Verbindung aus dem Cache |
+| `firestore.rules` | Zugriffsregeln für die gemeinsame Online-Rangliste, zum Einfügen in die Firebase-Konsole |
 | `LICENSE` | MIT-Lizenz |
 
 ## Technik
@@ -125,8 +138,11 @@ WebAudio erzeugt. Über das Lautsprecher-Symbol abschaltbar.
   (DeviceOrientation, mit iOS-Berechtigungsabfrage). Die Lenkung ist stufenlos.
 * **Rendering**: Die interne Auflösung ist auf 900 Pixel Kantenlänge begrenzt, damit es auf dem Handy
   flüssig bleibt. Ein Fehler in der Spielschleife wird abgefangen, das Bild friert nie ein.
-* **Speicher**: Namen, Fahrer, Strecke, Ton, Kipp-Steuerung, Bestzeiten und Rangliste liegen im
-  localStorage, die Rangliste zusätzlich im Cookie `mr_lb`.
+* **Speicher**: Namen, Fahrer, Strecke, Ton, Kipp-Steuerung, Bestzeiten und lokale Rangliste liegen im
+  localStorage, die Rangliste zusätzlich im Cookie `mr_lb`, offene Online-Einträge in der Warteschlange `mr_queue`.
+* **Online-Rangliste**: Firestore wird direkt über seine REST-Schnittstelle per `fetch` angesprochen, ohne
+  Firebase-Bibliothek. Der Web-API-Schlüssel steht im Spiel, das ist bei Firebase so vorgesehen; der Schutz
+  kommt über die Regeln in `firestore.rules`.
 
 ### Spielwerte anpassen
 

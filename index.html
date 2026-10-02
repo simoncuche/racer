@@ -135,7 +135,7 @@
 
 <script>
 'use strict';
-const VERSION='1.9.3', VERSION_DATE='2026-10-01';
+const VERSION='2.0.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -152,7 +152,29 @@ const easeInOut = (a,b,p)=>a+(b-a)*((-Math.cos(p*Math.PI)/2)+0.5);
 function calcScore(time,items,boosts,won){ return Math.max(0,Math.round((200-time)*20)) + items*100 + (boosts||0)*50 + (won?500:0); }
 function fmtTime(t){const m=Math.floor(t/60),s=Math.floor(t%60),d=Math.floor((t*10)%10);return `${m}:${s<10?'0':''}${s}.${d}`;}
 function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem('mr_'+k));localStorage.setItem('mr_'+k,JSON.stringify(v));}catch(e){return null;}}
-// Rangliste: wird im Browser gespeichert (localStorage) und zusätzlich als Cookie abgelegt
+// Gemeinsame Online-Rangliste über Firebase Firestore (REST, ohne Bibliothek). Pro Strecke eine Sammlung scores_<strecke>.
+const FIREBASE = { apiKey:"AIzaSyDb3q49oXxxdjVmSW2xGnsuUQYkZbJj-t4", projectId:"mallorca-ralley" };
+const Online = {
+  base(){ return `https://firestore.googleapis.com/v1/projects/${FIREBASE.projectId}/databases/(default)/documents`; },
+  enc(e){ return { fields:{ name:{stringValue:String(e.name).slice(0,14)}, driver:{stringValue:e.driver}, stage:{stringValue:e.stage}, time:{doubleValue:Number(e.time)}, items:{integerValue:String(e.items|0)}, boosts:{integerValue:String(e.boosts|0)}, won:{booleanValue:!!e.won}, score:{integerValue:String(e.score|0)}, date:{stringValue:e.date||''}, ts:{integerValue:String(e.id||Date.now())} } }; },
+  dec(doc){ const f=doc.fields||{}; const v=k=>{ const x=f[k]||{}; return x.stringValue ?? (x.integerValue!==undefined? Number(x.integerValue) : x.doubleValue ?? x.booleanValue); };
+    return { id:doc.name.split('/').pop(), name:v('name')||'?', driver:v('driver')||'girl', stage:v('stage'), time:Number(v('time'))||0, items:Number(v('items'))||0, boosts:Number(v('boosts'))||0, won:!!v('won'), score:Number(v('score'))||0, date:v('date')||'', online:true }; },
+  async add(entry){ // schreibt ein Ergebnis; schlägt es fehl, landet es in der Warteschlange
+    try{ const r=await fetch(`${Online.base()}/scores_${entry.stage}?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Online.enc(entry))});
+      if(!r.ok) throw new Error('HTTP '+r.status); return true; }
+    catch(err){ const q=store('queue')||[]; if(!q.some(e=>e.id===entry.id)) q.push(entry); store('queue',q.slice(-50)); return false; }
+  },
+  async flush(){ const q=store('queue')||[]; if(!q.length) return; const rest=[]; for(const e of q){ if(!(await Online.add({...e,_retry:true}))) rest.push(e); } store('queue',rest); },
+  async top(stageId,n=10){ // beste Punktzahlen einer Strecke
+    const body={ structuredQuery:{ from:[{collectionId:'scores_'+stageId}], orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}], limit:n } };
+    const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document).map(x=>Online.dec(x.document)); },
+  async rankOf(entry){ // Platz des Eintrags: Anzahl besserer Punktzahlen + 1
+    const body={ structuredQuery:{ from:[{collectionId:'scores_'+entry.stage}], where:{fieldFilter:{field:{fieldPath:'score'},op:'GREATER_THAN',value:{integerValue:String(entry.score|0)}}}, select:{fields:[{fieldPath:'score'}]}, limit:200 } };
+    const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document).length+1; }
+};
+// Lokale Rangliste: wird im Browser gespeichert (localStorage) und zusätzlich als Cookie abgelegt
 const Ranking = {
   load(){ let lb=store('lb'); if(!Array.isArray(lb)){ try{ const m=document.cookie.match(/(?:^|; )mr_lb=([^;]*)/); lb = m ? JSON.parse(decodeURIComponent(m[1])) : []; }catch(e){ lb=[]; } } return Array.isArray(lb)?lb:[]; },
   save(lb){ store('lb',lb); try{ document.cookie='mr_lb='+encodeURIComponent(JSON.stringify(lb))+'; max-age=315360000; path=/; SameSite=Lax'; }catch(e){} },
@@ -1235,21 +1257,33 @@ function showResult(){
   const rivalTime = G.rival.finished? fmtTime(G.rivalFinishTime) : 'noch unterwegs';
   const score=calcScore(G.finishTime,G.items,G.boosts,won);
   const {entry,rank} = Ranking.add({ name:driverName(me), driver:me.id, stage:G.stage.id, time:Math.round(G.finishTime*10)/10, items:G.items, boosts:G.boosts, won, score, date:new Date().toISOString().slice(0,10) });
+  // online speichern, dann Online-Platz und Online-Top-5 nachladen
+  (async()=>{ const ok=await Online.add(entry); const el=$('onlineRank'); if(!el) return;
+    if(!ok){ el.innerHTML='📵 Offline – wird gespeichert, sobald wieder Netz da ist'; return; }
+    try{ const [r,top]=await Promise.all([Online.rankOf(entry),Online.top(G.stage.id,5)]); el.innerHTML=`🌍 Platz ${r} in der gemeinsamen Rangliste`; $('onlineTop').innerHTML=rankingTable(G.stage.id,entry.id,5,top.map(t=>Object.assign(t,{ hl: t.name===entry.name && t.score===entry.score && t.time===entry.time }))); }
+    catch(e){ el.innerHTML='🌍 gespeichert'; } })();
   $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${driverName(r)}</td><td>${rivalTime}</td></tr><tr><td>🦐 ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · Meeresfrüchte ${G.items*100} · Turbos ${G.boosts*50}${won?' · Sieg 500':''}</td></tr><tr><td>Rangliste</td><td>${rank? 'Platz '+rank+' auf dieser Strecke' : '–'}</td></tr>`
-    + '<tr><td colspan="2" style="text-align:center;padding-top:8px">'+rankingTable(G.stage.id, entry.id, 5)+'</td></tr>';
+    + '<tr><td colspan="2" style="text-align:center;padding-top:4px" id="onlineRank">🌍 wird gespeichert …</td></tr>'
+    + '<tr><td colspan="2" style="text-align:center;padding-top:4px" id="onlineTop">'+rankingTable(G.stage.id, entry.id, 5)+'</td></tr>';
   if(won){ const wins=store('wins_'+G.stage.id)||0; store('wins_'+G.stage.id,wins+1); }
   setState('result'); Audio.setEngine(0,false);
 }
 
 // ---------- Menüs ----------
-function rankingTable(stageId, highlightId, limit){
-  const list=Ranking.forStage(stageId).slice(0,limit);
+function rankingTable(stageId, highlightId, limit, list){
+  list = (list || Ranking.forStage(stageId)).slice(0,limit);
   if(!list.length) return '<div style="opacity:.7">Noch keine Zeiten</div>';
-  return '<table style="margin:0 auto">'+list.map((e,i)=>`<tr style="${e.id===highlightId?'color:var(--accent)':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.driver==='girl'?'🚗':'🚙'} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · 🦐${e.items||0}</td></tr>`).join('')+'</table>';
+  return '<table style="margin:0 auto">'+list.map((e,i)=>`<tr style="${(e.id===highlightId||e.hl)?'color:var(--accent)':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.driver==='girl'?'🚗':'🚙'} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · 🦐${e.items||0}</td></tr>`).join('')+'</table>';
 }
 function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function renderRanking(){
-  $('rankList').innerHTML = STAGES.map(st=>`<div class="card stage" style="max-width:none;margin-bottom:10px;cursor:default;font-size:14px"><div class="title">${st.emoji} ${st.name}</div>${rankingTable(st.id,null,10)}</div>`).join('');
+  const box=$('rankList');
+  box.innerHTML = '<div id="rankMode" style="opacity:.8;font-size:13px;margin-bottom:8px">🌍 Gemeinsame Rangliste wird geladen …</div>' + STAGES.map(st=>`<div class="card stage" style="max-width:none;margin-bottom:10px;cursor:default;font-size:14px"><div class="title">${st.emoji} ${st.name}</div><div id="rank_${st.id}">${rankingTable(st.id,null,10)}</div></div>`).join('');
+  const myName = driverName(DRIVERS[G.driver]);
+  Online.flush().then(()=>Promise.all(STAGES.map(st=>Online.top(st.id,10)))).then(lists=>{
+    STAGES.forEach((st,i)=>{ const el=$('rank_'+st.id); if(el) el.innerHTML=rankingTable(st.id,null,10,lists[i]); });
+    const m=$('rankMode'); if(m) m.textContent='🌍 Gemeinsame Rangliste aller Handys';
+  }).catch(()=>{ const m=$('rankMode'); if(m) m.textContent='📵 Kein Netz – Liste von diesem Handy'; });
 }
 function renderDrivers(){
   const box=$('drivers'); box.innerHTML='';
@@ -1311,6 +1345,7 @@ $('ver').textContent='Version '+VERSION+' · '+VERSION_DATE;
 G.driver=store('driver')||'girl'; G.stageIdx=clamp(store('stage')||0,0,STAGES.length-1);
 setState('title');
 Tilt.updateUI();
+Online.flush().catch(()=>{});
 if(store('tilt') && Tilt.supported){ if(typeof DeviceOrientationEvent.requestPermission==='function'){ $('btnStart').addEventListener('click',()=>Tilt.enable(),{once:true}); } else Tilt.enable(); }
 requestAnimationFrame(frame);
 
