@@ -105,6 +105,16 @@
   <h2>Wie heißt du?</h2>
   <input id="nameInput" maxlength="14" placeholder="Dein Name" autocomplete="off" autocapitalize="words" style="width:min(90vw,320px);padding:12px 14px;border-radius:14px;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;font-size:22px;text-align:center;user-select:text;-webkit-user-select:text">
   <div class="row" id="nameChips" style="margin-top:12px;gap:8px"></div>
+  <div id="avatarBox" style="margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:8px">
+    <canvas id="avatarPreview" width="128" height="128" style="width:96px;height:96px;border-radius:50%;background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.5);touch-action:none"></canvas>
+    <div class="row" style="gap:8px"><button class="btn secondary" id="btnPhoto" style="padding:8px 14px;font-size:15px">📷 Foto vom Kopf</button><button class="btn secondary" id="btnPhotoDel" style="padding:8px 14px;font-size:15px;display:none">✕ Entfernen</button></div>
+    <input type="file" id="photoInput" accept="image/*" style="display:none">
+    <div id="cropTools" style="display:none;flex-direction:column;align-items:center;gap:6px;width:min(90vw,320px)">
+      <div class="small" style="margin:0">Bild verschieben (ziehen) und zoomen, dann übernehmen</div>
+      <input type="range" id="cropZoom" min="1" max="3" step="0.02" value="1.2" style="width:100%">
+      <button class="btn" id="btnCropOk" style="padding:8px 16px;font-size:15px">Übernehmen</button>
+    </div>
+  </div>
   <div class="row" style="margin-top:16px"><button class="btn secondary" id="btnNameBack">Zurück</button><button class="btn" id="btnNameNext">Weiter</button></div>
 </div>
 
@@ -154,7 +164,7 @@
 
 <script>
 'use strict';
-const VERSION='2.8.1', VERSION_DATE='2026-10-02';
+const VERSION='2.9.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -183,9 +193,9 @@ const SEASON='s2'; // Saison hochzählen = alle Ranglisten starten leer (alte Ei
 const colKey=stageId=>stageId+'_'+SEASON;
 const Online = {
   base(){ return `https://firestore.googleapis.com/v1/projects/${FIREBASE.projectId}/databases/(default)/documents`; },
-  enc(e){ return { fields:{ name:{stringValue:String(e.name).slice(0,14)}, driver:{stringValue:e.driver}, stage:{stringValue:colKey(e.stage)}, time:{doubleValue:Number(e.time)}, items:{integerValue:String(e.items|0)}, boosts:{integerValue:String(e.boosts|0)}, won:{booleanValue:!!e.won}, score:{integerValue:String(e.score|0)}, date:{stringValue:e.date||''}, ts:{integerValue:String(e.id||Date.now())} } }; },
+  enc(e){ return { fields:{ name:{stringValue:String(e.name).slice(0,14)}, driver:{stringValue:e.driver}, stage:{stringValue:colKey(e.stage)}, time:{doubleValue:Number(e.time)}, items:{integerValue:String(e.items|0)}, boosts:{integerValue:String(e.boosts|0)}, won:{booleanValue:!!e.won}, score:{integerValue:String(e.score|0)}, date:{stringValue:e.date||''}, ts:{integerValue:String(e.id||Date.now())}, ...(e.avatar? {avatar:{stringValue:String(e.avatar).slice(0,16000)}} : {}) } }; },
   dec(doc){ const f=doc.fields||{}; const v=k=>{ const x=f[k]||{}; return x.stringValue ?? (x.integerValue!==undefined? Number(x.integerValue) : x.doubleValue ?? x.booleanValue); };
-    return { id:doc.name.split('/').pop(), ts:Number(v('ts'))||0, name:v('name')||'?', driver:v('driver')||'girl', stage:v('stage'), time:Number(v('time'))||0, items:Number(v('items'))||0, boosts:Number(v('boosts'))||0, won:!!v('won'), score:Number(v('score'))||0, date:v('date')||'', online:true }; },
+    return { id:doc.name.split('/').pop(), ts:Number(v('ts'))||0, name:v('name')||'?', driver:v('driver')||'girl', stage:v('stage'), time:Number(v('time'))||0, items:Number(v('items'))||0, boosts:Number(v('boosts'))||0, won:!!v('won'), score:Number(v('score'))||0, date:v('date')||'', avatar:(typeof v('avatar')==='string'&&v('avatar').startsWith('data:image/'))? v('avatar') : null, online:true }; },
   async count(stageId){ const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], select:{fields:[{fieldPath:'score'}]}, limit:1000 } };
     const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document).length; },
   async add(entry){ // schreibt ein Ergebnis; schlägt es fehl, landet es in der Warteschlange
@@ -804,6 +814,7 @@ function drawKidBack(x, cx, cy, s, d, steer=0){
   x.fillStyle=d.skin; x.fillRect(cx-s*1.05,cy-s*0.6,s*0.3,s*0.5); x.fillRect(cx+s*0.75,cy-s*0.6,s*0.3,s*0.5);
   x.fillStyle=d.skin; x.fillRect(cx-s*0.2,cy-s*1.05,s*0.4,s*0.4);
   x.fillStyle=d.skin; x.beginPath(); x.arc(cx-s*0.6,cy-s*1.45,s*0.14,0,7); x.fill(); x.beginPath(); x.arc(cx+s*0.6,cy-s*1.45,s*0.14,0,7); x.fill();
+  if(d.avatarImg){ x.imageSmoothingEnabled=false; x.drawImage(d.avatarImg,cx-s*0.72,cy-s*2.22,s*1.44,s*1.44); x.imageSmoothingEnabled=true; return; }
   x.fillStyle=d.hair; x.beginPath(); x.arc(cx,cy-s*1.5,s*0.6,0,7); x.fill();
   if(d.id==='girl'){
     for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; x.beginPath(); x.arc(cx+Math.cos(a)*s*0.52,cy-s*1.5+Math.sin(a)*s*0.52,s*0.2,0,7); x.fill(); }
@@ -862,6 +873,7 @@ function drawVehicleFront(x, w, h, d){
 function drawKidFront(x,cx,cy,s,d){
   x.fillStyle=d.shirt; x.beginPath(); x.roundRect(cx-s*1.1,cy-s*0.8,s*2.2,s*1.0,s*0.4); x.fill();
   x.fillStyle=d.skin; x.fillRect(cx-s*0.2,cy-s*1.05,s*0.4,s*0.35);
+  if(d.avatarImg){ x.imageSmoothingEnabled=false; x.drawImage(d.avatarImg,cx-s*0.75,cy-s*2.15,s*1.5,s*1.5); x.imageSmoothingEnabled=true; return; }
   x.fillStyle=d.hair; x.beginPath(); x.arc(cx,cy-s*1.5,s*0.66,0,7); x.fill();
   if(d.id==='girl'){ for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; x.beginPath(); x.arc(cx+Math.cos(a)*s*0.58,cy-s*1.5+Math.sin(a)*s*0.58,s*0.17,0,7); x.fill(); } x.beginPath(); x.arc(cx,cy-s*2.05,s*0.28,0,7); x.fill(); x.fillStyle='#e0527a'; x.beginPath(); x.arc(cx+s*0.18,cy-s*1.95,s*0.09,0,7); x.fill(); }
   x.fillStyle=d.skin; x.beginPath(); x.ellipse(cx,cy-s*1.4,s*0.52,s*0.58,0,0,7); x.fill();
@@ -934,6 +946,7 @@ function drawGoat(x,w,h,f){ x.save(); x.translate(w/2,h);
   x.strokeStyle='#e2231a'; x.lineWidth=3; x.beginPath(); x.moveTo(-w*0.12,-h*0.62); x.quadraticCurveTo(0,-h*0.5,w*0.12,-h*0.62); x.stroke(); x.fillStyle='#d4a52a'; x.beginPath(); x.arc(0,-h*0.5,w*0.05,0,7); x.fill();
   x.restore(); }
 
+function buildCarSprites(){ for(const d of Object.values(DRIVERS)){ for(let s=-2;s<=2;s++) makeSprite('car_'+d.id+'_'+s,300,260,(x,w,h)=>drawVehicleBack(x,w,h,d,s/2)); } }
 function buildSprites(){
   makeSprite('palm',120,220,(x,w,h)=>drawPalm(x,w,h,1));
   makeSprite('palm2',120,250,(x,w,h)=>{x.translate(0,0);drawPalm(x,w,h,1.1);});
@@ -989,8 +1002,8 @@ function buildSprites(){
   makeSprite('crystal',64,64,drawCrystal); makeSprite('comet',64,64,drawComet); makeSprite('planetItem',64,64,drawPlanetItem); makeSprite('alienegg',64,64,drawAlienEgg);
   for(const f of [0,1]){ makeSprite('bus_'+f,140,180,(x,w,h)=>drawBus(x,w,h,f)); makeSprite('scooter_'+f,70,115,(x,w,h)=>drawScooter(x,w,h,f)); makeSprite('cyclist_'+f,70,115,(x,w,h)=>drawCyclist(x,w,h,f)); makeSprite('goat_'+f,90,85,(x,w,h)=>drawGoat(x,w,h,f)); }
   for(const d of Object.values(DRIVERS)){
-    for(let s=-2;s<=2;s++) makeSprite('car_'+d.id+'_'+s,300,260,(x,w,h)=>drawVehicleBack(x,w,h,d,s/2));
   }
+  buildCarSprites();
 }
 
 // ---------- Strecken ----------
@@ -1210,6 +1223,7 @@ const G = { state:'title', driver:'girl', stageIdx:0, track:null, stage:null,
 function startRace(){
   const stage=STAGES[G.stageIdx]; G.stage=stage; G.track=buildTrack(stage);
   const d=DRIVERS[G.driver]; const rivalId = G.driver==='girl'?'boy':'girl'; const r=DRIVERS[rivalId];
+  d.avatarImg=Avatar.img(Avatar.dataFor(playerName())); r.avatarImg=null; buildCarSprites();
   G.position=0; G.playerX=-0.4; G.speed=0; G.time=0; G.items=0; G.boostT=0; G.boosts=0; G.crashT=0; G.finishFx=0; G.finished=false; FX.clear(); G.countdown=3.99; G.shake=0; G.finishTime=0; G.rivalFinishTime=0;
   G.maxSpeed = TOP_SPEED*d.maxSpeedF;
   RNG.seed('verkehr-'+stage.id+'-v1'); // gleicher Verkehr auf allen Geräten
@@ -1577,7 +1591,7 @@ function updateHUD(){
   $('spd').textContent=kmh; $('spd').style.color = G.boostT>0 ? '#ff7a1a' : '';
   $('score').textContent=calcScore(G.finished?G.finishTime:G.time,G.items,G.boosts,false); $('time').textContent=fmtTime(G.time); $('items').textContent=G.items;
   const pz=G.position+playerZ, rz=G.rival.z; const ahead = G.finished ? (G.rival.finished && G.rivalFinishTime<G.finishTime ? false : true) : (pz>=rz);
-  $('pos').textContent = playerName();
+  { const av=Avatar.dataFor(playerName()); $('pos').innerHTML = (av? `<img src="${av}" style="width:22px;height:22px;vertical-align:middle;image-rendering:pixelated"> ` : '') + escapeHtml(playerName()); }
   const fz=G.track.finishZ; $('mYou').style.left=clamp(pz/fz,0,1)*100+'%'; $('mRival').style.left=clamp(rz/fz,0,1)*100+'%';
   // aktueller Ort
   let town=G.stage.towns[0][1]; for(const [frac,t] of G.stage.towns){ if(pz/fz>=frac) town=t; } $('lapinfo').textContent=town;
@@ -1589,13 +1603,13 @@ function showResult(){
   const bestKey='best_'+G.stage.id; const best=store(bestKey); let isBest=false; if(!best || G.finishTime<best){ store(bestKey,G.finishTime); isBest=true; }
   const rivalTime = G.rival.finished? fmtTime(G.rivalFinishTime) : 'noch unterwegs';
   const score=calcScore(G.finishTime,G.items,G.boosts);
-  const {entry,rank} = Ranking.add({ name:playerName(), driver:me.id, stage:G.stage.id, time:Math.round(G.finishTime*10)/10, items:G.items, boosts:G.boosts, won, score, date:new Date().toISOString().slice(0,10) });
+  const {entry,rank} = Ranking.add({ name:playerName(), driver:me.id, stage:G.stage.id, time:Math.round(G.finishTime*10)/10, items:G.items, boosts:G.boosts, won, score, date:new Date().toISOString().slice(0,10), avatar:Avatar.dataFor(playerName())||undefined });
   G.lastEntry=entry;
   // online speichern, dann Platz in der Gesamtrangliste und Top 5 anzeigen
   (async()=>{ const ok=await Online.add(entry); const big=$('resBig'), el=$('onlineRank'); if(!el) return;
     if(!ok){ big.textContent='📵 Kein Netz'; el.innerHTML='Das Ergebnis wird nachgereicht, sobald wieder Netz da ist'; return; }
     try{ const [r,total,top]=await Promise.all([Online.rankOf(entry),Online.count(G.stage.id),Online.top(G.stage.id,5)]);
-      big.textContent=(r===1?'🥇 ':r===2?'🥈 ':r===3?'🥉 ':'🌍 ')+'Platz '+r+' von '+total; el.innerHTML=r===1?'Neue Bestmarke auf dieser Strecke!':'in der gemeinsamen Rangliste aller Handys';
+      big.textContent=(r===1?'🥇 ':r===2?'🥈 ':r===3?'🥉 ':'🌍 ')+'Platz '+r+' von '+Math.max(total,r); el.innerHTML=r===1?'Neue Bestmarke auf dieser Strecke!':'in der gemeinsamen Rangliste aller Handys';
       $('onlineTop').innerHTML=rankingTable(G.stage.id,entry.id,5,top); }
     catch(e){ big.textContent='🌍 Gespeichert'; el.innerHTML='Platz konnte gerade nicht ermittelt werden'; } })();
   $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${G.stage.itemIcon||'🦐'} ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · ${G.stage.itemName} ${G.items*ITEM_POINTS} · Turbos ${G.boosts*50}</td></tr>`
@@ -1610,7 +1624,7 @@ function rankingTable(stageId, highlightId, limit, list, extra){
   list = (list || Ranking.forStage(stageId)).slice(0,limit);
   if(!list.length) return '<div style="opacity:.7">Noch keine Zeiten</div>';
   const rows=list.map((e,i)=>({e,i})); if(extra) rows.push({sep:true},{e:extra.e,i:extra.rank-1});
-  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr style="${(e.id===highlightId||e.ts===highlightId||e.hl)?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.driver==='girl'?'🚗':'🚙'} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · ${(STAGES.find(x=>x.id===stageId)||{}).itemIcon||'🦐'}${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
+  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr style="${(e.id===highlightId||e.ts===highlightId||e.hl)?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.avatar? `<img src="${e.avatar}" style="width:22px;height:22px;vertical-align:middle;image-rendering:pixelated;margin-right:2px">` : (e.driver==='girl'?'🚗':'🚙')} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · ${(STAGES.find(x=>x.id===stageId)||{}).itemIcon||'🦐'}${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
 }
 function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 let rankStage=null; // welche Strecke in der Rangliste offen ist
@@ -1633,19 +1647,44 @@ function renderRanking(){
     const m=$('rankMode'); if(m) m.textContent=!list.length? '🌍 Noch niemand hat diese Strecke gefahren' : (mine&&myRank? `🌍 Du bist auf Platz ${myRank}` : list.length>=25? '🌍 Die 25 Besten aller Handys' : `🌍 ${list.length} ${list.length===1?'Eintrag':'Einträge'} von allen Handys`);
   }).catch(()=>{ if(rankStage!==want) return; const m=$('rankMode'); if(m) m.textContent='📵 Kein Netz – die Rangliste braucht eine Internetverbindung'; const el=$('rank_'+st.id); if(el) el.textContent='nicht verfügbar'; });
 }
+// ---------- Fahrerkopf aus Foto: zuschneiden, verpixeln, Farben reduzieren, rund ausschneiden ----------
+const Avatar = { cache:{}, src:null, zoom:1.2, ox:0, oy:0, drag:null,
+  key(name){ return 'avatar_'+String(name).trim().toLowerCase(); },
+  dataFor(name){ try{ return localStorage.getItem('mr_'+Avatar.key(name))||null; }catch(e){ return null; } },
+  save(name,data){ try{ if(data) localStorage.setItem('mr_'+Avatar.key(name),data); else localStorage.removeItem('mr_'+Avatar.key(name)); }catch(e){} },
+  img(data){ if(!data) return null; let im=Avatar.cache[data]; if(!im){ im=new Image(); im.src=data; Avatar.cache[data]=im; } return im.complete&&im.naturalWidth? im : null; },
+  stylize(src,sx,sy,sw,sh){ // 30×30 Pixel, 5 Farbstufen, etwas kräftiger, rund mit dunkler Kontur
+    const N=30, c=mkCanvas(N,N), x=c.getContext('2d'); x.drawImage(src,sx,sy,sw,sh,0,0,N,N);
+    const d=x.getImageData(0,0,N,N), q=d.data;
+    for(let i=0;i<q.length;i+=4){ let r=q[i],g=q[i+1],b=q[i+2]; const l=(r+g+b)/3; r=l+(r-l)*1.35; g=l+(g-l)*1.35; b=l+(b-l)*1.35; const st=v=>clamp(Math.round(v/51)*51,0,255); q[i]=st(r); q[i+1]=st(g); q[i+2]=st(b); }
+    x.putImageData(d,0,0);
+    const out=mkCanvas(64,64), o=out.getContext('2d'); o.imageSmoothingEnabled=false; o.save(); o.beginPath(); o.arc(32,32,29,0,7); o.clip(); o.drawImage(c,0,0,64,64); o.restore();
+    o.strokeStyle='#2a1a10'; o.lineWidth=3; o.beginPath(); o.arc(32,32,29,0,7); o.stroke();
+    return out.toDataURL('image/png'); },
+  cropRect(){ const im=Avatar.src; const base=Math.min(im.naturalWidth,im.naturalHeight)/Avatar.zoom; const cx=im.naturalWidth/2+Avatar.ox, cy=im.naturalHeight/2+Avatar.oy; const sx=clamp(cx-base/2,0,im.naturalWidth-base), sy=clamp(cy-base/2,0,im.naturalHeight-base); return [sx,sy,base,base]; },
+  drawPreview(){ const c=$('avatarPreview'), x=c.getContext('2d'); x.clearRect(0,0,128,128);
+    if(Avatar.src){ const [sx,sy,sw,sh]=Avatar.cropRect(); x.save(); x.beginPath(); x.arc(64,64,62,0,7); x.clip(); x.drawImage(Avatar.src,sx,sy,sw,sh,0,0,128,128); x.restore(); return; }
+    const data=Avatar.dataFor($('nameInput').value); const im=Avatar.img(data);
+    if(im){ x.imageSmoothingEnabled=false; x.drawImage(im,0,0,128,128); } else { x.fillStyle='rgba(255,255,255,.5)'; x.font='60px Arial'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('🙂',64,70); }
+    $('btnPhotoDel').style.display = data? '' : 'none'; },
+  startCrop(file){ const url=URL.createObjectURL(file); const im=new Image(); im.onload=()=>{ Avatar.src=im; Avatar.zoom=1.2; Avatar.ox=0; Avatar.oy=0; $('cropZoom').value=1.2; $('cropTools').style.display='flex'; $('btnPhoto').style.display='none'; Avatar.drawPreview(); }; im.src=url; },
+  finishCrop(){ if(!Avatar.src) return; const [sx,sy,sw,sh]=Avatar.cropRect(); const data=Avatar.stylize(Avatar.src,sx,sy,sw,sh); Avatar.pending=data; Avatar.src=null; $('cropTools').style.display='none'; $('btnPhoto').style.display=''; const n=$('nameInput').value.trim(); if(n) Avatar.save(n,data); const im=new Image(); im.onload=()=>Avatar.drawPreview(); im.src=data; Avatar.cache[data]=im; $('btnPhotoDel').style.display=''; },
+  remove(){ Avatar.pending=null; Avatar.save($('nameInput').value,null); Avatar.drawPreview(); }
+};
 function renderName(){
   const inp=$('nameInput'); inp.value=store('player_name')||'';
   const names=(store('names')||[]).filter(n=>n);
   $('nameChips').innerHTML = names.map(n=>`<button class="chip${n===inp.value?' sel':''}">${escapeHtml(n)}</button>`).join('');
   for(const ch of $('nameChips').querySelectorAll('.chip')) ch.onclick=()=>{ inp.value=ch.textContent; store('player_name',ch.textContent); renderName(); };
   $('btnNameNext').disabled = !inp.value.trim(); $('btnNameNext').style.opacity = inp.value.trim()? 1 : .5;
+  Avatar.src=null; $('cropTools').style.display='none'; $('btnPhoto').style.display=''; Avatar.drawPreview();
 }
-function saveName(){ const n=$('nameInput').value.trim().slice(0,14); if(!n) return false; store('player_name',n); const names=(store('names')||[]).filter(x=>x!==n); names.unshift(n); store('names',names.slice(0,6)); return true; }
+function saveName(){ const n=$('nameInput').value.trim().slice(0,14); if(!n) return false; store('player_name',n); if(Avatar.pending){ Avatar.save(n,Avatar.pending); Avatar.pending=null; } const names=(store('names')||[]).filter(x=>x!==n); names.unshift(n); store('names',names.slice(0,6)); return true; }
 function renderDrivers(){
   const box=$('drivers'); box.innerHTML='';
   for(const d of Object.values(DRIVERS)){
     const card=document.createElement('div'); card.className='card'+(G.driver===d.id?' sel':''); card.dataset.id=d.id;
-    const c=mkCanvas(300,220); drawVehicleFront(c.getContext('2d'),300,220,d);
+    d.avatarImg=Avatar.img(Avatar.dataFor(playerName())); const c=mkCanvas(300,220); drawVehicleFront(c.getContext('2d'),300,220,d);
     card.appendChild(c); const t=document.createElement('div'); t.className='title'; t.textContent=d.carName; card.appendChild(t); const ds=document.createElement('div'); ds.className='desc'; ds.textContent=d.desc; card.appendChild(ds);
     card.addEventListener('click',()=>{ G.driver=d.id; store('driver',d.id); renderDrivers(); });
     box.appendChild(card);
@@ -1665,6 +1704,16 @@ $('btnNameBack').onclick=()=>setState('title');
 $('btnNameNext').onclick=()=>{ if(saveName()) setState('select'); else $('nameInput').focus(); };
 $('nameInput').addEventListener('input',()=>{ const ok=!!$('nameInput').value.trim(); $('btnNameNext').disabled=!ok; $('btnNameNext').style.opacity=ok?1:.5; for(const ch of $('nameChips').querySelectorAll('.chip')) ch.classList.toggle('sel',ch.textContent===$('nameInput').value); });
 $('nameInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('btnNameNext').click(); } });
+$('nameInput').addEventListener('input',()=>{ if(!Avatar.src) Avatar.drawPreview(); });
+$('btnPhoto').onclick=()=>$('photoInput').click();
+$('photoInput').addEventListener('change',e=>{ const f=e.target.files&&e.target.files[0]; if(f) Avatar.startCrop(f); e.target.value=''; });
+$('btnPhotoDel').onclick=()=>Avatar.remove();
+$('btnCropOk').onclick=()=>Avatar.finishCrop();
+$('cropZoom').addEventListener('input',()=>{ Avatar.zoom=+$('cropZoom').value; Avatar.drawPreview(); });
+{ const pv=$('avatarPreview'); const down=e=>{ if(!Avatar.src) return; const t=e.touches?e.touches[0]:e; Avatar.drag={x:t.clientX,y:t.clientY,ox:Avatar.ox,oy:Avatar.oy}; e.preventDefault(); };
+  const move=e=>{ if(!Avatar.drag||!Avatar.src) return; const t=e.touches?e.touches[0]:e; const k=Math.min(Avatar.src.naturalWidth,Avatar.src.naturalHeight)/Avatar.zoom/96; Avatar.ox=Avatar.drag.ox-(t.clientX-Avatar.drag.x)*k; Avatar.oy=Avatar.drag.oy-(t.clientY-Avatar.drag.y)*k; Avatar.drawPreview(); e.preventDefault(); };
+  const up=()=>{ Avatar.drag=null; };
+  pv.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up); pv.addEventListener('touchstart',down,{passive:false}); pv.addEventListener('touchmove',move,{passive:false}); pv.addEventListener('touchend',up); }
 $('btnBackTitle').onclick=()=>setState('name');
 $('btnRanking').onclick=()=>setState('rankpick');
 $('btnRankPickBack').onclick=()=>setState('title');
