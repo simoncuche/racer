@@ -207,7 +207,7 @@
 
 <script>
 'use strict';
-const VERSION='3.13.0', VERSION_DATE='2026-10-02';
+const VERSION='3.13.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -2190,7 +2190,8 @@ const Avatar = { pending:null, editing:null, urlCache:{},
     if(p){ drawAvatarHead(x,64,70,44,p,'front'); } else { x.fillStyle='rgba(255,255,255,.5)'; x.font='60px Arial'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('🙂',64,70); }
     $('btnPhotoDel').style.display = (p && !Avatar.editing)? '' : 'none'; $('btnAvatarEdit').style.display = Avatar.editing? 'none' : ''; },
   tab:'face',
-  openEditor(p){ Avatar.editing=Object.assign(defaultAvatar(),p||{}); const box=$('avatarEditor'); box.style.display='flex'; const e=Avatar.editing;
+  openEditor(p,keepScroll){ Avatar.editing=Object.assign(defaultAvatar(),p||{}); const box=$('avatarEditor'); box.style.display='flex'; const e=Avatar.editing;
+    const oldBody=box.querySelector('.avbody'); const sc = keepScroll && oldBody ? oldBody.scrollTop : 0; const screenSc=$('name').scrollTop; // Scrollposition merken, damit die Liste beim Auswählen nicht springt
     const TABS=[['face','🙂 Gesicht'],['eyes','👀 Augen'],['mouth','👄 Mund'],['hair','💇 Haare'],['extra','🧢 Extras']];
     const tabs='<div class="avtabs">'+TABS.map(t=>`<button class="avtab${Avatar.tab===t[0]?' sel':''}" data-tab="${t[0]}">${t[1]}</button>`).join('')+'</div>';
     const num=['hairColor','skin','capColor','eye','brows'];
@@ -2207,10 +2208,11 @@ const Avatar = { pending:null, editing:null, urlCache:{},
     else body = row('Brille',opts(AV_GLASSES,'glasses')) + row('Kopfbedeckung',opts(AV_HEAD,'headwear')) + (needCapColor? row('Farbe der Kopfbedeckung',colors(AV_CAP,'capColor')) : '') + row('Extras',toggles([['freckles','Sommersprossen'],['earrings','Ohrringe']]));
     box.innerHTML = tabs + '<div class="avbody">' + body + '</div>'
       + `<div class="row" style="margin-top:8px;gap:8px"><button class="btn secondary" id="btnAvatarRandom" style="padding:8px 14px;font-size:15px">🎲 Zufall</button><button class="btn" id="btnAvatarOk" style="padding:8px 16px;font-size:15px">Fertig</button></div>`;
+    const nb=box.querySelector('.avbody'); if(nb) nb.scrollTop=sc; $('name').scrollTop=screenSc;
     // Vorschaubilder: der eigene Avatar mit genau dieser Option
     for(const b of box.querySelectorAll('.avopt')){ const k=b.dataset.k, v=b.dataset.v; const q=Object.assign({},e); if(v==='toggle') q[k]=!e[k]; else q[k]= num.includes(k)? +v : v;
       const x=b.querySelector('canvas').getContext('2d'); drawAvatarHead(x,56,66,50,q,'front'); }
-    for(const b of box.querySelectorAll('.avopt,.avcolor')){ b.onclick=()=>{ const k=b.dataset.k, v=b.dataset.v; if(v==='toggle') e[k]=!e[k]; else if(num.includes(k)) e[k]=+v; else e[k]=v; Avatar.openEditor(e); }; }
+    for(const b of box.querySelectorAll('.avopt,.avcolor')){ b.onclick=()=>{ const k=b.dataset.k, v=b.dataset.v; if(v==='toggle') e[k]=!e[k]; else if(num.includes(k)) e[k]=+v; else e[k]=v; Avatar.openEditor(e,true); }; }
     for(const t of box.querySelectorAll('.avtab')){ t.onclick=()=>{ Avatar.tab=t.dataset.tab; Avatar.openEditor(e); }; }
     $('btnAvatarRandom').onclick=()=>{ const pick=a=>a[Math.floor(Math.random()*a.length)]; e.hair=pick(AV_STYLES)[0]; e.hairColor=Math.floor(Math.random()*8); e.skin=Math.floor(Math.random()*AV_SKIN.length); e.face=pick(AV_FACE)[0]; e.eye=Math.floor(Math.random()*AV_EYE.length); e.eyeShape=pick(AV_EYESHAPE)[0]; e.nose=pick(AV_NOSE)[0]; e.ears=pick(AV_EARS)[0]; e.creature=Math.random()<0.3? pick(AV_CREATURE)[0] : 'none'; e.mouth=pick(AV_MOUTH)[0]; e.brows=Math.floor(Math.random()*3); e.moustache=Math.random()<0.3? pick(AV_MUST)[0] : 'none'; e.beard=Math.random()<0.3? pick(AV_BEARD)[0] : 'none'; e.glasses=Math.random()<0.3? pick(AV_GLASSES)[0] : 'none'; e.headwear=Math.random()<0.4? pick(AV_HEAD)[0] : 'none'; e.capColor=Math.floor(Math.random()*AV_CAP.length); e.freckles=Math.random()<0.2; e.earrings=Math.random()<0.15; Avatar.openEditor(e); };
     $('btnAvatarOk').onclick=()=>{ Avatar.pending=Avatar.editing; Avatar.editing=null; box.style.display='none'; const n=$('nameInput').value.trim(); if(n){ Avatar.save(n,Avatar.pending); } Avatar.drawPreview(); };
@@ -2302,6 +2304,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.13.1','2026-10-02','Konfigurator: Beim Auswählen bleibt die Liste an der gleichen Stelle, statt nach oben zu springen.'],
  ['3.13.0','2026-10-02','Avatar: Hautfarben Grün, Gelb, Blau und Lila. Ohren von Katze, Hase, Bär und Alien, Schweine- und Katzennase. Neue Rubrik „Besonderes“: Tentakel, Fühler, Hörner, Schnurrhaare, drittes Auge, Einhorn.'],
  ['3.12.0','2026-10-02','Avatar bei der Namenseingabe und im Konfigurator größer. Ranglisten-Einträge lassen sich antippen: großer Avatar mit allen Werten (Platz, Punkte, Zeit, Items, Turbos, Fahrzeug, Datum).'],
  ['3.11.0','2026-10-02','Avatar-Konfigurator neu: Reiter für Gesicht, Augen, Mund, Haare und Zubehör, jede Option als Vorschaubild. Neu wählbar: 6 Augenformen, 6 Nasen, 5 Ohrenformen, 10 Münder.'],
