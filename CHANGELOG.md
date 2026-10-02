@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.12.0 (2026-10-02)
+
+Avatar bei der Namenseingabe und im Konfigurator größer. Ranglisten-Einträge lassen sich antippen: großer Avatar mit allen Werten (Platz, Punkte, Zeit, Items, Turbos, Fahrzeug, Datum).
+
 ## 3.11.0 (2026-10-02)
 
 Avatar-Konfigurator neu: Reiter für Gesicht, Augen, Mund, Haare und Zubehör, jede Option als Vorschaubild. Neu wählbar: 6 Augenformen, 6 Nasen, 5 Ohrenformen, 10 Münder.

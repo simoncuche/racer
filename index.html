@@ -143,7 +143,7 @@
   <input id="nameInput" name="spieler" maxlength="14" placeholder="Dein Name" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="words" inputmode="text" enterkeyhint="done" style="width:min(90vw,320px);padding:12px 14px;border-radius:14px;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;font-size:22px;text-align:center;user-select:text;-webkit-user-select:text">
   <div class="row" id="nameChips" style="margin-top:12px;gap:8px"></div>
   <div id="avatarBox" style="margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:8px">
-    <canvas id="avatarPreview" width="256" height="256" style="width:150px;height:150px;border-radius:50%;background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.5)"></canvas>
+    <canvas id="avatarPreview" width="400" height="400" style="width:min(56vw,220px);height:min(56vw,220px);border-radius:50%;background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.5)"></canvas>
     <div class="row" style="gap:8px"><button class="btn secondary" id="btnAvatarEdit" style="padding:8px 14px;font-size:15px">🎨 Avatar gestalten</button><button class="btn secondary" id="btnPhotoDel" style="padding:8px 14px;font-size:15px;display:none">✕ Entfernen</button></div>
     <div id="avatarEditor" style="display:none;flex-direction:column;gap:6px;width:min(94vw,400px);background:var(--panel);border-radius:16px;padding:10px"></div>
   </div>
@@ -178,6 +178,17 @@
   <div class="row" style="margin-top:14px"><button class="btn secondary" id="btnRankBack">Zurück</button></div>
 </div>
 
+<!-- Ranglisten-Detail -->
+<div id="rankDetail" class="hidden" style="position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--panel);border-radius:20px;padding:16px 18px;width:min(92vw,360px);text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+    <canvas id="rdAvatar" width="400" height="400" style="width:min(50vw,200px);height:min(50vw,200px);border-radius:50%;background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.5)"></canvas>
+    <div id="rdName" style="font-size:clamp(20px,6vw,28px);font-weight:900;margin-top:8px"></div>
+    <div id="rdRank" style="opacity:.85;font-size:14px;margin:2px 0 8px"></div>
+    <table id="rdStats" style="margin:0 auto;font-size:15px"></table>
+    <button class="btn secondary" id="btnRdClose" style="margin-top:12px;padding:10px 22px">Schließen</button>
+  </div>
+</div>
+
 <!-- Pause -->
 <div id="pause" class="screen hidden">
   <h2>Pause</h2>
@@ -196,7 +207,7 @@
 
 <script>
 'use strict';
-const VERSION='3.11.0', VERSION_DATE='2026-10-02';
+const VERSION='3.12.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -1982,8 +1993,18 @@ function rankingTable(stageId, highlightId, limit, list, extra){
   list = (list || Ranking.forStage(stageId)).slice(0,limit);
   if(!list.length) return '<div style="opacity:.7">Noch keine Zeiten</div>';
   const rows=list.map((e,i)=>({e,i})); if(extra) rows.push({sep:true},{e:extra.e,i:extra.rank-1});
-  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr style="${(e.id===highlightId||e.ts===highlightId||e.hl||Online.pkey(e.name)===Online.pkey(playerName()))?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.avatar? `<img src="${Avatar.dataUrl(e.avatar)}" style="width:26px;height:26px;vertical-align:middle;margin-right:2px">` : (e.driver==='girl'?'🚗':e.driver==='plane'?'✈️':'🚙')} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · ${(STAGES.find(x=>x.id===stageId)||{}).itemIcon||'🦐'}${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
+  rankingTable.rows=rows.filter(r=>!r.sep).map(r=>({e:r.e,rank:r.i+1,stageId})); // für die Detailansicht
+  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr class="rankrow" data-i="${rankingTable.rows.findIndex(r=>r.e===e)}" style="cursor:pointer;${(e.id===highlightId||e.ts===highlightId||e.hl||Online.pkey(e.name)===Online.pkey(playerName()))?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.avatar? `<img src="${Avatar.dataUrl(e.avatar)}" style="width:26px;height:26px;vertical-align:middle;margin-right:2px">` : (e.driver==='girl'?'🚗':e.driver==='plane'?'✈️':'🚙')} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · ${(STAGES.find(x=>x.id===stageId)||{}).itemIcon||'🦐'}${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
 }
+function showRankDetail(row){ // großer Avatar mit allen Werten eines Ranglisten-Eintrags
+  const e=row.e, st=STAGES.find(x=>x.id===row.stageId)||{}; const box=$('rankDetail'); box.classList.remove('hidden');
+  const medal=['🥇','🥈','🥉'][row.rank-1]||('Platz '+row.rank); const veh = e.driver==='girl'?'🚗 Roter Flitzer':e.driver==='plane'?'✈️ Gelber Doppeldecker':'🚙 Blauer Jeep';
+  $('rdName').textContent=e.name; $('rdRank').textContent=medal+' · '+(st.emoji||'')+' '+(st.name||'');
+  $('rdStats').innerHTML=[['⭐ Punkte',Ranking.score(e)],['⏱️ Zeit',fmtTime(e.time)],[(st.itemIcon||'🦐')+' '+(st.itemName||'Items'),e.items||0],['🔥 Turbos',e.boosts||0],['Fahrzeug',veh],['📅 Datum',e.date||'–']].map(([k,v])=>`<tr><td style="text-align:left;opacity:.8;padding:3px 10px 3px 0">${k}</td><td style="text-align:right;font-weight:700">${v}</td></tr>`).join('');
+  const c=$('rdAvatar'), x=c.getContext('2d'); x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,400,400); x.setTransform(400/128,0,0,400/128,0,0);
+  if(e.avatar) drawAvatarHead(x,64,70,44,e.avatar,'front'); else { x.font='70px Arial'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(e.driver==='girl'?'🚗':e.driver==='plane'?'✈️':'🚙',64,66); }
+}
+document.addEventListener('click',ev=>{ const tr=ev.target.closest&&ev.target.closest('tr.rankrow'); if(tr && rankingTable.rows){ const row=rankingTable.rows[+tr.dataset.i]; if(row) showRankDetail(row); } });
 function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 let rankStage=null; // welche Strecke in der Rangliste offen ist
 function renderRankPick(){
@@ -2140,7 +2161,7 @@ const Avatar = { pending:null, editing:null, urlCache:{},
   encode(p){ return p? 'p:'+JSON.stringify(p) : null; },
   decode(str){ if(!str||typeof str!=='string'||!str.startsWith('p:')) return null; try{ const p=JSON.parse(str.slice(2)); if(p.moustache===true) p.moustache='wide'; if(p.moustache===false) p.moustache='none'; if(p.glasses===true) p.glasses='round'; if(p.glasses===false) p.glasses='none'; if(typeof p.eye==='string') p.eye = p.eye==='#3a6a9a'? 1 : 0; return Object.assign(defaultAvatar(),p); }catch(e){ return null; } },
   dataUrl(p){ const k=JSON.stringify(p); if(Avatar.urlCache[k]) return Avatar.urlCache[k]; const c=mkCanvas(64,64); drawAvatarHead(c.getContext('2d'),32,36,24,p,'front'); return Avatar.urlCache[k]=c.toDataURL('image/png'); },
-  drawPreview(){ const c=$('avatarPreview'), x=c.getContext('2d'); x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,256,256); x.setTransform(2,0,0,2,0,0);
+  drawPreview(){ const c=$('avatarPreview'), x=c.getContext('2d'); x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,400,400); x.setTransform(400/128,0,0,400/128,0,0);
     const p = Avatar.editing || Avatar.pending || Avatar.paramsFor($('nameInput').value);
     if(p){ drawAvatarHead(x,64,70,44,p,'front'); } else { x.fillStyle='rgba(255,255,255,.5)'; x.font='60px Arial'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('🙂',64,70); }
     $('btnPhotoDel').style.display = (p && !Avatar.editing)? '' : 'none'; $('btnAvatarEdit').style.display = Avatar.editing? 'none' : ''; },
@@ -2217,6 +2238,7 @@ $('btnBackTitle').onclick=()=>setState('name');
 $('btnRanking').onclick=()=>setState('rankpick');
 $('btnRankPickBack').onclick=()=>setState('title');
 let rankReturn='title';
+$('btnRdClose').onclick=()=>$('rankDetail').classList.add('hidden'); $('rankDetail').addEventListener('click',ev=>{ if(ev.target.id==='rankDetail') $('rankDetail').classList.add('hidden'); });
 $('btnChangesBack').onclick=()=>setState('title'); $('btnChangesBackTop').onclick=()=>setState('title');
 $('btnRankBack').onclick=()=>{ setState(rankReturn); rankReturn='title'; }; $('btnRankBackTop').onclick=()=>{ setState(rankReturn); rankReturn='title'; };
 $('btnToStages').onclick=()=>setState('stages');
@@ -2256,6 +2278,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.12.0','2026-10-02','Avatar bei der Namenseingabe und im Konfigurator größer. Ranglisten-Einträge lassen sich antippen: großer Avatar mit allen Werten (Platz, Punkte, Zeit, Items, Turbos, Fahrzeug, Datum).'],
  ['3.11.0','2026-10-02','Avatar-Konfigurator neu: Reiter für Gesicht, Augen, Mund, Haare und Zubehör, jede Option als Vorschaubild. Neu wählbar: 6 Augenformen, 6 Nasen, 5 Ohrenformen, 10 Münder.'],
  ['3.10.2','2026-10-02','Home-Screen-App: Rangliste robuster. Anfragen haben ein Zeitlimit, Fehler werden mit Ursache und „Nochmals versuchen“ angezeigt, die App prüft beim Öffnen auf eine neue Version.'],
  ['3.10.1','2026-10-02','Autowahl: breite, flache Karten untereinander mit Bild links und Text rechts – auch mit drei Fahrzeugen ohne Scrollen.'],
