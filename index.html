@@ -80,7 +80,7 @@
 <!-- HUD -->
 <div id="hud" class="hidden">
   <div class="box"><div class="speed"><span id="spd">0</span><span style="font-size:.45em"> km/h</span></div><div id="lapinfo">Palma</div></div>
-  <div class="box" style="text-align:right"><div id="pos">1. Platz</div><div><span id="time">0:00.0</span> · 🦐 <span id="items">0</span> · ⭐ <span id="score">0</span></div></div>
+  <div class="box" style="text-align:right"><div id="pos">1. Platz</div><div><span id="time">0:00.0</span> · <span id="itemIcon">🦐</span> <span id="items">0</span> · ⭐ <span id="score">0</span></div></div>
 </div>
 <div id="prog" class="hidden"><div class="mark rival" id="mRival"></div><div class="mark you" id="mYou"></div><div class="flag">🏁</div></div>
 <div id="topbtns" class="hidden"><div class="icon" id="btnPause">⏸</div><div class="icon" id="btnMute">🔊</div><div class="icon" id="btnTilt" title="Kipp-Steuerung">📱</div></div>
@@ -154,7 +154,7 @@
 
 <script>
 'use strict';
-const VERSION='2.5.0', VERSION_DATE='2026-10-02';
+const VERSION='2.5.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -536,13 +536,15 @@ function drawFir(x,w,h){ x.save(); x.translate(w/2,h);
   x.restore(); }
 function drawCow(x,w,h){ x.save(); x.translate(w/2,h);
   x.fillStyle='rgba(0,0,0,0.25)'; x.beginPath(); x.ellipse(0,2,w*0.42,h*0.05,0,0,7); x.fill();
-  x.fillStyle='#4a3a2a'; for(const lx of [-w*0.32,-w*0.14,w*0.08,w*0.26]) x.fillRect(lx,-h*0.3,w*0.09,h*0.3);
-  x.fillStyle='#f4efe6'; x.beginPath(); x.roundRect(-w*0.42,-h*0.7,w*0.84,h*0.44,14); x.fill();
-  x.fillStyle='#6a4a30'; x.beginPath(); x.ellipse(-w*0.18,-h*0.5,w*0.14,h*0.12,0.3,0,7); x.fill(); x.beginPath(); x.ellipse(w*0.2,-h*0.42,w*0.1,h*0.1,-0.4,0,7); x.fill();
-  x.fillStyle='#f4efe6'; x.beginPath(); x.roundRect(-w*0.2,-h*0.98,w*0.4,h*0.36,10); x.fill(); x.fillStyle='#e8b4a0'; x.beginPath(); x.ellipse(0,-h*0.68,w*0.12,h*0.07,0,0,7); x.fill();
-  x.fillStyle='#222'; x.beginPath(); x.arc(-w*0.08,-h*0.85,w*0.03,0,7); x.fill(); x.beginPath(); x.arc(w*0.08,-h*0.85,w*0.03,0,7); x.fill();
-  x.fillStyle='#e8b4a0'; x.beginPath(); x.ellipse(-w*0.24,-h*0.9,w*0.08,h*0.04,0.5,0,7); x.fill(); x.beginPath(); x.ellipse(w*0.24,-h*0.9,w*0.08,h*0.04,-0.5,0,7); x.fill();
-  x.strokeStyle='#d9c9a8'; x.lineWidth=3; x.beginPath(); x.moveTo(-w*0.12,-h*0.98); x.lineTo(-w*0.18,-h*1.08); x.moveTo(w*0.12,-h*0.98); x.lineTo(w*0.18,-h*1.08); x.stroke();
+  x.fillStyle='#222'; for(const lx of [-w*0.34,-w*0.16,w*0.08,w*0.26]){ x.fillRect(lx,-h*0.3,w*0.09,h*0.3); x.fillStyle='#111'; x.fillRect(lx,-h*0.04,w*0.09,h*0.04); x.fillStyle='#222'; }
+  x.fillStyle='#f6b4c8'; x.beginPath(); x.ellipse(-w*0.02,-h*0.3,w*0.1,h*0.07,0,0,7); x.fill();
+  x.fillStyle='#fafafa'; x.beginPath(); x.roundRect(-w*0.44,-h*0.72,w*0.88,h*0.46,16); x.fill();
+  x.fillStyle='#1a1a1a'; x.beginPath(); x.ellipse(-w*0.22,-h*0.56,w*0.14,h*0.13,0.3,0,7); x.fill(); x.beginPath(); x.ellipse(w*0.18,-h*0.42,w*0.12,h*0.11,-0.5,0,7); x.fill(); x.beginPath(); x.ellipse(w*0.3,-h*0.62,w*0.08,h*0.07,0,0,7); x.fill();
+  x.fillStyle='#fafafa'; x.beginPath(); x.roundRect(-w*0.2,-h*1.0,w*0.4,h*0.4,12); x.fill(); x.fillStyle='#1a1a1a'; x.beginPath(); x.ellipse(-w*0.1,-h*0.9,w*0.08,h*0.08,0,0,7); x.fill();
+  x.fillStyle='#f6b4c8'; x.beginPath(); x.ellipse(0,-h*0.68,w*0.14,h*0.09,0,0,7); x.fill(); x.fillStyle='#333'; x.beginPath(); x.arc(-w*0.05,-h*0.68,w*0.02,0,7); x.fill(); x.beginPath(); x.arc(w*0.05,-h*0.68,w*0.02,0,7); x.fill();
+  x.fillStyle='#222'; x.beginPath(); x.arc(-w*0.09,-h*0.86,w*0.03,0,7); x.fill(); x.beginPath(); x.arc(w*0.09,-h*0.86,w*0.03,0,7); x.fill();
+  x.fillStyle='#fafafa'; x.beginPath(); x.ellipse(-w*0.26,-h*0.92,w*0.09,h*0.05,0.5,0,7); x.fill(); x.beginPath(); x.ellipse(w*0.26,-h*0.92,w*0.09,h*0.05,-0.5,0,7); x.fill();
+  x.strokeStyle='#d9c9a8'; x.lineWidth=4; x.lineCap='round'; x.beginPath(); x.moveTo(-w*0.12,-h*1.0); x.quadraticCurveTo(-w*0.2,-h*1.14,-w*0.26,-h*1.08); x.moveTo(w*0.12,-h*1.0); x.quadraticCurveTo(w*0.2,-h*1.14,w*0.26,-h*1.08); x.stroke();
   x.strokeStyle='#8a3a2a'; x.lineWidth=3; x.beginPath(); x.moveTo(-w*0.1,-h*0.64); x.quadraticCurveTo(0,-h*0.52,w*0.1,-h*0.64); x.stroke(); x.fillStyle='#d4a52a'; x.beginPath(); x.arc(0,-h*0.52,w*0.05,0,7); x.fill();
   x.restore(); }
 function drawCableCar(x,w,h,f){ // Luftseilbahn: zwei Masten, Seil, Gondel wandert (f = 0..3)
@@ -571,6 +573,43 @@ function drawFlag(x,w,h,kind){ x.save(); x.translate(w/2,h);
   if(kind==='es'){ x.fillStyle='#c60b1e'; x.fillRect(0,-fh*0.2,fw,fh*1.4); x.fillStyle='#ffc400'; x.fillRect(0,fh*0.25,fw,fh*0.5); x.fillStyle='#c60b1e'; x.fillRect(fw*0.22,fh*0.36,fw*0.1,fh*0.28); x.fillStyle='#ffc400'; x.fillRect(fw*0.24,fh*0.4,fw*0.06,fh*0.2); }
   else { x.fillStyle='#da291c'; x.fillRect(0,-fh*0.2,fw,fh*1.4); x.fillStyle='#fff'; x.fillRect(fw*0.5-fw*0.065,fh*0.15,fw*0.13,fh*0.7); x.fillRect(fw*0.5-fw*0.22,fh*0.5-fh*0.13,fw*0.44,fh*0.26); }
   x.restore(); x.strokeStyle='rgba(0,0,0,0.25)'; x.lineWidth=1; wave(x); x.stroke(); x.restore(); x.restore(); }
+
+// ---------- Schweizer Spezialitäten (Sammel-Items) und Murmeltier ----------
+function drawCheese(x,w,h){ x.save(); x.translate(w/2,h/2);
+  x.fillStyle='#f3c640'; x.beginPath(); x.moveTo(-w*0.42,w*0.3); x.lineTo(w*0.42,w*0.3); x.lineTo(w*0.3,-w*0.1); x.lineTo(-w*0.1,-w*0.38); x.closePath(); x.fill();
+  x.fillStyle='#ffe08a'; x.beginPath(); x.moveTo(-w*0.42,w*0.3); x.lineTo(-w*0.1,-w*0.38); x.lineTo(w*0.3,-w*0.1); x.lineTo(w*0.0,0.15*w); x.closePath(); x.fill();
+  x.fillStyle='#d9a52a'; for(const [hx,hy,r] of [[-w*0.1,w*0.12,w*0.07],[w*0.15,w*0.18,w*0.05],[-w*0.25,w*0.22,w*0.04],[w*0.05,-w*0.08,w*0.045]]){ x.beginPath(); x.arc(hx,hy,r,0,7); x.fill(); }
+  x.restore(); }
+function drawChocolate(x,w,h){ x.save(); x.translate(w/2,h/2); x.rotate(-0.3);
+  x.fillStyle='#c62828'; x.beginPath(); x.roundRect(-w*0.42,-w*0.26,w*0.84,w*0.52,4); x.fill();
+  x.fillStyle='#5d3a1a'; x.beginPath(); x.roundRect(-w*0.42,-w*0.26,w*0.5,w*0.52,[4,0,0,4]); x.fill();
+  x.fillStyle='#7a4a24'; for(let i=0;i<2;i++) for(let j=0;j<3;j++){ x.beginPath(); x.roundRect(-w*0.4+j*w*0.16,-w*0.24+i*w*0.26,w*0.13,w*0.22,2); x.fill(); }
+  x.fillStyle='#fff'; x.font=`bold ${Math.floor(w*0.14)}px Arial`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('CH',w*0.25,0);
+  x.restore(); }
+function drawBratwurst(x,w,h){ x.save(); x.translate(w/2,h/2); x.rotate(-0.5);
+  x.fillStyle='#e8d5a8'; x.beginPath(); x.roundRect(-w*0.44,-w*0.14,w*0.88,w*0.32,w*0.14); x.fill();
+  x.fillStyle='#d9b27a'; x.beginPath(); x.roundRect(-w*0.44,-w*0.14,w*0.88,w*0.3,w*0.14); x.strokeStyle='#c49a62'; x.lineWidth=2; x.stroke();
+  x.fillStyle='#c98a5a'; x.beginPath(); x.roundRect(-w*0.46,-w*0.16,w*0.92,w*0.2,w*0.1); x.fill();
+  x.strokeStyle='#8a5a34'; x.lineWidth=2; for(let i=-2;i<=2;i++){ x.beginPath(); x.moveTo(i*w*0.14-4,-w*0.14); x.lineTo(i*w*0.14+4,w*0.03); x.stroke(); }
+  x.fillStyle='#e8c21a'; x.beginPath(); x.moveTo(-w*0.3,-w*0.1); x.quadraticCurveTo(0,-w*0.22,w*0.3,-w*0.08); x.quadraticCurveTo(0,-w*0.1,-w*0.3,-w*0.1); x.fill();
+  x.restore(); }
+function drawZopf(x,w,h){ x.save(); x.translate(w/2,h/2);
+  x.fillStyle='#c98a3a'; x.beginPath(); x.roundRect(-w*0.44,-w*0.16,w*0.88,w*0.32,w*0.16); x.fill();
+  x.fillStyle='#e0a955'; for(let i=0;i<5;i++){ x.beginPath(); x.ellipse(-w*0.3+i*w*0.15,(i%2?-1:1)*w*0.03,w*0.1,w*0.12,(i%2?0.6:-0.6),0,7); x.fill(); }
+  x.fillStyle='rgba(255,230,180,0.5)'; for(let i=0;i<5;i++){ x.beginPath(); x.ellipse(-w*0.32+i*w*0.15,(i%2?-1:1)*w*0.05,w*0.04,w*0.05,0,0,7); x.fill(); }
+  x.restore(); }
+function drawMarmot(x,w,h){ x.save(); x.translate(w/2,h); // sitzendes Murmeltier
+  x.fillStyle='rgba(0,0,0,0.25)'; x.beginPath(); x.ellipse(0,2,w*0.32,h*0.05,0,0,7); x.fill();
+  x.fillStyle='#8a6a44'; x.beginPath(); x.ellipse(0,-h*0.36,w*0.3,h*0.36,0,0,7); x.fill();
+  x.fillStyle='#c9a87a'; x.beginPath(); x.ellipse(0,-h*0.3,w*0.18,h*0.26,0,0,7); x.fill();
+  x.fillStyle='#8a6a44'; x.beginPath(); x.arc(0,-h*0.78,w*0.22,0,7); x.fill(); x.beginPath(); x.arc(-w*0.18,-h*0.92,w*0.07,0,7); x.fill(); x.beginPath(); x.arc(w*0.18,-h*0.92,w*0.07,0,7); x.fill();
+  x.fillStyle='#c9a87a'; x.beginPath(); x.ellipse(0,-h*0.7,w*0.12,h*0.09,0,0,7); x.fill();
+  x.fillStyle='#222'; x.beginPath(); x.arc(-w*0.08,-h*0.82,w*0.035,0,7); x.fill(); x.beginPath(); x.arc(w*0.08,-h*0.82,w*0.035,0,7); x.fill(); x.beginPath(); x.arc(0,-h*0.74,w*0.03,0,7); x.fill();
+  x.fillStyle='#fff'; x.fillRect(-w*0.04,-h*0.7,w*0.035,h*0.05); x.fillRect(w*0.005,-h*0.7,w*0.035,h*0.05);
+  x.fillStyle='#8a6a44'; x.beginPath(); x.ellipse(-w*0.22,-h*0.42,w*0.08,h*0.12,0.4,0,7); x.fill(); x.beginPath(); x.ellipse(w*0.22,-h*0.42,w*0.08,h*0.12,-0.4,0,7); x.fill();
+  x.restore(); }
+const SWISS=[['cheese','Käse','🧀'],['chocolate','Schokolade','🍫'],['bratwurst','Bratwurst','🌭'],['zopf','Zopf','🥖']];
+const ITEMSETS={ seafood:SEAFOOD, swiss:SWISS };
 // Fahrzeug von hinten (Spieler & Rivale) – steer: -1..1 (Blick leicht auf die Außenseite)
 function shade(hex,f){ const n=parseInt(hex.slice(1),16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255; r=clamp(Math.round(r*f),0,255); g=clamp(Math.round(g*f),0,255); b=clamp(Math.round(b*f),0,255); return `rgb(${r},${g},${b})`; }
 function tire(x,cx,cy,tw,th,knobby){ // cx,cy = Mitte unten
@@ -849,7 +888,8 @@ function buildSprites(){
   makeSprite('kapellbruecke',520,220,drawKapellbruecke);
   makeSprite('chalet',200,170,drawChalet); makeSprite('chalet2',170,190,drawChalet);
   makeSprite('fir',110,210,drawFir); makeSprite('fir2',90,160,drawFir);
-  makeSprite('cow',100,80,drawCow);
+  makeSprite('cow',110,90,drawCow); makeSprite('marmot',70,80,drawMarmot);
+  makeSprite('cheese',64,64,drawCheese); makeSprite('chocolate',64,64,drawChocolate); makeSprite('bratwurst',64,64,drawBratwurst); makeSprite('zopf',64,64,drawZopf);
   for(const f of [0,1,2,3]) makeSprite('cablecar_'+f,420,360,(x,w,h)=>drawCableCar(x,w,h,f));
   makeSprite('alp',620,420,drawAlp);
   makeSprite('flag_es',70,200,(x,w,h)=>drawFlag(x,w,h,'es')); makeSprite('flag_ch',70,200,(x,w,h)=>drawFlag(x,w,h,'ch'));
@@ -877,18 +917,18 @@ const STAGES = [
   },
   { id:'luzern', name:'Luzern → Sursee', emoji:'🇨🇭', desc:'Von der Kapellbrücke in Luzern vorbei an Chalets, Kühen und einer Luftseilbahn, dem Sempachersee entlang bis Sursee. Schneeberge inklusive.',
     sky:['#4e9ae6','#dff0ff'], fog:'#e6f0fa', grass:['#5f9a3f','#579136'], rumble:['#b4b4b4','#a8a8a8'], road:['#5e5e62','#58585c'], lane:'#f4f4f4',
-    sea:true, mountains:0.75, snow:true, rivalSpeed:0.84, itemName:'Meeresfrüchte', towns:[[0,'Luzern'],[0.2,'Emmen'],[0.4,'Rothenburg'],[0.62,'Sempach'],[1,'Sursee']],
+    sea:true, mountains:0.75, snow:true, rivalSpeed:0.84, items:'swiss', itemName:'Spezialitäten', itemIcon:'🧀', crowd:[['cow'],['marmot'],['cow'],['marmot']], towns:[[0,'Luzern'],[0.2,'Emmen'],[0.4,'Rothenburg'],[0.62,'Sempach'],[1,'Sursee']],
     build(t){ const ch=['chalet','chalet2','house1','chalet'];
       t.straight(40); t.sprite(14,-1.2,'kapellbruecke'); t.sprite(12,1.5,'church'); t.town(10,38,false,ch); t.sprite(24,1.3,'cafe'); t.mix(4,40,['lamp','flag_ch'],1.2,0.15); t.far(0,60,'alp',30);
-      t.curve(60,3,10); t.fill(40,100,'fir',1.6,0.35); t.mix(40,100,['cow','flag_ch'],1.4,0.15); t.sprite(70,1.25,'cablecar'); t.far(60,160,'alp',28);
-      t.straight(50); t.town(105,135,true,ch); t.sprite(120,1.3,'cafe'); t.fill(135,160,'fir',1.6,0.3); t.hill(50,40); t.curve(70,-4,20); t.fill(160,290,'fir',1.7,0.35); t.mix(160,290,['cow','chalet'],1.6,0.15); t.sprite(200,-1.25,'cablecar'); t.sprite(240,1.4,'alp'); t.over(250,'bridge');
+      t.curve(60,3,10); t.fill(40,100,'fir',1.6,0.35); t.mix(40,100,['cow','flag_ch','marmot'],1.4,0.18); t.sprite(70,1.25,'cablecar'); t.far(60,160,'alp',28);
+      t.straight(50); t.town(105,135,true,ch); t.sprite(120,1.3,'cafe'); t.fill(135,160,'fir',1.6,0.3); t.hill(50,40); t.curve(70,-4,20); t.fill(160,290,'fir',1.7,0.35); t.mix(160,290,['cow','chalet','marmot'],1.6,0.18); t.sprite(200,-1.25,'cablecar'); t.sprite(240,1.4,'alp'); t.over(250,'bridge');
       t.sCurve(100,4,-30); t.fill(290,390,'fir2',1.5,0.35); t.mix(290,390,['cow','flag_ch'],1.3,0.15); t.town(330,360,true,ch); t.far(290,390,'alp',30);
       t.hill(40,-40); t.straight(40); t.fill(390,430,'fir',1.6,0.3); t.sprite(410,1.25,'cablecar');
       // Sempachersee rechts der Straße mit Booten, links Chalets und Kühe
       t.curve(80,-3,-20); t.water(430,560,1); t.mix(430,560,['boat','parasol'],2.4,0.12,true); for(let i=432;i<560;i+=9) t.sprites.push({seg:Math.round(i*K),offset:2.3+rnd(0,1.6),name:'boat'});
       t.fill(430,560,'fir',1.5,0.3,true); t.mix(430,560,['cow','chalet2','flag_ch'],1.6,0.2,true); t.town(520,550,true,ch);
-      t.sCurve(100,3,20); t.fill(560,660,'fir',1.6,0.35); t.mix(560,660,['cow','flag_ch'],1.4,0.15); t.sprite(600,-1.4,'alp'); t.far(560,760,'alp',32); t.over(640,'bridge');
-      t.hill(50,50); t.curve(60,-4,0); t.fill(660,760,'fir2',1.6,0.35); t.mix(660,760,['chalet','cow'],1.7,0.15); t.sprite(720,1.25,'cablecar');
+      t.sCurve(100,3,20); t.fill(560,660,'fir',1.6,0.35); t.mix(560,660,['cow','flag_ch','marmot'],1.4,0.18); t.sprite(600,-1.4,'alp'); t.far(560,760,'alp',32); t.over(640,'bridge');
+      t.hill(50,50); t.curve(60,-4,0); t.fill(660,760,'fir2',1.6,0.35); t.mix(660,760,['chalet','cow','marmot'],1.7,0.18); t.sprite(720,1.25,'cablecar');
       t.straight(80); t.fill(760,830,'fir',1.6,0.3); t.town(800,840,true,ch); t.sprite(820,1.3,'cafe'); t.sprite(835,-1.9,'church'); t.mix(760,840,['flag_ch','lamp'],1.2,0.2); t.far(760,840,'alp',28); }
   },
   { id:'estrenc', name:'Santanyí → Es Trenc', emoji:'🏖️', desc:'Flaches Land mit Windmühlen und Mandelbäumen, dann Dünen und Strand.',
@@ -937,6 +977,7 @@ class TrackBuilder{
 function buildTrack(stage){
   RNG.seed('strecke-'+stage.id+'-v1'); // gleiche Strecke auf allen Geräten
   const t=new TrackBuilder(); stage.build(t);
+  const itemSet=ITEMSETS[stage.items||'seafood']; // Sammel-Items dieser Strecke
   // Auslauf hinter dem Ziel + sanftes Ende
   const finishIndex=t.segments.length;
   t.straight(60); // Auslauf: die Straße geht weiter
@@ -944,12 +985,13 @@ function buildTrack(stage){
   t.sprites.push(...Array.from({length:40},(_,i)=>({seg:finishIndex+8+i*3,offset:(i%2?1:-1)*(2.6+rnd(0,0.6)),name:i%3?'palm':'palm2'})));
   t.sprites.push(...Array.from({length:10},(_,i)=>({seg:finishIndex+20+i*10,offset:(i%2?1:-1)*(3.4+rnd(0,0.5)),name:'beachhut'})));
   for(let i=finishIndex-30;i<finishIndex+60;i++){ if(!t.segments[i]) continue; t.segments[i].crowd=[];
-    for(const side of [-1,1]){ const n = i<finishIndex? 2 : 1; for(let k=0;k<n;k++){ if(rnd(0,1)<0.8) t.segments[i].crowd.push({offset:side*(1.2+k*0.3+rnd(0,0.15)), kind:SEAFOOD[Math.floor(rnd(0,SEAFOOD.length))], phase:rnd(0,6), speed:rnd(4,7)}); } } }
+    const crowdSet = stage.crowd || itemSet;
+    for(const side of [-1,1]){ const n = i<finishIndex? 2 : 1; for(let k=0;k<n;k++){ if(rnd(0,1)<0.8) t.segments[i].crowd.push({offset:side*(1.2+k*0.3+rnd(0,0.15)), kind:crowdSet[Math.floor(rnd(0,crowdSet.length))], phase:rnd(0,6), speed:rnd(4,7)}); } } }
   const segs=t.segments;
   for(const s of t.sprites){ if(!segs[s.seg]) continue; const anim = SPR[s.name+'_0'] ? [0,1,2,3].map(i=>SPR[s.name+'_'+i]).filter(Boolean) : null; segs[s.seg].sprites.push({offset:s.offset,ox:s.ox,sprite:anim?anim[0]:SPR[s.name],anim,phase:rnd(0,4)}); }
   for(const w of t.waters){ if(segs[w.seg]) segs[w.seg].water=w.side; }
   // Sammelgegenstände
-  for(let i=30;i<finishIndex-10;i+=rnd(24,40)|0){ const lane=[-0.6,-0.2,0.2,0.6][Math.floor(rnd(0,4))]; const kind=SEAFOOD[Math.floor(rnd(0,SEAFOOD.length))]; segs[i].items.push({offset:lane,sprite:SPR[kind[0]],kind,taken:false,phase:rnd(0,6)}); }
+  for(let i=30;i<finishIndex-10;i+=rnd(24,40)|0){ const lane=[-0.6,-0.2,0.2,0.6][Math.floor(rnd(0,4))]; const kind=itemSet[Math.floor(rnd(0,itemSet.length))]; segs[i].items.push({offset:lane,sprite:SPR[kind[0]],kind,taken:false,phase:rnd(0,6)}); }
   // Boost-Felder: alle ~110 Segmente, 4 Segmente lang, in einer von drei Spuren
   for(let i=90;i<finishIndex-40;i+=rnd(95,130)|0){ const offset=[-0.5,0,0.5][Math.floor(rnd(0,3))]; for(let k=0;k<4;k++) segs[i+k].boost={offset,k}; }
   // Start- und Zielmarkierungen samt Bogen
@@ -1057,6 +1099,7 @@ function startRace(){
     G.traffic.push({ kind, sprite:SPR[kind+'_0'], z:(40+i*70+rnd(0,30))*SEG_LEN, offset:kind==='goat'? rnd(-0.9,0.9) : [-0.5,0,0.5][Math.floor(rnd(0,3))], baseOffset:0, speed:spd, phase:rnd(0,10), fps:kind==='cyclist'?7:kind==='goat'?4:3 }); for(const c of G.traffic) c.baseOffset=c.offset; }
   RNG.reset();
   G.skyOffset=G.hillOffset=G.treeOffset=0; Tilt.calibrate();
+  $('itemIcon').textContent = stage.itemIcon||'🦐';
   setState('race'); showToast(stage.towns[0][1]+' – Start!',1.6); Audio.init(); Audio.resume();
 }
 
@@ -1394,7 +1437,7 @@ function showResult(){
       big.textContent=(r===1?'🥇 ':r===2?'🥈 ':r===3?'🥉 ':'🌍 ')+'Platz '+r+' von '+total; el.innerHTML=r===1?'Neue Bestmarke auf dieser Strecke!':'in der gemeinsamen Rangliste aller Handys';
       $('onlineTop').innerHTML=rankingTable(G.stage.id,entry.id,5,top); }
     catch(e){ big.textContent='🌍 Gespeichert'; el.innerHTML='Platz konnte gerade nicht ermittelt werden'; } })();
-  $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>🦐 ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · Meeresfrüchte ${G.items*ITEM_POINTS} · Turbos ${G.boosts*50}</td></tr>`
+  $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${G.stage.itemIcon||'🦐'} ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · ${G.stage.itemName} ${G.items*ITEM_POINTS} · Turbos ${G.boosts*50}</td></tr>`
     + '<tr><td colspan="2" style="text-align:center;padding-top:6px;opacity:.85" id="onlineRank">Rangliste wird aktualisiert …</td></tr>'
     + '<tr><td colspan="2" style="text-align:center;padding-top:2px" id="onlineTop"></td></tr>';
   if(won){ const wins=store('wins_'+G.stage.id)||0; store('wins_'+G.stage.id,wins+1); }
@@ -1406,7 +1449,7 @@ function rankingTable(stageId, highlightId, limit, list, extra){
   list = (list || Ranking.forStage(stageId)).slice(0,limit);
   if(!list.length) return '<div style="opacity:.7">Noch keine Zeiten</div>';
   const rows=list.map((e,i)=>({e,i})); if(extra) rows.push({sep:true},{e:extra.e,i:extra.rank-1});
-  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr style="${(e.id===highlightId||e.ts===highlightId||e.hl)?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.driver==='girl'?'🚗':'🚙'} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · 🦐${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
+  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr style="${(e.id===highlightId||e.ts===highlightId||e.hl)?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.driver==='girl'?'🚗':'🚙'} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · ${(STAGES.find(x=>x.id===stageId)||{}).itemIcon||'🦐'}${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
 }
 function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 let rankStage=null; // welche Strecke in der Rangliste offen ist
@@ -1433,7 +1476,7 @@ function renderName(){
   const inp=$('nameInput'); inp.value=store('player_name')||'';
   const names=(store('names')||[]).filter(n=>n);
   $('nameChips').innerHTML = names.map(n=>`<button class="chip${n===inp.value?' sel':''}">${escapeHtml(n)}</button>`).join('');
-  for(const ch of $('nameChips').querySelectorAll('.chip')) ch.onclick=()=>{ inp.value=ch.textContent; renderName(); };
+  for(const ch of $('nameChips').querySelectorAll('.chip')) ch.onclick=()=>{ inp.value=ch.textContent; store('player_name',ch.textContent); renderName(); };
   $('btnNameNext').disabled = !inp.value.trim(); $('btnNameNext').style.opacity = inp.value.trim()? 1 : .5;
 }
 function saveName(){ const n=$('nameInput').value.trim().slice(0,14); if(!n) return false; store('player_name',n); const names=(store('names')||[]).filter(x=>x!==n); names.unshift(n); store('names',names.slice(0,6)); return true; }
