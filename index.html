@@ -174,7 +174,7 @@
 
 <script>
 'use strict';
-const VERSION='3.8.1', VERSION_DATE='2026-10-02';
+const VERSION='3.8.2', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -1542,16 +1542,21 @@ function readInput(){
 // ---------- Kipp-Steuerung (Gyroskop / Lagesensor) ----------
 const Tilt = {
   enabled:false, value:0, raw:0, base:null, pitch:0, pbase:null, supported:('DeviceOrientationEvent' in window),
+  sgnP:1, sgnL:null, landscape:null, // Richtung der Bildschirm-Oberkante im Geräte-System, aus der Schwerkraft gelernt
   // Aus beta/gamma wird die Schwerkraftrichtung im Geräte-Koordinatensystem rekonstruiert. Der Anteil entlang der
   // waagrechten Bildschirmachse ist der Links-rechts-Neigungswinkel – egal ob das Handy flach oder steil gehalten wird.
   read(e){
     if(e.beta==null || e.gamma==null) return;
     const b=e.beta*Math.PI/180, g=e.gamma*Math.PI/180;
     const ux=-Math.sin(g)*Math.cos(b), uy=Math.sin(b); // „oben“ im Geräte-System (x nach rechts, y nach oben)
-    const angle = (screen.orientation && typeof screen.orientation.angle==='number') ? screen.orientation.angle : (window.orientation||0);
-    let sx; if(angle===90) sx=-uy; else if(angle===-90||angle===270) sx=uy; else if(angle===180) sx=-ux; else sx=ux;
-    // Vor-/Zurückkippen (nur der Doppeldecker nutzt es): Anteil von „oben“ entlang der senkrechten Bildschirmachse
-    let sy; if(angle===90) sy=ux; else if(angle===-90||angle===270) sy=-ux; else if(angle===180) sy=-uy; else sy=uy;
+    // Hoch- oder Querformat kommt aus dem Fenster (nicht aus screen.orientation: das iPad zählt die Drehung anders als das iPhone).
+    // Welche Gerätekante oben ist, verrät die Schwerkraft, sobald das Gerät nicht ganz flach liegt – der Wert bleibt gespeichert.
+    const landscape = window.innerWidth > window.innerHeight;
+    if(landscape!==Tilt.landscape){ Tilt.landscape=landscape; Tilt.base=null; Tilt.pbase=null; }
+    if(landscape){ if(Math.abs(ux)>0.3) Tilt.sgnL=Math.sign(ux); if(Tilt.sgnL===null){ const a=(screen.orientation && typeof screen.orientation.angle==='number') ? screen.orientation.angle : (window.orientation||0); Tilt.sgnL = (a===-90||a===270) ? -1 : 1; } }
+    else { if(Math.abs(uy)>0.3) Tilt.sgnP=Math.sign(uy); }
+    let sx, sy; // sx: Anteil von „oben“ entlang der Bildschirm-Rechtsachse, sy: entlang der Bildschirm-Hochachse
+    if(landscape){ const sg=Tilt.sgnL; sy=sg*ux; sx=-sg*uy; } else { const sg=Tilt.sgnP; sy=sg*uy; sx=sg*ux; }
     const pt=Math.asin(clamp(sy,-1,1))*180/Math.PI; if(Tilt.pbase===null) Tilt.pbase=pt; const pd=pt-Tilt.pbase; if(Math.abs(pd)<6) Tilt.pbase+=pd*0.004;
     const pv = Math.abs(pd)<6 ? 0 : clamp((Math.abs(pd)-6)/16,0,1)*Math.sign(pd); Tilt.pitch = Tilt.pitch*0.6 + pv*0.4; // positiv = zu sich gekippt = steigen
     const t = -Math.asin(clamp(sx,-1,1))*180/Math.PI; // Grad, positiv = rechte Seite nach unten geneigt
@@ -2183,6 +2188,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.8.2','2026-10-02','Kipp-Steuerung auf dem iPad: Hoch- und Querformat werden jetzt aus dem Fenster und der Schwerkraft bestimmt statt aus der vom Gerät gemeldeten Drehung, die beim iPad anders zählt.'],
  ['3.8.1','2026-10-02','Sant Salvador: großer Hügel mit kleinem Kloster obendrauf statt riesigem Haus. Ortstafeln Luzern und Palma stehen jetzt sichtbar kurz nach der Startlinie.'],
  ['3.8.0','2026-10-02','Doppeldecker: Hindernisse hängen jetzt von der Flughöhe ab. Tief fliegen heißt Verkehr und Büsche treffen, hoch fliegen heißt Bäume und Häuser überfliegen. Brücken kann man unter- oder überfliegen, in den Tunnel muss man tief hinein. Flügel werden in Kurven nicht mehr abgeschnitten.'],
  ['3.7.0','2026-10-02','Ortstafeln doppelt so groß, der Name passt immer vollständig drauf. Vor dem Ziel in Artà: Altstadt mit Sandsteinhäusern, Pfarrkirche und der Wallfahrtskirche Sant Salvador auf dem Hügel mit Zypressentreppe.'],

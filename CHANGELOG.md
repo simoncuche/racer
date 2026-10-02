@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.8.2 (2026-10-02)
+
+Kipp-Steuerung auf dem iPad: Hoch- und Querformat werden jetzt aus dem Fenster und der Schwerkraft bestimmt statt aus der vom Gerät gemeldeten Drehung, die beim iPad anders zählt.
+
 ## 3.8.1 (2026-10-02)
 
 Sant Salvador: großer Hügel mit kleinem Kloster obendrauf statt riesigem Haus. Ortstafeln Luzern und Palma stehen jetzt sichtbar kurz nach der Startlinie.
