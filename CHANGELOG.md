@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.11.0 (2026-10-02)
+
+Avatar-Konfigurator neu: Reiter für Gesicht, Augen, Mund, Haare und Zubehör, jede Option als Vorschaubild. Neu wählbar: 6 Augenformen, 6 Nasen, 5 Ohrenformen, 10 Münder.
+
 ## 3.10.2 (2026-10-02)
 
 Home-Screen-App: Rangliste robuster. Anfragen haben ein Zeitlimit, Fehler werden mit Ursache und „Nochmals versuchen“ angezeigt, die App prüft beim Öffnen auf eine neue Version.
