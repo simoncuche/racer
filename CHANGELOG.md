@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.7.0 (2026-10-02)
+
+Ortstafeln doppelt so groß, der Name passt immer vollständig drauf. Vor dem Ziel in Artà: Altstadt mit Sandsteinhäusern, Pfarrkirche und der Wallfahrtskirche Sant Salvador auf dem Hügel mit Zypressentreppe.
+
 ## 3.6.1 (2026-10-02)
 
 Rangliste: Ergebnisse mit dem Doppeldecker wurden von den Firestore-Regeln abgelehnt und als „Kein Netz“ gemeldet. Regeln ergänzt, abgelehnte Ergebnisse werden jetzt klar von fehlendem Netz unterschieden. ✈️ in der Rangliste.
