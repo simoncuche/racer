@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.15.0 (2026-10-02)
+
+Avatar: 10 neue Kopfbedeckungen (Zylinder, Baskenmütze, Piratenhut, Kochmütze, Partyhut, Zauberhut, Wikingerhelm, Weihnachtsmütze, Kopfhörer, Fischerhut). Fahrer in der Autowahl größer.
+
 ## 3.14.0 (2026-10-02)
 
 Avatar: 8 neue Brillen (Katzenauge, Lesebrille, Monokel, Skibrille, Herz, Stern, 3D, Nerd), 6 Brauenformen, 6 neue Münder (breites Lachen, Vampir, Hasenzähne, Zahnlücke, Pfeifen, Jammern).
