@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **2.1.0**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **2.1.1**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -98,9 +98,8 @@ Die Rangliste ist **online und für alle Handys gemeinsam**: Jedes Ergebnis wird
 Datenbank geschrieben (Projekt `mallorca-ralley`, eine Sammlung pro Strecke, zum Beispiel
 `scores_arta`). Der Ranglisten-Bildschirm zeigt die zehn besten Punktzahlen aller Spieler, das
 Ergebnis nennt den eigenen Platz in der gemeinsamen Liste. Ohne Netz werden Ergebnisse in einer
-Warteschlange gespeichert und beim nächsten Start nachgereicht, die Rangliste zeigt dann die lokale
-Liste dieses Handys. Lokal bleiben pro Strecke die zehn besten Einträge im Browser (localStorage) und
-als Cookie erhalten.
+Warteschlange gespeichert und beim nächsten Start nachgereicht. Eine separate lokale Rangliste gibt es
+nicht, ohne Netz zeigt der Ranglisten-Bildschirm nur einen Hinweis.
 
 Die Zugriffsregeln der Datenbank stehen in `firestore.rules`: Lesen ist für alle erlaubt, Schreiben nur
 für vollständige, plausible Einträge (Name bis 14 Zeichen, Zeit 20 bis 1000 Sekunden, Punkte bis 30000),
@@ -138,8 +137,8 @@ WebAudio erzeugt. Über das Lautsprecher-Symbol abschaltbar.
   (DeviceOrientation, mit iOS-Berechtigungsabfrage). Die Lenkung ist stufenlos.
 * **Rendering**: Die interne Auflösung ist auf 900 Pixel Kantenlänge begrenzt, damit es auf dem Handy
   flüssig bleibt. Ein Fehler in der Spielschleife wird abgefangen, das Bild friert nie ein.
-* **Speicher**: Namen, Fahrer, Strecke, Ton, Kipp-Steuerung, Bestzeiten und lokale Rangliste liegen im
-  localStorage, die Rangliste zusätzlich im Cookie `mr_lb`, offene Online-Einträge in der Warteschlange `mr_queue`.
+* **Speicher**: Namen, Fahrer, Strecke, Ton, Kipp-Steuerung und Bestzeiten liegen im localStorage, offene
+  Online-Einträge in der Warteschlange `mr_queue`.
 * **Online-Rangliste**: Firestore wird direkt über seine REST-Schnittstelle per `fetch` angesprochen, ohne
   Firebase-Bibliothek. Der Web-API-Schlüssel steht im Spiel, das ist bei Firebase so vorgesehen; der Schutz
   kommt über die Regeln in `firestore.rules`.

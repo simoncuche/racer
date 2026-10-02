@@ -135,7 +135,7 @@
 
 <script>
 'use strict';
-const VERSION='2.1.0', VERSION_DATE='2026-10-02';
+const VERSION='2.1.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -1264,12 +1264,12 @@ function showResult(){
   const {entry,rank} = Ranking.add({ name:driverName(me), driver:me.id, stage:G.stage.id, time:Math.round(G.finishTime*10)/10, items:G.items, boosts:G.boosts, won, score, date:new Date().toISOString().slice(0,10) });
   // online speichern, dann Online-Platz und Online-Top-5 nachladen
   (async()=>{ const ok=await Online.add(entry); const el=$('onlineRank'); if(!el) return;
-    if(!ok){ el.innerHTML='📵 Offline – wird gespeichert, sobald wieder Netz da ist'; return; }
+    if(!ok){ el.innerHTML='📵 Kein Netz – das Ergebnis wird nachgereicht, sobald wieder Netz da ist'; return; }
     try{ const [r,top]=await Promise.all([Online.rankOf(entry),Online.top(G.stage.id,5)]); el.innerHTML=`🌍 Platz ${r} in der gemeinsamen Rangliste`; $('onlineTop').innerHTML=rankingTable(G.stage.id,entry.id,5,top.map(t=>Object.assign(t,{ hl: t.name===entry.name && t.score===entry.score && t.time===entry.time }))); }
-    catch(e){ el.innerHTML='🌍 gespeichert'; } })();
-  $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${driverName(r)}</td><td>${rivalTime}</td></tr><tr><td>🦐 ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · Meeresfrüchte ${G.items*100} · Turbos ${G.boosts*50}${won?' · Sieg 500':''}</td></tr><tr><td>Rangliste</td><td>${rank? 'Platz '+rank+' auf dieser Strecke' : '–'}</td></tr>`
-    + '<tr><td colspan="2" style="text-align:center;padding-top:4px" id="onlineRank">🌍 wird gespeichert …</td></tr>'
-    + '<tr><td colspan="2" style="text-align:center;padding-top:4px" id="onlineTop">'+rankingTable(G.stage.id, entry.id, 5)+'</td></tr>';
+    catch(e){ el.innerHTML='🌍 Ergebnis gespeichert'; } })();
+  $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${driverName(r)}</td><td>${rivalTime}</td></tr><tr><td>🦐 ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · Meeresfrüchte ${G.items*100} · Turbos ${G.boosts*50}${won?' · Sieg 500':''}</td></tr>`
+    + '<tr><td colspan="2" style="text-align:center;padding-top:6px;font-weight:700" id="onlineRank">🌍 Rangliste wird aktualisiert …</td></tr>'
+    + '<tr><td colspan="2" style="text-align:center;padding-top:2px" id="onlineTop"></td></tr>';
   if(won){ const wins=store('wins_'+G.stage.id)||0; store('wins_'+G.stage.id,wins+1); }
   setState('result'); Audio.setEngine(0,false);
 }
@@ -1283,12 +1283,12 @@ function rankingTable(stageId, highlightId, limit, list){
 function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function renderRanking(){
   const box=$('rankList');
-  box.innerHTML = '<div id="rankMode" style="opacity:.8;font-size:13px;margin-bottom:8px">🌍 Gemeinsame Rangliste wird geladen …</div>' + STAGES.map(st=>`<div class="card stage" style="max-width:none;margin-bottom:10px;cursor:default;font-size:14px"><div class="title">${st.emoji} ${st.name}</div><div id="rank_${st.id}">${rankingTable(st.id,null,10)}</div></div>`).join('');
+  box.innerHTML = '<div id="rankMode" style="opacity:.8;font-size:13px;margin-bottom:8px">🌍 Rangliste wird geladen …</div>' + STAGES.map(st=>`<div class="card stage" style="max-width:none;margin-bottom:10px;cursor:default;font-size:14px"><div class="title">${st.emoji} ${st.name}</div><div id="rank_${st.id}" style="opacity:.7">…</div></div>`).join('');
   const myName = driverName(DRIVERS[G.driver]);
   Online.flush().then(()=>Promise.all(STAGES.map(st=>Online.top(st.id,10)))).then(lists=>{
     STAGES.forEach((st,i)=>{ const el=$('rank_'+st.id); if(el) el.innerHTML=rankingTable(st.id,null,10,lists[i]); });
-    const m=$('rankMode'); if(m) m.textContent='🌍 Gemeinsame Rangliste aller Handys';
-  }).catch(()=>{ const m=$('rankMode'); if(m) m.textContent='📵 Kein Netz – Liste von diesem Handy'; });
+    const m=$('rankMode'); if(m) m.textContent='🌍 Die zehn Besten aller Handys pro Strecke';
+  }).catch(()=>{ const m=$('rankMode'); if(m) m.textContent='📵 Kein Netz – die Rangliste braucht eine Internetverbindung'; STAGES.forEach(st=>{ const el=$('rank_'+st.id); if(el) el.textContent='nicht verfügbar'; }); });
 }
 function renderDrivers(){
   const box=$('drivers'); box.innerHTML='';
