@@ -35,6 +35,9 @@
   .card input{width:100%;margin-top:6px;padding:6px 10px;border-radius:10px;border:2px solid rgba(255,255,255,.3);background:rgba(0,0,0,.3);color:#fff;font-size:16px;text-align:center;user-select:text;-webkit-user-select:text}
   .stage{flex:1 1 180px;max-width:240px;text-align:left}
   .stage .best{color:var(--accent);font-size:13px;margin-top:4px}
+  .tab{appearance:none;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;border-radius:12px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;flex:1 1 0}
+  .tab.sel{background:var(--accent);color:#1a1a1a;border-color:var(--accent)}
+  .stage .rankbtn{margin-top:8px;padding:6px 10px;font-size:13px;border-radius:10px;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;cursor:pointer}
   .stat{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;font-size:13px;opacity:.85;margin-top:12px}
   .small{font-size:12px;opacity:.7;margin-top:14px;max-width:420px;line-height:1.4}
   #ver{position:static;margin-top:12px;text-align:center;font-size:12px;opacity:.6;letter-spacing:.5px}
@@ -114,6 +117,7 @@
 <!-- Rangliste -->
 <div id="ranking" class="screen hidden">
   <div class="row" style="align-items:center;justify-content:space-between;max-width:520px;flex-wrap:nowrap"><h2 style="margin:0">🏆 Rangliste</h2><button class="btn secondary" id="btnRankBackTop" style="padding:10px 18px;margin:0">Zurück</button></div>
+  <div class="row" id="rankTabs" style="margin-top:10px;gap:6px;max-width:520px"></div>
   <div id="rankList" style="width:100%;max-width:520px;margin-top:10px"></div>
   <div class="row" style="margin-top:14px"><button class="btn secondary" id="btnRankBack">Zurück</button></div>
 </div>
@@ -131,11 +135,12 @@
   <div class="big" id="resBig">1. Platz</div>
   <table id="resTable"></table>
   <div class="row"><button class="btn" id="btnAgain">Nochmal</button><button class="btn secondary" id="btnMenu">Andere Strecke</button></div>
+  <div class="row" style="margin-top:4px"><button class="btn secondary" id="btnResRank" style="padding:10px 18px;font-size:16px">🏆 Rangliste dieser Strecke</button></div>
 </div>
 
 <script>
 'use strict';
-const VERSION='2.1.1', VERSION_DATE='2026-10-02';
+const VERSION='2.2.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -145,7 +150,12 @@ const VERSION='2.1.1', VERSION_DATE='2026-10-02';
 const $ = id => document.getElementById(id);
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
-const rnd = (a,b)=>a+Math.random()*(b-a);
+// Zufall: normalerweise Math.random, beim Streckenbau ein fester Generator je Strecke, damit alle Geräte dieselbe Strecke fahren
+const RNG = { fn:Math.random,
+  seed(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){ h=Math.imul(h^str.charCodeAt(i),3432918353); h=h<<13|h>>>19; } let a=(h>>>0)||1;
+    RNG.fn=()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; },
+  reset(){ RNG.fn=Math.random; } };
+const rnd = (a,b)=>a+RNG.fn()*(b-a);
 const easeIn = (a,b,p)=>a+(b-a)*Math.pow(p,2);
 const easeOut = (a,b,p)=>a+(b-a)*(1-Math.pow(1-p,2));
 const easeInOut = (a,b,p)=>a+(b-a)*((-Math.cos(p*Math.PI)/2)+0.5);
@@ -819,13 +829,14 @@ class TrackBuilder{
   hill(n,y){ this.addRoad(n/3|0,n/3|0,n/3|0,0,y); }
   sprite(seg,offset,name){ this.sprites.push({seg:Math.round(seg*K),offset,name}); }
   over(seg,name){ this.sprites.push({seg:Math.round(seg*K),offset:0,ox:-0.5,name}); } // Brücke/Bogen über der Straße
-  town(from,to,withChurch){ const houses=['house1','house2','house3','house4']; for(let s=Math.round(from*K);s<Math.round(to*K);s+=5){ for(const side of [-1,1]){ if(Math.random()<0.8) this.sprites.push({seg:s,offset:side*(1.35+rnd(0,0.5)),name:houses[Math.floor(rnd(0,4))]}); } if(s%15===0) this.sprites.push({seg:s+2,offset:(s%30?1:-1)*1.2,name:'lamp'}); }
+  town(from,to,withChurch){ const houses=['house1','house2','house3','house4']; for(let s=Math.round(from*K);s<Math.round(to*K);s+=5){ for(const side of [-1,1]){ if(rnd(0,1)<0.8) this.sprites.push({seg:s,offset:side*(1.35+rnd(0,0.5)),name:houses[Math.floor(rnd(0,4))]}); } if(s%15===0) this.sprites.push({seg:s+2,offset:(s%30?1:-1)*1.2,name:'lamp'}); }
     if(withChurch) this.sprites.push({seg:Math.round((from+to)/2*K),offset:-1.9,name:'church'}); }
-  mix(from,to,names,dist,density,oneSide){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=Math.max(1,Math.round(1/density))){ if(Math.random()<0.85){ const side=oneSide? -1 : (Math.random()<0.5?-1:1); this.sprites.push({seg:s,offset:side*(dist+rnd(0,0.9)),name:names[Math.floor(rnd(0,names.length))]}); } } }
-  far(from,to,name,every){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=every){ this.sprites.push({seg:s,offset:(Math.random()<0.5?-1:1)*rnd(3.2,4.5),name}); } }
-  fill(from,to,name,dist,density,oneSide){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=Math.max(1,Math.round(1/density))){ if(Math.random()<0.85){ const side=oneSide? -1 : (Math.random()<0.5?-1:1); this.sprites.push({seg:s,offset:side*(dist+rnd(0,0.8)),name}); } } }
+  mix(from,to,names,dist,density,oneSide){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=Math.max(1,Math.round(1/density))){ if(rnd(0,1)<0.85){ const side=oneSide? -1 : (rnd(0,1)<0.5?-1:1); this.sprites.push({seg:s,offset:side*(dist+rnd(0,0.9)),name:names[Math.floor(rnd(0,names.length))]}); } } }
+  far(from,to,name,every){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=every){ this.sprites.push({seg:s,offset:(rnd(0,1)<0.5?-1:1)*rnd(3.2,4.5),name}); } }
+  fill(from,to,name,dist,density,oneSide){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=Math.max(1,Math.round(1/density))){ if(rnd(0,1)<0.85){ const side=oneSide? -1 : (rnd(0,1)<0.5?-1:1); this.sprites.push({seg:s,offset:side*(dist+rnd(0,0.8)),name}); } } }
 }
 function buildTrack(stage){
+  RNG.seed('strecke-'+stage.id+'-v1'); // gleiche Strecke auf allen Geräten
   const t=new TrackBuilder(); stage.build(t);
   // Auslauf hinter dem Ziel + sanftes Ende
   const finishIndex=t.segments.length;
@@ -834,7 +845,7 @@ function buildTrack(stage){
   t.sprites.push(...Array.from({length:40},(_,i)=>({seg:finishIndex+8+i*3,offset:(i%2?1:-1)*(2.6+rnd(0,0.6)),name:i%3?'palm':'palm2'})));
   t.sprites.push(...Array.from({length:10},(_,i)=>({seg:finishIndex+20+i*10,offset:(i%2?1:-1)*(3.4+rnd(0,0.5)),name:'beachhut'})));
   for(let i=finishIndex-30;i<finishIndex+60;i++){ if(!t.segments[i]) continue; t.segments[i].crowd=[];
-    for(const side of [-1,1]){ const n = i<finishIndex? 2 : 1; for(let k=0;k<n;k++){ if(Math.random()<0.8) t.segments[i].crowd.push({offset:side*(1.2+k*0.3+rnd(0,0.15)), kind:SEAFOOD[Math.floor(rnd(0,SEAFOOD.length))], phase:rnd(0,6), speed:rnd(4,7)}); } } }
+    for(const side of [-1,1]){ const n = i<finishIndex? 2 : 1; for(let k=0;k<n;k++){ if(rnd(0,1)<0.8) t.segments[i].crowd.push({offset:side*(1.2+k*0.3+rnd(0,0.15)), kind:SEAFOOD[Math.floor(rnd(0,SEAFOOD.length))], phase:rnd(0,6), speed:rnd(4,7)}); } } }
   const segs=t.segments;
   for(const s of t.sprites){ if(segs[s.seg]) segs[s.seg].sprites.push({offset:s.offset,ox:s.ox,sprite:SPR[s.name]}); }
   // Sammelgegenstände
@@ -847,6 +858,7 @@ function buildTrack(stage){
   segs[finishIndex].sprites.push({offset:0,ox:-0.5,sprite:SPR.archFinish});
   // Ortsschilder
   for(const [frac,town] of stage.towns){ const idx=clamp(Math.round(frac*(finishIndex-1))+1,1,finishIndex-1); const s=makeSprite('sign_'+stage.id+'_'+town,160,200,(x,w,h)=>drawSign(x,w,h,town)); segs[idx].sprites.push({offset:-1.25,sprite:s}); }
+  RNG.reset();
   return { segments:segs, finishIndex, length:segs.length*SEG_LEN, finishZ:finishIndex*SEG_LEN };
 }
 
@@ -937,11 +949,13 @@ function startRace(){
   const d=DRIVERS[G.driver]; const rivalId = G.driver==='girl'?'boy':'girl'; const r=DRIVERS[rivalId];
   G.position=0; G.playerX=-0.4; G.speed=0; G.time=0; G.items=0; G.boostT=0; G.boosts=0; G.crashT=0; G.finishFx=0; G.finished=false; FX.clear(); G.countdown=3.99; G.shake=0; G.finishTime=0; G.rivalFinishTime=0;
   G.maxSpeed = TOP_SPEED*d.maxSpeedF;
-  G.rival={ driver:r, z:0, offset:0.4, speed:0, maxSpeed:TOP_SPEED*stage.rivalSpeed*(1+Math.random()*0.04), finished:false, sprite:SPR['car_'+rivalId+'_0'], wobble:Math.random()*10 };
+  RNG.seed('verkehr-'+stage.id+'-v1'); // gleicher Verkehr auf allen Geräten
+  G.rival={ driver:r, z:0, offset:0.4, speed:0, maxSpeed:TOP_SPEED*stage.rivalSpeed*1.02, finished:false, sprite:SPR['car_'+rivalId+'_0'], wobble:rnd(0,10) };
   // Verkehr
   G.traffic=[]; const kinds=['bus','scooter','cyclist','cyclist','goat','scooter'];
   for(let i=0;i<Math.floor(G.track.finishIndex/70);i++){ const kind=kinds[i%kinds.length]; const spd = kind==='bus'? G.maxSpeed*0.35 : kind==='scooter'? G.maxSpeed*0.45 : kind==='goat'? G.maxSpeed*0.1 : G.maxSpeed*0.25;
     G.traffic.push({ kind, sprite:SPR[kind+'_0'], z:(40+i*70+rnd(0,30))*SEG_LEN, offset:kind==='goat'? rnd(-0.9,0.9) : [-0.5,0,0.5][Math.floor(rnd(0,3))], baseOffset:0, speed:spd, phase:rnd(0,10), fps:kind==='cyclist'?7:kind==='goat'?4:3 }); for(const c of G.traffic) c.baseOffset=c.offset; }
+  RNG.reset();
   G.skyOffset=G.hillOffset=G.treeOffset=0; Tilt.calibrate();
   setState('race'); showToast(stage.towns[0][1]+' – Start!',1.6); Audio.init(); Audio.resume();
 }
@@ -1278,17 +1292,21 @@ function showResult(){
 function rankingTable(stageId, highlightId, limit, list){
   list = (list || Ranking.forStage(stageId)).slice(0,limit);
   if(!list.length) return '<div style="opacity:.7">Noch keine Zeiten</div>';
-  return '<table style="margin:0 auto">'+list.map((e,i)=>`<tr style="${(e.id===highlightId||e.hl)?'color:var(--accent)':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.driver==='girl'?'🚗':'🚙'} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · 🦐${e.items||0}</td></tr>`).join('')+'</table>';
+  return '<table style="margin:0 auto">'+list.map((e,i)=>`<tr style="${(e.id===highlightId||e.hl)?'color:var(--accent)':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.driver==='girl'?'🚗':'🚙'} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · 🦐${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
 }
 function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+let rankStage=null; // welche Strecke in der Rangliste offen ist
 function renderRanking(){
-  const box=$('rankList');
-  box.innerHTML = '<div id="rankMode" style="opacity:.8;font-size:13px;margin-bottom:8px">🌍 Rangliste wird geladen …</div>' + STAGES.map(st=>`<div class="card stage" style="max-width:none;margin-bottom:10px;cursor:default;font-size:14px"><div class="title">${st.emoji} ${st.name}</div><div id="rank_${st.id}" style="opacity:.7">…</div></div>`).join('');
-  const myName = driverName(DRIVERS[G.driver]);
-  Online.flush().then(()=>Promise.all(STAGES.map(st=>Online.top(st.id,10)))).then(lists=>{
-    STAGES.forEach((st,i)=>{ const el=$('rank_'+st.id); if(el) el.innerHTML=rankingTable(st.id,null,10,lists[i]); });
-    const m=$('rankMode'); if(m) m.textContent='🌍 Die zehn Besten aller Handys pro Strecke';
-  }).catch(()=>{ const m=$('rankMode'); if(m) m.textContent='📵 Kein Netz – die Rangliste braucht eine Internetverbindung'; STAGES.forEach(st=>{ const el=$('rank_'+st.id); if(el) el.textContent='nicht verfügbar'; }); });
+  if(!rankStage) rankStage=STAGES[G.stageIdx].id;
+  $('rankTabs').innerHTML = STAGES.map(st=>`<button class="tab${st.id===rankStage?' sel':''}" data-st="${st.id}">${st.emoji} ${st.name.replace(' → ','→')}</button>`).join('');
+  for(const b of $('rankTabs').querySelectorAll('.tab')) b.onclick=()=>{ rankStage=b.dataset.st; renderRanking(); };
+  const st=STAGES.find(x=>x.id===rankStage), box=$('rankList');
+  box.innerHTML = `<div class="card stage" style="max-width:none;cursor:default;font-size:14px"><div class="title">${st.emoji} ${st.name}</div><div id="rankMode" style="opacity:.8;font-size:13px;margin:4px 0 6px">🌍 wird geladen …</div><div id="rank_${st.id}" style="opacity:.7">…</div></div>`;
+  const want=rankStage;
+  Online.flush().then(()=>Online.top(st.id,25)).then(list=>{ if(rankStage!==want) return;
+    const el=$('rank_'+st.id); if(el) el.innerHTML=rankingTable(st.id,null,25,list);
+    const m=$('rankMode'); if(m) m.textContent=!list.length? '🌍 Noch niemand hat diese Strecke gefahren' : list.length>=25? '🌍 Die 25 Besten aller Handys' : `🌍 ${list.length} ${list.length===1?'Eintrag':'Einträge'} von allen Handys`;
+  }).catch(()=>{ if(rankStage!==want) return; const m=$('rankMode'); if(m) m.textContent='📵 Kein Netz – die Rangliste braucht eine Internetverbindung'; const el=$('rank_'+st.id); if(el) el.textContent='nicht verfügbar'; });
 }
 function renderDrivers(){
   const box=$('drivers'); box.innerHTML='';
@@ -1306,13 +1324,16 @@ function renderStages(){
   const box=$('stagelist'); box.innerHTML='';
   STAGES.forEach((s,i)=>{ const card=document.createElement('div'); card.className='card stage'+(G.stageIdx===i?' sel':'');
     const best=store('best_'+s.id), wins=store('wins_'+s.id)||0;
-    card.innerHTML=`<div class="title">${s.emoji} ${s.name}</div><div class="desc">${s.desc}</div><div class="best">${best?'Bestzeit: '+fmtTime(best):'Noch nicht gefahren'}${wins?' · 🥇×'+wins:''}</div>`;
-    card.addEventListener('click',()=>{ G.stageIdx=i; store('stage',i); renderStages(); }); box.appendChild(card); });
+    card.innerHTML=`<div class="title">${s.emoji} ${s.name}</div><div class="desc">${s.desc}</div><div class="best">${best?'Bestzeit: '+fmtTime(best):'Noch nicht gefahren'}${wins?' · 🥇×'+wins:''}</div><button class="rankbtn">🏆 Rangliste öffnen</button>`;
+    card.addEventListener('click',()=>{ G.stageIdx=i; store('stage',i); renderStages(); });
+    card.querySelector('.rankbtn').addEventListener('click',e=>{ e.stopPropagation(); G.stageIdx=i; store('stage',i); rankStage=s.id; rankReturn='stages'; setState('ranking'); });
+    box.appendChild(card); });
 }
 $('btnStart').onclick=()=>{ Audio.init(); Audio.resume(); setState('select'); };
 $('btnBackTitle').onclick=()=>setState('title');
-$('btnRanking').onclick=()=>setState('ranking');
-$('btnRankBack').onclick=()=>setState('title'); $('btnRankBackTop').onclick=()=>setState('title');
+$('btnRanking').onclick=()=>{ rankStage=null; rankReturn='title'; setState('ranking'); };
+let rankReturn='title';
+$('btnRankBack').onclick=()=>{ setState(rankReturn); rankReturn='title'; }; $('btnRankBackTop').onclick=()=>{ setState(rankReturn); rankReturn='title'; };
 $('btnToStages').onclick=()=>setState('stages');
 $('btnBackSelect').onclick=()=>setState('select');
 $('btnRace').onclick=()=>startRace();
@@ -1321,6 +1342,7 @@ $('btnResume').onclick=()=>{ Tilt.calibrate(); setState('race'); };
 $('btnQuit').onclick=()=>{ Audio.setEngine(0,false); setState('stages'); };
 $('btnAgain').onclick=()=>startRace();
 $('btnMenu').onclick=()=>setState('stages');
+$('btnResRank').onclick=()=>{ rankStage=G.stage.id; rankReturn='result'; setState('ranking'); };
 function setMuteIcon(){ $('btnMute').textContent = Audio.muted? '🔇':'🔊'; }
 $('btnMute').onclick=()=>{ Audio.toggle(); setMuteIcon(); };
 $('btnTilt').onclick=()=>{ if(G.state==='race' && Tilt.enabled){ Tilt.calibrate(); showToast('Mitte neu gesetzt 📱',1); } else Tilt.toggle(); };
@@ -1345,7 +1367,7 @@ function drawMenuBackground(t){
 }
 
 // ---------- Start ----------
-buildSprites(); buildOrangeTree(); resize(); bindPad(); setMuteIcon();
+RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize(); bindPad(); setMuteIcon();
 $('ver').textContent='Version '+VERSION+' · '+VERSION_DATE;
 G.driver=store('driver')||'girl'; G.stageIdx=clamp(store('stage')||0,0,STAGES.length-1);
 setState('title');
