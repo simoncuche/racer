@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **2.6.3**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **2.7.0**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -70,7 +70,7 @@ Der Name landet in der Rangliste. Das jeweils andere Auto fährt als Gegner mit.
 | Strecke | Unterwegs |
 |---|---|
 | 🏰 Palma → Artà | Kathedrale, spanische Fahnen, Windmühlen von Sant Jordi, Mandelbäume und Schafe auf der Ebene Es Pla, Algaida, Montuïri, Manacor, Weinberge, Steinbrücken, Talaiot und die Wallfahrtskirche hoch über Artà |
-| 🇨🇭 Luzern → Sursee | Bergig: zwei Anstiege, Abfahrt ins Tal, Viadukt mit Steinbrüstung über das Tal, Serpentinen zum Pass, lange Abfahrt zum See, zum Schluss noch zwei Hügel. Statt Meeresfrüchten gibt es Käse, Schokolade, Bratwurst und Zopf zu sammeln, im Ziel jubeln Kühe und Murmeltiere. Kapellbrücke mit Wasserturm, Chalets, Tannen, schwarz-weiße Kühe mit Glocke, Murmeltiere, Schweizer Fahnen, Luftseilbahnen mit fahrender Gondel, Berge mit Schneekuppe direkt an der Straße, Sempachersee mit Segelbooten am Straßenrand, Emmen, Rothenburg, Sempach; Schneeberge im Hintergrund und graue Straßenkante statt Rot-Weiß |
+| 🇨🇭 Luzern → Sursee | Bergig: zwei Anstiege, Abfahrt ins Tal, Viadukt mit Steinbrüstung über das Tal, Serpentinen zum Pass, lange Abfahrt zum See, zum Schluss noch zwei Hügel. Statt Meeresfrüchten gibt es Käse, Schokolade, Bratwurst und Zopf zu sammeln, im Ziel jubeln Kühe und Murmeltiere. Kapellbrücke mit Wasserturm, Chalets, Tannen, Apfelbäume, schwarz-weiße Kühe mit Glocke, Murmeltiere, Schweizer Fahnen, Luftseilbahnen mit fahrender Gondel, Berge mit Schneekuppe direkt an der Straße, Sempachersee mit Segelbooten am Straßenrand, Emmen, Rothenburg, Sempach; Schneeberge im Hintergrund und graue Straßenkante statt Rot-Weiß |
 | 🏖️ Santanyí → Es Trenc | Windmühlen, Mandelbäume, Weinberge, Sonnenblumen, Kakteen, Schafe, Ses Salines, Colònia, Dünen und Strand |
 
 Die Strecken werden mit einem festen Zufallsgenerator je Strecke aufgebaut und sind damit auf allen
@@ -136,7 +136,8 @@ WebAudio erzeugt. Über das Lautsprecher-Symbol abschaltbar.
   Brücken, Berge, Meeresfrüchte und so weiter entstehen beim Start als Canvas-Sprites. Es gibt keine
   Bilddateien.
 * **Hintergrund** mit Himmel, Sonne, Wolken, Bergkette, Meer und Hügeln in mehreren Ebenen, die sich
-  in Kurven unterschiedlich schnell bewegen.
+  in Kurven unterschiedlich schnell bewegen. Der Horizont folgt der obersten sichtbaren Straßenkante, so dass
+  an Kuppen und Abfahrten keine Fläche zwischen Himmel und Straße entsteht.
 * **Partikelsystem** für Funken, Staub, Flammen, Reifenqualm und Konfetti.
 * **Eingabe**: Touch-Buttons, Antippen der Bildschirmhälften, Tastatur und Lagesensor
   (DeviceOrientation, mit iOS-Berechtigungsabfrage). Die Lenkung ist stufenlos.
