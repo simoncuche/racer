@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.8.1 (2026-10-02)
+
+Sant Salvador: großer Hügel mit kleinem Kloster obendrauf statt riesigem Haus. Ortstafeln Luzern und Palma stehen jetzt sichtbar kurz nach der Startlinie.
+
 ## 3.8.0 (2026-10-02)
 
 Doppeldecker: Hindernisse hängen jetzt von der Flughöhe ab. Tief fliegen heißt Verkehr und Büsche treffen, hoch fliegen heißt Bäume und Häuser überfliegen. Brücken kann man unter- oder überfliegen, in den Tunnel muss man tief hinein. Flügel werden in Kurven nicht mehr abgeschnitten.
