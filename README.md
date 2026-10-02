@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **2.7.0**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **2.7.1**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -69,7 +69,7 @@ Der Name landet in der Rangliste. Das jeweils andere Auto fährt als Gegner mit.
 
 | Strecke | Unterwegs |
 |---|---|
-| 🏰 Palma → Artà | Kathedrale, spanische Fahnen, Windmühlen von Sant Jordi, Mandelbäume und Schafe auf der Ebene Es Pla, Algaida, Montuïri, Manacor, Weinberge, Steinbrücken, Talaiot und die Wallfahrtskirche hoch über Artà |
+| 🏰 Palma → Artà | Kathedrale, spanische Fahnen, Windmühlen von Sant Jordi, Mandelbäume und Schafe auf der Ebene Es Pla, Algaida, Montuïri, Manacor, Strand von Cala Millor mit Liegestühlen, Sonnenschirmen und Booten, Weinberge, Steinbrücken, Talaiot und die Wallfahrtskirche hoch über Artà |
 | 🇨🇭 Luzern → Sursee | Bergig: zwei Anstiege, Abfahrt ins Tal, Viadukt mit Steinbrüstung über das Tal, Serpentinen zum Pass, lange Abfahrt zum See, zum Schluss noch zwei Hügel. Statt Meeresfrüchten gibt es Käse, Schokolade, Bratwurst und Zopf zu sammeln, im Ziel jubeln Kühe und Murmeltiere. Kapellbrücke mit Wasserturm, Chalets, Tannen, Apfelbäume, schwarz-weiße Kühe mit Glocke, Murmeltiere, Schweizer Fahnen, Luftseilbahnen mit fahrender Gondel, Berge mit Schneekuppe direkt an der Straße, Sempachersee mit Segelbooten am Straßenrand, Emmen, Rothenburg, Sempach; Schneeberge im Hintergrund und graue Straßenkante statt Rot-Weiß |
 | 🏖️ Santanyí → Es Trenc | Windmühlen, Mandelbäume, Weinberge, Sonnenblumen, Kakteen, Schafe, Ses Salines, Colònia, Dünen und Strand |
 

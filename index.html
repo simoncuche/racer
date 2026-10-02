@@ -154,7 +154,7 @@
 
 <script>
 'use strict';
-const VERSION='2.7.0', VERSION_DATE='2026-10-02';
+const VERSION='2.7.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -375,6 +375,14 @@ function drawParasol(x,w,h){
   x.strokeStyle='#c9b27a'; x.lineWidth=2; for(let i=-2;i<=2;i++){ x.beginPath(); x.moveTo(0,-h*0.95); x.lineTo(i*w*0.22,-h*0.56); x.stroke(); }
   x.restore();
 }
+function drawDeckchair(x,w,h,col){ x.save(); x.translate(w/2,h); // Liegestuhl mit gestreiftem Tuch, leicht schräg
+  x.fillStyle='rgba(0,0,0,0.2)'; x.beginPath(); x.ellipse(0,2,w*0.46,h*0.06,0,0,7); x.fill();
+  x.strokeStyle='#c9a86a'; x.lineWidth=4; x.lineCap='round';
+  x.beginPath(); x.moveTo(-w*0.4,0); x.lineTo(-w*0.3,-h*0.3); x.moveTo(w*0.4,0); x.lineTo(w*0.3,-h*0.3); x.moveTo(-w*0.3,-h*0.3); x.lineTo(w*0.3,-h*0.3); x.moveTo(-w*0.34,-h*0.3); x.lineTo(-w*0.46,-h*0.78); x.stroke();
+  for(let i=0;i<5;i++){ x.fillStyle=i%2? col : '#fff'; x.fillRect(-w*0.3+i*w*0.12,-h*0.34,w*0.12,h*0.08); }
+  x.save(); x.translate(-w*0.4,-h*0.54); x.rotate(0.35); for(let i=0;i<5;i++){ x.fillStyle=i%2? col : '#fff'; x.fillRect(-w*0.06,-h*0.3+i*h*0.07,w*0.52,h*0.07); } x.restore();
+  x.fillStyle='#f1c9a5'; x.beginPath(); x.arc(-w*0.22,-h*0.6,w*0.09,0,7); x.fill();
+  x.restore(); }
 function drawBoat(x,w,h){
   x.save(); x.translate(w/2,h);
   x.fillStyle='#fff'; x.beginPath(); x.moveTo(-w*0.45,-h*0.2); x.lineTo(w*0.45,-h*0.2); x.lineTo(w*0.3,0); x.lineTo(-w*0.35,0); x.fill();
@@ -867,7 +875,7 @@ function buildSprites(){
   makeSprite('rock',140,70,drawRock);
   makeSprite('archFinish',680,340,(x,w,h)=>drawArch(x,w,h,'ZIEL'));
   makeSprite('parasol',120,110,drawParasol);
-  makeSprite('boat',140,170,drawBoat);
+  makeSprite('boat',140,170,drawBoat); makeSprite('deckchair',110,90,(x,w,h)=>drawDeckchair(x,w,h,'#1e8fe0')); makeSprite('deckchair2',110,90,(x,w,h)=>drawDeckchair(x,w,h,'#e2231a')); makeSprite('deckchair3',110,90,(x,w,h)=>drawDeckchair(x,w,h,'#3cc06a'));
   makeSprite('ensaimada',60,60,drawEnsaimada);
   makeSprite('orange',50,50,drawOrange);
   makeSprite('shrimp',64,64,drawShrimp); makeSprite('fish',64,64,drawFish); makeSprite('crab',64,64,drawCrab); makeSprite('scallop',64,64,drawScallop); makeSprite('squid',64,64,drawSquid);
@@ -915,7 +923,9 @@ const STAGES = [
       t.straight(50); t.sprite(395,-1.9,'windmill'); t.sprite(410,1.9,'windmill'); t.sprite(425,-1.9,'windmill'); t.town(385,420,true); t.hill(50,40); t.fill(430,480,'almond',1.6,0.35); t.over(455,'bridge');
       t.curve(80,5,-30); t.fill(480,560,'wall',1.15,0.6); t.mix(480,560,['vineyard','cactus'],1.6,0.25); t.sCurve(120,5,20); t.fill(560,680,'olive',1.7,0.3); t.mix(560,680,['sunflowers','sheep'],1.7,0.2);
       t.straight(60); t.town(600,660,true); t.sprite(615,1.3,'cafe'); t.sprite(640,-1.3,'cafe'); t.mix(600,660,['lamp'],1.15,0.15); t.over(690,'bridge');
-      t.curve(70,-4,30); t.fill(680,760,'almond',1.6,0.3); t.mix(680,760,['wall','rock'],1.3,0.3); t.far(680,760,'mountain',40); t.hill(60,60); t.curve(60,4,30); t.fill(760,840,'pine',1.6,0.3); t.mix(760,840,['rock','agave'],1.4,0.3); t.far(760,840,'mountain2',35); t.sprite(800,-2.4,'talaiot');
+      // Strand von Cala Millor: breiter Sand mit Liegestühlen, Sonnenschirmen und Booten, links Pinien und Strandhütten
+      t.curve(70,-4,10); t.water(680,760,1,true); for(let i=Math.round(680*K);i<Math.round(760*K);i+=2){ if(rnd(0,1)<0.8) t.sprites.push({seg:i,offset:1.5+rnd(0,1.3),name:['deckchair','deckchair2','deckchair3','parasol'][Math.floor(rnd(0,4))]}); } for(let i=682;i<760;i+=7) t.sprites.push({seg:Math.round(i*K),offset:3.6+rnd(0,1.4),name:'boat'});
+      t.fill(680,760,'pine',1.5,0.3,true); t.mix(680,760,['beachhut','palm','cafe'],1.6,0.2,true); t.far(680,760,'mountain',40); t.hill(60,60); t.curve(60,4,30); t.fill(760,840,'pine',1.6,0.3); t.mix(760,840,['rock','agave'],1.4,0.3); t.far(760,840,'mountain2',35); t.sprite(800,-2.4,'talaiot');
       t.hill(50,40); t.straight(70); t.fill(840,900,'wall',1.15,0.6); t.mix(840,900,['pine','cactus'],1.6,0.25); t.town(880,915,true); t.sprite(905,-1.9,'church'); t.sprite(910,1.8,'church'); t.sprite(895,1.4,'cafe'); t.far(840,920,'mountain',30);
       t.mix(5,915,['flag_es'],1.2,0.025); }
   },
@@ -988,7 +998,7 @@ class TrackBuilder{
   town(from,to,withChurch,houses){ houses=houses||['house1','house2','house3','house4']; for(let s=Math.round(from*K);s<Math.round(to*K);s+=5){ for(const side of [-1,1]){ if(rnd(0,1)<0.8) this.sprites.push({seg:s,offset:side*(1.35+rnd(0,0.5)),name:houses[Math.floor(rnd(0,4))]}); } if(s%15===0) this.sprites.push({seg:s+2,offset:(s%30?1:-1)*1.2,name:'lamp'}); }
     if(withChurch) this.sprites.push({seg:Math.round((from+to)/2*K),offset:-1.9,name:'church'}); }
   mix(from,to,names,dist,density,oneSide){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=Math.max(1,Math.round(1/density))){ if(rnd(0,1)<0.85){ const side=oneSide? -1 : (rnd(0,1)<0.5?-1:1); this.sprites.push({seg:s,offset:side*(dist+rnd(0,0.9)),name:names[Math.floor(rnd(0,names.length))]}); } } }
-  water(from,to,side){ for(let s=Math.round(from*K);s<Math.round(to*K);s++){ this.waters.push({seg:s,side}); } } // See neben der Straße
+  water(from,to,side,beach){ for(let s=Math.round(from*K);s<Math.round(to*K);s++){ this.waters.push({seg:s,side,beach}); } } // See/Meer neben der Straße, beach = breiter Sandstrand
   viaduct(from,to){ for(let s=Math.round(from*K);s<Math.round(to*K);s++){ this.viaducts.push(s); } } // Straße auf einer Brücke über ein Tal
   far(from,to,name,every){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=every){ this.sprites.push({seg:s,offset:(rnd(0,1)<0.5?-1:1)*rnd(3.2,4.5),name}); } }
   fill(from,to,name,dist,density,oneSide){ for(let s=Math.round(from*K);s<Math.round(to*K);s+=Math.max(1,Math.round(1/density))){ if(rnd(0,1)<0.85){ const side=oneSide? -1 : (rnd(0,1)<0.5?-1:1); this.sprites.push({seg:s,offset:side*(dist+rnd(0,0.8)),name}); } } }
@@ -1009,7 +1019,7 @@ function buildTrack(stage){
     for(const side of [-1,1]){ const n = i<finishIndex? 2 : 1; for(let k=0;k<n;k++){ if(rnd(0,1)<0.8) t.segments[i].crowd.push({offset:side*(1.2+k*0.3+rnd(0,0.15)), kind:crowdSet[Math.floor(rnd(0,crowdSet.length))], phase:rnd(0,6), speed:rnd(4,7)}); } } }
   const segs=t.segments;
   for(const s of t.sprites){ if(!segs[s.seg]) continue; const anim = SPR[s.name+'_0'] ? [0,1,2,3].map(i=>SPR[s.name+'_'+i]).filter(Boolean) : null; segs[s.seg].sprites.push({offset:s.offset,ox:s.ox,sprite:anim?anim[0]:SPR[s.name],anim,phase:rnd(0,4)}); }
-  for(const w of t.waters){ if(segs[w.seg]) segs[w.seg].water=w.side; }
+  for(const w of t.waters){ if(segs[w.seg]){ segs[w.seg].water=w.side; segs[w.seg].beach=!!w.beach; } }
   for(const v of t.viaducts){ if(segs[v]) segs[v].viaduct=true; }
   // Sammelgegenstände
   for(let i=30;i<finishIndex-10;i+=rnd(24,40)|0){ const lane=[-0.6,-0.2,0.2,0.6][Math.floor(rnd(0,4))]; const kind=itemSet[Math.floor(rnd(0,itemSet.length))]; segs[i].items.push({offset:lane,sprite:SPR[kind[0]],kind,taken:false,phase:rnd(0,6)}); }
@@ -1293,8 +1303,9 @@ function drawSegment(w,lanes,x1,y1,w1,x2,y2,w2,fog,seg){
   const grass = col===2? '#d9d9d9' : st.grass[col];
   ctx.fillStyle=grass; ctx.fillRect(0,y2,w,y1-y2);
   if(seg.water){ // See auf einer Seite: Uferstreifen + Wasser bis zum Bildrand
-    const sd=seg.water, e1=x1+sd*(w1+r1), e2=x2+sd*(w2+r2), edge= sd>0 ? w : 0, s1=e1+sd*w1*0.5, s2=e2+sd*w2*0.5;
-    poly(e1,y1,s1,y1,s2,y2,e2,y2,'#d9cfa0');
+    const sd=seg.water, bw=seg.beach?1.6:0.5, e1=x1+sd*(w1+r1), e2=x2+sd*(w2+r2), edge= sd>0 ? w : 0, s1=e1+sd*w1*bw, s2=e2+sd*w2*bw;
+    poly(e1,y1,s1,y1,s2,y2,e2,y2, seg.beach ? (col?'#f0e2b8':'#ead9ab') : '#d9cfa0');
+    if(seg.beach){ poly(s1-sd*w1*0.08,y1,s1,y1,s2,y2,s2-sd*w2*0.08,y2,'rgba(255,255,255,0.7)'); }
     const wg = col? '#3f8fd0':'#4596d6'; poly(s1,y1,edge,y1,edge,y2,s2,y2,wg);
     if(fog>0.4){ ctx.fillStyle='rgba(255,255,255,0.35)'; const n=3; for(let i=0;i<n;i++){ const t=(i+0.5)/n; const lx=lerp(s1,edge,t), ly=lerp(y1,y2,0.5); ctx.fillRect(lx-4,ly,8,1); } }
   }
