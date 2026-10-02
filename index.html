@@ -30,10 +30,14 @@
   .btn.secondary:active{box-shadow:0 2px 0 #8e99a8}
   .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:720px}
   .row.sticky{position:sticky;bottom:0;padding:12px 0 8px;background:linear-gradient(rgba(10,30,60,0),rgba(10,30,60,.9) 35%);z-index:2}
-  #drivers.three .card{flex:1 1 30%;max-width:none;min-width:0;padding:6px 6px}
-  #drivers.three .card canvas{height:clamp(64px,11vh,120px)}
-  #drivers.three .card .title{font-size:clamp(13px,3.6vw,16px);margin-top:4px}
-  #drivers.three .card .desc{font-size:10.5px;line-height:1.25}
+  #drivers{flex-direction:column;align-items:stretch;max-width:560px}
+  #drivers .card{flex:none;max-width:none;display:flex;align-items:center;gap:12px;text-align:left;padding:8px 12px 8px 8px}
+  #drivers .card canvas{flex:none;width:clamp(96px,30vw,150px);height:auto;aspect-ratio:300/220;margin:0}
+  #drivers .card .text{flex:1;min-width:0}
+  #drivers .card .title{margin-top:0}
+  #drivers .card .desc{margin-top:4px;font-size:clamp(11.5px,3.2vw,13px)}
+  #drivers.three .card canvas{width:clamp(84px,24vw,130px)}
+  #drivers.three .card .desc{font-size:clamp(11px,3vw,12.5px);line-height:1.25}
   .card{flex:1 1 220px;max-width:300px;background:var(--panel);border:3px solid transparent;border-radius:20px;padding:10px 12px;cursor:pointer;transition:transform .12s}
   .card.sel{border-color:var(--accent);transform:scale(1.03);box-shadow:0 0 0 4px rgba(255,207,63,.25)}
   .card canvas{width:auto;max-width:100%;height:clamp(90px,16vh,170px);display:block;margin:0 auto;border-radius:12px;background:linear-gradient(#bfe3ff,#e9d9b7)}
@@ -179,7 +183,7 @@
 
 <script>
 'use strict';
-const VERSION='3.10.0', VERSION_DATE='2026-10-02';
+const VERSION='3.10.1', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -2139,7 +2143,7 @@ function renderDrivers(){
     if(d.secret && !Plane.unlocked()) continue;
     const card=document.createElement('div'); card.className='card'+(G.driver===d.id?' sel':'')+(d.secret?' secret':''); card.dataset.id=d.id;
     d.avatar=Avatar.paramsFor(playerName()); const c=mkCanvas(300,220); drawVehicleFront(c.getContext('2d'),300,220,d);
-    card.appendChild(c); const t=document.createElement('div'); t.className='title'; t.textContent=d.carName; card.appendChild(t); const ds=document.createElement('div'); ds.className='desc'; ds.textContent=d.desc; card.appendChild(ds);
+    card.appendChild(c); const txt=document.createElement('div'); txt.className='text'; const t=document.createElement('div'); t.className='title'; t.textContent=d.carName; txt.appendChild(t); const ds=document.createElement('div'); ds.className='desc'; ds.textContent=d.desc; txt.appendChild(ds); card.appendChild(txt);
     card.addEventListener('click',()=>{ G.driver=d.id; if(!d.secret) store('driver',d.id); renderDrivers(); });
     box.appendChild(card);
   }
@@ -2206,6 +2210,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.10.1','2026-10-02','Autowahl: breite, flache Karten untereinander mit Bild links und Text rechts – auch mit drei Fahrzeugen ohne Scrollen.'],
  ['3.10.0','2026-10-02','Rangliste: jeder Spieler nur einmal (sein bestes Ergebnis), Anzeige der 30 Besten, eigener Platz auch außerhalb der 30. Avatar-Vorschau bei der Namenseingabe größer.'],
  ['3.9.2','2026-10-02','Autowahl: Der Kopf des Fahrers ragt leicht über die Windschutzscheibe. Mit drei Fahrzeugen bleiben Zurück/Weiter unten immer sichtbar, die Karten werden kompakter.'],
  ['3.9.1','2026-10-02','Rangliste zeigt nur noch Ergebnisse mit Avatar. Jeder Spieler hat ab jetzt automatisch einen Avatar (Standardgesicht, im Namensbildschirm anpassbar), damit jedes neue Ergebnis eines trägt.'],

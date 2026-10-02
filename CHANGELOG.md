@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.10.1 (2026-10-02)
+
+Autowahl: breite, flache Karten untereinander mit Bild links und Text rechts – auch mit drei Fahrzeugen ohne Scrollen.
+
 ## 3.10.0 (2026-10-02)
 
 Rangliste: jeder Spieler nur einmal (sein bestes Ergebnis), Anzeige der 30 Besten, eigener Platz auch außerhalb der 30. Avatar-Vorschau bei der Namenseingabe größer.
