@@ -65,6 +65,7 @@
   #steerPad{width:100%;justify-content:space-between}
   .pbtn{width:clamp(64px,19vw,96px);height:clamp(64px,19vw,96px);border-radius:50%;background:rgba(255,255,255,.22);border:3px solid rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;font-size:clamp(28px,8vw,40px);color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.6);backdrop-filter:blur(2px)}
   .pbtn.on{background:rgba(255,207,63,.65);border-color:#fff}
+  .pbtn.alt{width:clamp(48px,14vw,72px);height:clamp(48px,14vw,72px);font-size:clamp(20px,6vw,30px)}
   .pbtn.gas{background:rgba(60,200,90,.35)}.pbtn.brake{background:rgba(230,60,60,.35)}
   #topbtns{position:fixed;right:10px;top:calc(max(8px,env(safe-area-inset-top)) + 58px);display:flex;flex-direction:column;gap:8px}
   .icon.on{background:rgba(255,207,63,.75);color:#222}
@@ -94,7 +95,7 @@
 <div id="msg" class="hidden"></div>
 <div id="toast"></div>
 <div id="controls" class="hidden">
-  <div class="pad" id="steerPad"><div class="pbtn" data-k="left">◀</div><div class="pbtn" data-k="right">▶</div></div>
+  <div class="pad" id="steerPad"><div class="pbtn" data-k="left">◀</div><div class="pad" id="altPad" style="flex-direction:column;gap:8px;display:none"><div class="pbtn alt" data-k="up">▲</div><div class="pbtn alt" data-k="down">▼</div></div><div class="pbtn" data-k="right">▶</div></div>
 </div>
 
 <!-- Title -->
@@ -173,7 +174,7 @@
 
 <script>
 'use strict';
-const VERSION='3.5.0', VERSION_DATE='2026-10-02';
+const VERSION='3.6.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -251,8 +252,9 @@ const DRIVERS = {
          maxSpeedF:60/110, offRoadF:1.0, accelF:0.7, grip:0.9, size:1.2 }
 };
 const Plane = { // Easter Egg: Doppeldecker, freigeschaltet durch Schütteln im Autowahl-Bildschirm
-  unlocked(){ return !!store('plane'); },
-  unlock(){ const fresh=!Plane.unlocked(); store('plane',true); if(G.state==='select'){ renderDrivers(); const card=document.querySelector('.card[data-id="plane"]'); if(card){ card.classList.add('reveal'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); } }
+  active:false, // gilt nur für die gerade geöffnete Autowahl – beim nächsten Öffnen muss man wieder schütteln
+  unlocked(){ return Plane.active; },
+  unlock(){ const fresh=!Plane.active; Plane.active=true; if(G.state==='select'){ renderDrivers(); const card=document.querySelector('.card[data-id="plane"]'); if(card){ card.classList.add('reveal'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); } }
     if(fresh){ Audio.init(); Audio.resume(); Audio.fanfare(true); menuToast('✈️ Geheimes Fahrzeug freigeschaltet!',2500); } }
 };
 function menuToast(text,ms){ const t=$('toast'); t.textContent=text; t.style.opacity=1; clearTimeout(menuToast.h); menuToast.h=setTimeout(()=>{ t.style.opacity=0; },ms||2000); }
@@ -798,7 +800,7 @@ function tire(x,cx,cy,tw,th,knobby){ // cx,cy = Mitte unten
 }
 function drawPlaneBack(x, cw, h, d, yaw=0){ // Doppeldecker von hinten, neigt sich beim Lenken in die Kurve
   const w=260, steer=Math.sign(yaw)*Math.min(1,Math.abs(yaw)*2); const c=d.carColor, red='#d9262c';
-  x.save(); x.translate(cw/2, h-8); x.translate(0,-h*0.5); x.rotate(-yaw*0.3); x.translate(0,h*0.5);
+  x.save(); x.translate(cw/2, h-8); x.translate(0,-h*0.5); x.rotate(yaw*0.3); x.translate(0,h*0.5);
   // Propellerscheibe ganz vorne (hinter allem): Unschärfe-Kreis und drei Blätter
   x.fillStyle='rgba(90,90,90,0.28)'; x.beginPath(); x.ellipse(0,-h*0.6,w*0.2,h*0.2,0,0,7); x.fill();
   x.strokeStyle='rgba(50,50,50,0.55)'; x.lineWidth=5; for(let i=0;i<3;i++){ const a=i*Math.PI*2/3+0.4; x.beginPath(); x.moveTo(0,-h*0.6); x.lineTo(Math.cos(a)*w*0.19,-h*0.6+Math.sin(a)*h*0.19); x.stroke(); }
@@ -1396,14 +1398,14 @@ document.addEventListener('focusout',()=>setTimeout(setVH,250));
 window.addEventListener('resize',()=>{ resize(); setVH(); }); if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); setVH(); }).observe(document.documentElement); window.addEventListener('orientationchange',()=>setTimeout(()=>{ resize(); setVH(); },200)); if(window.visualViewport) window.visualViewport.addEventListener('resize',setVH); setVH();
 
 const G = { state:'title', driver:'girl', stageIdx:0, track:null, stage:null,
-  position:0, playerX:0, speed:0, maxSpeed:TOP_SPEED, time:0, items:0, boostT:0, boosts:0, crashT:0, flashT:0, crashSide:0, hitSprite:null, goT:99, finishFx:0, carRect:null, steerVis:0, finished:false, countdown:3, startDelay:0,
+  position:0, playerX:0, speed:0, maxSpeed:TOP_SPEED, time:0, items:0, boostT:0, boosts:0, crashT:0, flashT:0, crashSide:0, hitSprite:null, goT:99, alt:0.3, altV:0, finishFx:0, carRect:null, steerVis:0, finished:false, countdown:3, startDelay:0,
   rival:null, traffic:[], skyOffset:0, hillOffset:0, treeOffset:0, shake:0, lastT:0, bob:0, keys:{}, toastT:0, finishTime:0, rivalFinishTime:0, bump:0 };
 
 function startRace(){
   const stage=STAGES[G.stageIdx]; G.stage=stage; G.track=buildTrack(stage);
   const d=DRIVERS[G.driver]; const rivalId = G.driver==='girl'?'boy':'girl'; const r=DRIVERS[rivalId];
   d.avatar=Avatar.paramsFor(playerName()); r.avatar=null; buildCarSprites();
-  G.position=0; G.playerX=-0.4; G.speed=0; G.time=0; G.items=0; G.boostT=0; G.boosts=0; G.crashT=0; G.flashT=0; G.crashSide=0; G.hitSprite=null; G.finishFx=0; G.finished=false; FX.clear(); G.countdown=3.99; G.goT=99; G.shake=0; G.finishTime=0; G.rivalFinishTime=0;
+  G.position=0; G.playerX=-0.4; G.speed=0; G.time=0; G.items=0; G.boostT=0; G.boosts=0; G.crashT=0; G.flashT=0; G.crashSide=0; G.hitSprite=null; G.finishFx=0; G.finished=false; FX.clear(); G.countdown=3.99; G.goT=99; G.alt=0.3; G.altV=0; $('altPad').style.display = d.type==='plane' ? 'flex' : 'none'; G.shake=0; G.finishTime=0; G.rivalFinishTime=0;
   G.maxSpeed = TOP_SPEED*d.maxSpeedF;
   RNG.seed('verkehr-'+stage.id+'-v1'); // gleicher Verkehr auf allen Geräten
   G.rival={ driver:r, z:0, offset:0.4, speed:0, maxSpeed:TOP_SPEED*stage.rivalSpeed*1.02, finished:false, sprite:SPR['car_'+rivalId+'_0'], wobble:rnd(0,10) };
@@ -1424,13 +1426,13 @@ function setState(s){
   const racing = s==='race'||s==='pause';
   for(const id of ['hud','prog','topbtns','controls']) $(id).classList.toggle('hidden', !racing);
   $('msg').classList.toggle('hidden', s!=='race');
-  if(s==='name') renderName(); if(s==='select'){ $('selectTitle').textContent=playerName()+', welches Auto?'; renderDrivers(); } if(s==='stages') renderStages(); if(s==='rankpick') renderRankPick(); if(s==='ranking') renderRanking(); if(s==='changes') renderChanges();
+  if(s==='name') renderName(); if(s==='select'){ Plane.active=false; if(DRIVERS[G.driver].secret) G.driver='girl'; $('selectTitle').textContent=playerName()+', welches Auto?'; renderDrivers(); } if(s==='stages') renderStages(); if(s==='rankpick') renderRankPick(); if(s==='ranking') renderRanking(); if(s==='changes') renderChanges();
 }
 function popMsg(text){ const m=$('msg'); m.textContent=text; m.classList.remove('pop'); void m.offsetWidth; if(text) m.classList.add('pop'); }
 function showToast(text,sec){ const t=$('toast'); t.textContent=text; t.style.opacity=1; G.toastT=sec; }
 
 // ---------- Eingabe ----------
-const input={left:false,right:false,gas:false,brake:false};
+const input={left:false,right:false,up:false,down:false};
 const touchActive={};
 function bindPad(){
   for(const el of document.querySelectorAll('.pbtn')){
@@ -1452,12 +1454,14 @@ function readInput(){
   const k=G.keys; const sides=Object.values(touchActive);
   let steer = (input.left||k.ArrowLeft||k.KeyA||sides.includes('left')) ? -1 : (input.right||k.ArrowRight||k.KeyD||sides.includes('right')) ? 1 : 0;
   if(Tilt.enabled && steer===0) steer = Tilt.value;
-  return { steer, left: steer<0, right: steer>0 };
+  let climb = (input.up||k.ArrowUp||k.KeyW) ? 1 : (input.down||k.ArrowDown||k.KeyS) ? -1 : 0; // nur für den Doppeldecker
+  if(Tilt.enabled && climb===0) climb = Tilt.pitch;
+  return { steer, climb, left: steer<0, right: steer>0 };
 }
 
 // ---------- Kipp-Steuerung (Gyroskop / Lagesensor) ----------
 const Tilt = {
-  enabled:false, value:0, raw:0, base:null, supported:('DeviceOrientationEvent' in window),
+  enabled:false, value:0, raw:0, base:null, pitch:0, pbase:null, supported:('DeviceOrientationEvent' in window),
   // Aus beta/gamma wird die Schwerkraftrichtung im Geräte-Koordinatensystem rekonstruiert. Der Anteil entlang der
   // waagrechten Bildschirmachse ist der Links-rechts-Neigungswinkel – egal ob das Handy flach oder steil gehalten wird.
   read(e){
@@ -1466,6 +1470,10 @@ const Tilt = {
     const ux=-Math.sin(g)*Math.cos(b), uy=Math.sin(b); // „oben“ im Geräte-System (x nach rechts, y nach oben)
     const angle = (screen.orientation && typeof screen.orientation.angle==='number') ? screen.orientation.angle : (window.orientation||0);
     let sx; if(angle===90) sx=-uy; else if(angle===-90||angle===270) sx=uy; else if(angle===180) sx=-ux; else sx=ux;
+    // Vor-/Zurückkippen (nur der Doppeldecker nutzt es): Anteil von „oben“ entlang der senkrechten Bildschirmachse
+    let sy; if(angle===90) sy=ux; else if(angle===-90||angle===270) sy=-ux; else if(angle===180) sy=-uy; else sy=uy;
+    const pt=Math.asin(clamp(sy,-1,1))*180/Math.PI; if(Tilt.pbase===null) Tilt.pbase=pt; const pd=pt-Tilt.pbase; if(Math.abs(pd)<6) Tilt.pbase+=pd*0.004;
+    const pv = Math.abs(pd)<6 ? 0 : clamp((Math.abs(pd)-6)/16,0,1)*Math.sign(pd); Tilt.pitch = Tilt.pitch*0.6 + pv*0.4; // positiv = zu sich gekippt = steigen
     const t = -Math.asin(clamp(sx,-1,1))*180/Math.PI; // Grad, positiv = rechte Seite nach unten geneigt
     Tilt.raw=t; if(Tilt.base===null) Tilt.base=t;
     const d=t-Tilt.base;
@@ -1474,7 +1482,7 @@ const Tilt = {
     const v = Math.abs(d)<dead ? 0 : clamp((Math.abs(d)-dead)/(range-dead),0,1)*Math.sign(d);
     Tilt.value = Tilt.value*0.6 + v*0.4; // geglättet
   },
-  calibrate(){ Tilt.base=null; Tilt.value=0; },
+  calibrate(){ Tilt.base=null; Tilt.value=0; Tilt.pbase=null; Tilt.pitch=0; },
   async enable(){
     if(!Tilt.supported){ showToast('Kein Lagesensor gefunden 😕',2); return false; }
     try{ if(typeof DeviceOrientationEvent.requestPermission==='function'){ const r=await DeviceOrientationEvent.requestPermission(); if(r!=='granted'){ showToast('Zugriff auf den Sensor abgelehnt',2); return false; } } }catch(err){ showToast('Sensor nicht erlaubt',2); return false; }
@@ -1496,12 +1504,13 @@ function update(dt){
   if(G.countdown>0){ const prev=Math.ceil(G.countdown); G.countdown-=dt; const now=Math.ceil(G.countdown);
     if(now!==prev){ if(now>0) Audio.beep(440,0.15); else Audio.beep(880,0.4); }
     const txt = G.countdown>0 ? (G.countdown>3?'':String(Math.ceil(G.countdown))) : 'LOS!'; if(txt!==$('msg').textContent) popMsg(txt);
-    if(G.countdown<=0){ G.goT=0; startFx(); setTimeout(()=>{ if(G.countdown<=0) $('msg').textContent=''; },800); }
+    if(G.countdown<=0){ G.goT=0; startFx(); if(d.type==='plane') setTimeout(()=>showToast('Tief fliegen zum Sammeln! ▼',1.8),900); setTimeout(()=>{ if(G.countdown<=0) $('msg').textContent=''; },800); }
     if(G.countdown>0){ if(G.countdown<3 && G.carRect && d.type!=='plane' && Math.random()<dt*10){ const c=G.carRect; FX.add({x:c.x+(Math.random()<0.5?-1:1)*c.w*0.2,y:c.bottom-c.h*0.1,vx:rnd(-20,20),vy:rnd(20,60),life:0.5,max:0.5,size:rnd(3,6),grow:true,color:'rgba(160,160,160,0.5)'}); } FX.update(dt); return; }
   }
   G.goT+=dt;
   if(!G.finished) G.time+=dt;
-  const inp = G.finished ? {steer:0,left:false,right:false} : readInput();
+  const inp = G.finished ? {steer:0,climb:0,left:false,right:false} : readInput();
+  if(d.type==='plane'){ const c=clamp(inp.climb||0,-1,1); G.alt=clamp(G.alt+c*dt*0.8,0,1); G.altV+=(c-G.altV)*Math.min(1,dt*5); }
   const playerSegment=findSegment(G.position+playerZ);
   const speedPct=G.speed/G.maxSpeed;
   const dx=dt*2*speedPct*(0.8+0.3*d.grip);
@@ -1523,7 +1532,8 @@ function update(dt){
   else if(G.speed<target) G.speed=Math.min(target, G.speed + accel*(G.boostT>0?2.5:1)*dt);
   else G.speed=Math.max(target, G.speed - G.maxSpeed/4*dt);
   // Boost-Feld überfahren?
-  if(!G.finished && playerSegment.boost && Math.abs(G.playerX-playerSegment.boost.offset)<0.42 && G.boostT<BOOST_SEC-0.5){ G.boostT=BOOST_SEC; G.boosts++; showToast('TURBO! 🔥',0.9); Audio.boost(); }
+  const low = d.type!=='plane' || G.alt<0.35; // der Doppeldecker erreicht Items und Turbo-Felder nur im Tiefflug
+  if(!G.finished && low && playerSegment.boost && Math.abs(G.playerX-playerSegment.boost.offset)<0.42 && G.boostT<BOOST_SEC-0.5){ G.boostT=BOOST_SEC; G.boosts++; showToast('TURBO! 🔥',0.9); Audio.boost(); }
   // Neben der Straße
   const offRoadLimit=G.maxSpeed*d.offRoadF;
   const flying = d.type==='plane';
@@ -1537,7 +1547,7 @@ function update(dt){
   if(!G.finished && !flying) for(const c of G.traffic){ const seg=findSegment(c.z); if(seg===playerSegment && G.speed>c.speed && overlap(G.playerX,0.5,c.offset,Math.min(0.45,c.sprite.w*SPRITE_SCALE*0.8))){ const side=(G.playerX<c.offset?-1:1); G.speed=c.speed*0.9; G.position=Math.max(0,startPosition-SEG_LEN*0.3); crashFx(side,true); c.kick=-side; c.kickT=0.9; c.baseOffset=clamp(c.baseOffset-side*0.25,-0.9,0.9); showToast('Krach! 💥',0.8); } }
   if(!G.finished && !flying){ const r=G.rival; const seg=findSegment(r.z); if(seg===playerSegment && G.speed>r.speed && overlap(G.playerX,0.55,r.offset,0.4)){ const side=(G.playerX<r.offset?-1:1); G.speed=r.speed*0.9; crashFx(side,true); r.kick=-side; r.kickT=0.9; } }
   // Gegenstände einsammeln
-  for(const it of playerSegment.items){ if(!it.taken && Math.abs(G.playerX-it.offset)<0.35){ it.taken=true; G.items++; Audio.pickup(); showToast(it.kind[2]+' '+it.kind[1]+'! 😋',0.7); pickupFx(it.kind[2]); } }
+  if(low) for(const it of playerSegment.items){ if(!it.taken && Math.abs(G.playerX-it.offset)<0.35){ it.taken=true; G.items++; Audio.pickup(); showToast(it.kind[2]+' '+it.kind[1]+'! 😋',0.7); pickupFx(it.kind[2]); } }
   G.playerX=clamp(G.playerX,-2.2,2.2); G.speed=clamp(G.speed,0,G.maxSpeed+TOP_SPEED*(BOOST_F-1));
   // Ortsschilder-Toast
   for(const [frac,town] of G.stage.towns){ const idx=Math.round(frac*(T.finishIndex-1))+1; if(idx>2 && idx<T.finishIndex-1 && startPosition<idx*SEG_LEN-playerZ && G.position>=idx*SEG_LEN-playerZ){ showToast(town+' 📍',1.4); Audio.beep(660,0.15,'sine'); } }
@@ -1742,10 +1752,10 @@ function render(){
   const carH = carW*spr.h/spr.w;
   const bottom = H*HORIZON() + pScale*camH()*H/2;
   const carX = W/2 + sv*carW*0.06; // Auto rutscht leicht in Lenkrichtung
-  const hover = d.type==='plane' ? carH*0.7+Math.sin(G.time*2.2)*carH*0.06 : 0; // der Doppeldecker schwebt über der Straße
+  const hover = d.type==='plane' ? carH*(0.45+G.alt*1.9)+Math.sin(G.time*2.2)*carH*0.06 : 0; // der Doppeldecker schwebt, Höhe wählbar
   G.carRect={x:carX,bottom:bottom-hover,w:carW,h:carH};
   ctx.save(); ctx.translate(carX,bottom);
-  if(hover){ ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0,0,carW*0.4,carH*0.08,0,0,7); ctx.fill(); ctx.translate(0,-hover); }
+  if(hover){ const sh=1-G.alt*0.45; ctx.fillStyle='rgba(0,0,0,'+(0.3*(1-G.alt*0.5))+')'; ctx.beginPath(); ctx.ellipse(0,0,carW*0.4*sh,carH*0.08*sh,0,0,7); ctx.fill(); ctx.translate(0,-hover); ctx.scale(1,1+0.14*G.altV); }
   if(G.crashT>0){ const t=1.2-G.crashT, k=clamp(G.crashT/1.2,0,1); // Hüpfer, Rutscher zur Seite, Stauchung beim Aufsetzen, Wackeln
     const hop = t<0.3 ? Math.sin(t/0.3*Math.PI)*carH*0.22 : t<0.5 ? Math.sin((t-0.3)/0.2*Math.PI)*carH*0.07 : 0;
     const squash = (t>=0.28&&t<0.38) ? 0.9 : 1;
@@ -2026,7 +2036,7 @@ function renderDrivers(){
     const card=document.createElement('div'); card.className='card'+(G.driver===d.id?' sel':'')+(d.secret?' secret':''); card.dataset.id=d.id;
     d.avatar=Avatar.paramsFor(playerName()); const c=mkCanvas(300,220); drawVehicleFront(c.getContext('2d'),300,220,d);
     card.appendChild(c); const t=document.createElement('div'); t.className='title'; t.textContent=d.carName; card.appendChild(t); const ds=document.createElement('div'); ds.className='desc'; ds.textContent=d.desc; card.appendChild(ds);
-    card.addEventListener('click',()=>{ G.driver=d.id; store('driver',d.id); renderDrivers(); });
+    card.addEventListener('click',()=>{ G.driver=d.id; if(!d.secret) store('driver',d.id); renderDrivers(); });
     box.appendChild(card);
   }
 }
@@ -2092,8 +2102,9 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.6.0','2026-10-02','Doppeldecker: Neigung beim Lenken korrigiert, er kann jetzt hoch- und runterfliegen (▲▼-Buttons in der Mitte, Pfeiltasten oder Handy nach vorne/hinten kippen). Items und Turbo-Felder gibt es nur im Tiefflug. Das Geheimfahrzeug muss jedes Mal neu entdeckt werden.'],
  ['3.5.0','2026-10-02','Startlinie mit Schachbrett vor dem Auto, Streckenposten mit Flagge und Startampel; beim Start qualmen die Reifen. Beim Crash vibriert das Handy (Android).'],
- ['3.4.0','2026-10-02','Geheimes drittes Fahrzeug: Handy im Autowahl-Bildschirm schütteln. Ein gelber Doppeldecker, der über alle Hindernisse und den Verkehr hinwegfliegt, aber nur 60 km/h schafft (Turbo 100).'],
+ ['3.4.0','2026-10-02','Ein geheimes drittes Fahrzeug ist versteckt: ein gelber Doppeldecker, der über alle Hindernisse und den Verkehr hinwegfliegt, aber nur 60 km/h schafft (Turbo 100). Wie man ihn findet, wird nicht verraten.'],
  ['3.3.0','2026-10-02','Tunnel führt durch einen Berg mit Felsportal und Gewölbe. Crashs mit Sprung, Rutscher, Trümmern, Rauch und wackelndem Gegner. Versionsverlauf im Spiel.'],
  ['3.2.0','2026-10-02','Avatar-Konfigurator mit Frisuren, Bärten, Schnäuzen, Brillen und Kopfbedeckungen statt Foto. Lange Kapellbrücke über die Reuss. Weniger Publikum im Ziel.'],
  ['3.1.2','2026-10-02','Namenseingabe: kein Durchscheinen bei offener Tastatur, keine Kontakt-Vorschläge.'],

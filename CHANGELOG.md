@@ -2,13 +2,17 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.6.0 (2026-10-02)
+
+Doppeldecker: Neigung beim Lenken korrigiert, er kann jetzt hoch- und runterfliegen (▲▼-Buttons in der Mitte, Pfeiltasten oder Handy nach vorne/hinten kippen). Items und Turbo-Felder gibt es nur im Tiefflug. Das Geheimfahrzeug muss jedes Mal neu entdeckt werden.
+
 ## 3.5.0 (2026-10-02)
 
 Startlinie mit Schachbrett vor dem Auto, Streckenposten mit Flagge und Startampel; beim Start qualmen die Reifen. Beim Crash vibriert das Handy (Android).
 
 ## 3.4.0 (2026-10-02)
 
-Geheimes drittes Fahrzeug: Handy im Autowahl-Bildschirm schütteln. Ein gelber Doppeldecker, der über alle Hindernisse und den Verkehr hinwegfliegt, aber nur 60 km/h schafft (Turbo 100).
+Ein geheimes drittes Fahrzeug ist versteckt: ein gelber Doppeldecker, der über alle Hindernisse und den Verkehr hinwegfliegt, aber nur 60 km/h schafft (Turbo 100). Wie man ihn findet, wird nicht verraten.
 
 ## 3.3.0 (2026-10-02)
 
