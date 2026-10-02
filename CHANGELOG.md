@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.9.0 (2026-10-02)
+
+Autowahl: Der Avatar sitzt jetzt im Auto hinter der Scheibe statt auf dem Dach. Streckenwahl: Mallorca mit spanischer Flagge 🇪🇸, Weltraum mit Alien.
+
 ## 3.8.2 (2026-10-02)
 
 Kipp-Steuerung auf dem iPad: Hoch- und Querformat werden jetzt aus dem Fenster und der Schwerkraft bestimmt statt aus der vom Gerät gemeldeten Drehung, die beim iPad anders zählt.

@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **3.8.2**, sie steht unten auf dem Startbildschirm. Ein Tipp auf die Versionszeile öffnet den Versionsverlauf; ausführlich steht er in `CHANGELOG.md`.
+Handy, am Tablet und am Computer. Aktuelle Version: **3.9.0**, sie steht unten auf dem Startbildschirm. Ein Tipp auf die Versionszeile öffnet den Versionsverlauf; ausführlich steht er in `CHANGELOG.md`.
 
 ## Spielen
 
