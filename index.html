@@ -126,7 +126,7 @@
   <input id="nameInput" name="spieler" maxlength="14" placeholder="Dein Name" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="words" inputmode="text" enterkeyhint="done" style="width:min(90vw,320px);padding:12px 14px;border-radius:14px;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;font-size:22px;text-align:center;user-select:text;-webkit-user-select:text">
   <div class="row" id="nameChips" style="margin-top:12px;gap:8px"></div>
   <div id="avatarBox" style="margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:8px">
-    <canvas id="avatarPreview" width="128" height="128" style="width:96px;height:96px;border-radius:50%;background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.5)"></canvas>
+    <canvas id="avatarPreview" width="256" height="256" style="width:150px;height:150px;border-radius:50%;background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.5)"></canvas>
     <div class="row" style="gap:8px"><button class="btn secondary" id="btnAvatarEdit" style="padding:8px 14px;font-size:15px">🎨 Avatar gestalten</button><button class="btn secondary" id="btnPhotoDel" style="padding:8px 14px;font-size:15px;display:none">✕ Entfernen</button></div>
     <div id="avatarEditor" style="display:none;flex-direction:column;gap:6px;width:min(92vw,360px);background:var(--panel);border-radius:16px;padding:10px"></div>
   </div>
@@ -179,7 +179,7 @@
 
 <script>
 'use strict';
-const VERSION='3.9.2', VERSION_DATE='2026-10-02';
+const VERSION='3.10.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -212,23 +212,26 @@ const Online = {
   dec(doc){ const f=doc.fields||{}; const v=k=>{ const x=f[k]||{}; return x.stringValue ?? (x.integerValue!==undefined? Number(x.integerValue) : x.doubleValue ?? x.booleanValue); };
     return { id:doc.name.split('/').pop(), ts:Number(v('ts'))||0, name:v('name')||'?', driver:v('driver')||'girl', stage:v('stage'), time:Number(v('time'))||0, items:Number(v('items'))||0, boosts:Number(v('boosts'))||0, won:!!v('won'), score:Number(v('score'))||0, date:v('date')||'', avatar:Avatar.decode(v('avatar')), online:true }; },
   hasAvatar(doc){ const a=doc.fields&&doc.fields.avatar; return !!(a&&a.stringValue); }, // alte Ergebnisse ohne Avatar zählen nicht mehr
-  async count(stageId){ const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], select:{fields:[{fieldPath:'avatar'}]}, limit:1000 } };
-    const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document&&Online.hasAvatar(x.document)).length; },
+  pkey(name){ return String(name||'').trim().toLowerCase(); }, // ein Spieler = ein Name (ohne Groß/Klein)
+  async all(stageId){ // alle Einträge mit Avatar, je Spieler nur das beste Ergebnis, absteigend sortiert (kurz gecacht)
+    const now=Date.now(); const c=Online._cache&&Online._cache[stageId]; if(c && now-c.t<4000) return c.list;
+    const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}], limit:1000 } };
+    const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); const best=new Map();
+    for(const x of rows){ if(!x.document||!Online.hasAvatar(x.document)) continue; const e=Online.dec(x.document); const k=Online.pkey(e.name); const b=best.get(k); if(!b || e.score>b.score || (e.score===b.score && e.time<b.time)) best.set(k,e); }
+    const list=[...best.values()].sort((a,b)=>b.score-a.score || a.time-b.time); (Online._cache=Online._cache||{})[stageId]={t:now,list}; return list; },
+  async count(stageId){ return (await Online.all(stageId)).length; },
   async add(entry){ // schreibt ein Ergebnis; schlägt es fehl, landet es in der Warteschlange
     Online.lastError=null;
     try{ const r=await fetch(`${Online.base()}/scores_${colKey(entry.stage)}?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Online.enc(entry))});
-      if(!r.ok){ Online.lastError='HTTP '+r.status; throw new Error('HTTP '+r.status); } return true; }
+      if(!r.ok){ Online.lastError='HTTP '+r.status; throw new Error('HTTP '+r.status); } if(Online._cache) delete Online._cache[entry.stage]; return true; }
     catch(err){ if(!Online.lastError) Online.lastError='net'; const q=store('queue')||[]; if(!q.some(e=>e.id===entry.id)) q.push(entry); store('queue',q.slice(-50)); return false; }
   },
   async flush(){ const q=store('queue')||[]; if(!q.length) return; const rest=[]; for(const e of q){ if(!(await Online.add({...e,_retry:true}))) rest.push(e); } store('queue',rest); },
-  async top(stageId,n=10){ // beste Punktzahlen einer Strecke (nur Einträge mit Avatar)
-    const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}], limit:n*3+20 } };
-    const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document&&Online.hasAvatar(x.document)).map(x=>Online.dec(x.document)).slice(0,n); },
-  async rankOf(entry){ // Platz des Eintrags: Anzahl besserer Punktzahlen + 1
-    const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(entry.stage)}], where:{fieldFilter:{field:{fieldPath:'score'},op:'GREATER_THAN',value:{integerValue:String(entry.score|0)}}}, select:{fields:[{fieldPath:'avatar'}]}, limit:300 } };
-    const r=await fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); return rows.filter(x=>x.document&&Online.hasAvatar(x.document)).length+1; }
+  async top(stageId,n=10){ return (await Online.all(stageId)).slice(0,n); },
+  async rankOfName(stageId,name){ const list=await Online.all(stageId); const k=Online.pkey(name); const i=list.findIndex(e=>Online.pkey(e.name)===k); return i>=0 ? i+1 : null; },
+  async rankOf(entry){ // Platz des Spielers (sein bestes Ergebnis); ist er noch nicht drin, Platz nach Punktzahl
+    const list=await Online.all(entry.stage); const k=Online.pkey(entry.name); const i=list.findIndex(e=>Online.pkey(e.name)===k); if(i>=0) return i+1; return list.filter(e=>e.score>entry.score).length+1; }
 };
 // Lokale Rangliste: wird im Browser gespeichert (localStorage) und zusätzlich als Cookie abgelegt
 const Ranking = {
@@ -1943,8 +1946,10 @@ function showResult(){
   // online speichern, dann Platz in der Gesamtrangliste und Top 5 anzeigen
   (async()=>{ const ok=await Online.add(entry); const big=$('resBig'), el=$('onlineRank'); if(!el) return;
     if(!ok){ const rejected=/^HTTP 4/.test(Online.lastError||''); big.textContent= rejected ? '⚠️ Abgelehnt' : '📵 Kein Netz'; el.innerHTML= rejected ? 'Die Online-Rangliste hat das Ergebnis abgelehnt ('+Online.lastError+'). Meist fehlen in Firebase die aktuellen Regeln aus firestore.rules. Es wird später nochmals versucht.' : 'Das Ergebnis wird nachgereicht, sobald wieder Netz da ist'; return; }
-    try{ const [r,total,top]=await Promise.all([Online.rankOf(entry),Online.count(G.stage.id),Online.top(G.stage.id,5)]);
-      big.textContent=(r===1?'🥇 ':r===2?'🥈 ':r===3?'🥉 ':'🌍 ')+'Platz '+r+' von '+Math.max(total,r); el.innerHTML=r===1?'Neue Bestmarke auf dieser Strecke!':'in der gemeinsamen Rangliste aller Handys';
+    try{ const [r,total,top,all]=await Promise.all([Online.rankOf(entry),Online.count(G.stage.id),Online.top(G.stage.id,5),Online.all(G.stage.id)]);
+      const myBest=all.find(e=>Online.pkey(e.name)===Online.pkey(entry.name)); const beaten = myBest && myBest.score>entry.score;
+      big.textContent=(r===1?'🥇 ':r===2?'🥈 ':r===3?'🥉 ':'🌍 ')+'Platz '+r+' von '+Math.max(total,r);
+      el.innerHTML = beaten ? 'Deine Bestmarke bleibt '+myBest.score+' ⭐ – jeder Spieler zählt nur mit seinem besten Ergebnis' : r===1 ? 'Neue Bestmarke auf dieser Strecke!' : 'in der gemeinsamen Rangliste aller Handys';
       $('onlineTop').innerHTML=rankingTable(G.stage.id,entry.id,5,top); }
     catch(e){ big.textContent='🌍 Gespeichert'; el.innerHTML='Platz konnte gerade nicht ermittelt werden'; } })();
   $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${G.stage.itemIcon||'🦐'} ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · ${G.stage.itemName} ${G.items*ITEM_POINTS} · Turbos ${G.boosts*50}</td></tr>`
@@ -1959,7 +1964,7 @@ function rankingTable(stageId, highlightId, limit, list, extra){
   list = (list || Ranking.forStage(stageId)).slice(0,limit);
   if(!list.length) return '<div style="opacity:.7">Noch keine Zeiten</div>';
   const rows=list.map((e,i)=>({e,i})); if(extra) rows.push({sep:true},{e:extra.e,i:extra.rank-1});
-  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr style="${(e.id===highlightId||e.ts===highlightId||e.hl)?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.avatar? `<img src="${Avatar.dataUrl(e.avatar)}" style="width:26px;height:26px;vertical-align:middle;margin-right:2px">` : (e.driver==='girl'?'🚗':e.driver==='plane'?'✈️':'🚙')} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · ${(STAGES.find(x=>x.id===stageId)||{}).itemIcon||'🦐'}${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
+  return '<table style="margin:0 auto">'+rows.map(({e,i,sep})=> sep ? '<tr><td colspan="4" style="opacity:.5;padding:2px">⋯</td></tr>' : `<tr style="${(e.id===highlightId||e.ts===highlightId||e.hl||Online.pkey(e.name)===Online.pkey(playerName()))?'color:var(--accent);font-weight:700':''}"><td>${['🥇','🥈','🥉'][i]||(i+1)+'.'}</td><td style="text-align:left">${e.avatar? `<img src="${Avatar.dataUrl(e.avatar)}" style="width:26px;height:26px;vertical-align:middle;margin-right:2px">` : (e.driver==='girl'?'🚗':e.driver==='plane'?'✈️':'🚙')} ${escapeHtml(e.name)}</td><td style="color:var(--accent)">${Ranking.score(e)} ⭐</td><td style="opacity:.8;font-size:.85em">${fmtTime(e.time)} · ${(STAGES.find(x=>x.id===stageId)||{}).itemIcon||'🦐'}${e.items||0}${limit>10?' · 🔥'+(e.boosts||0)+'<br><span style="opacity:.6">'+(e.date||'')+'</span>':''}</td></tr>`).join('')+'</table>';
 }
 function escapeHtml(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 let rankStage=null; // welche Strecke in der Rangliste offen ist
@@ -1974,12 +1979,12 @@ function renderRanking(){
   const st=STAGES.find(x=>x.id===rankStage), box=$('rankList');
   box.innerHTML = `<div class="card stage" style="max-width:none;cursor:default;font-size:14px"><div class="title">${st.emoji} ${st.name}</div><div id="rankMode" style="opacity:.8;font-size:13px;margin:4px 0 6px">🌍 wird geladen …</div><div id="rank_${st.id}" style="opacity:.7">…</div></div>`;
   const want=rankStage;
-  const mine = G.lastEntry && G.lastEntry.stage===st.id ? G.lastEntry : null;
-  Online.flush().then(()=>Promise.all([Online.top(st.id,25), mine? Online.rankOf(mine).catch(()=>null) : null])).then(([list,myRank])=>{ if(rankStage!==want) return;
-    const inList = mine && list.some(e=>e.ts===mine.id);
-    const extra = (mine && myRank && !inList) ? { e:Object.assign({},mine,{ts:mine.id}), rank:myRank } : null;
-    const el=$('rank_'+st.id); if(el) el.innerHTML=rankingTable(st.id,mine?mine.id:null,25,list,extra);
-    const m=$('rankMode'); if(m) m.textContent=!list.length? '🌍 Noch niemand hat diese Strecke gefahren' : (mine&&myRank? `🌍 Du bist auf Platz ${myRank}` : list.length>=25? '🌍 Die 25 Besten aller Handys' : `🌍 ${list.length} ${list.length===1?'Eintrag':'Einträge'} von allen Handys`);
+  const TOPN=30, me=playerName();
+  Online.flush().then(()=>Online.all(st.id)).then(all=>{ if(rankStage!==want) return;
+    const list=all.slice(0,TOPN); const myRank=all.findIndex(e=>Online.pkey(e.name)===Online.pkey(me))+1;
+    const extra = (myRank>TOPN) ? { e:all[myRank-1], rank:myRank } : null;
+    const el=$('rank_'+st.id); if(el) el.innerHTML=rankingTable(st.id,null,TOPN,list,extra);
+    const m=$('rankMode'); if(m) m.textContent=!all.length? '🌍 Noch niemand hat diese Strecke gefahren' : (myRank? `🌍 Du bist auf Platz ${myRank} von ${all.length}` : `🌍 ${all.length} Spieler – jeder mit seinem besten Ergebnis`) + (all.length>TOPN? ` · die ${TOPN} Besten` : '');
   }).catch(()=>{ if(rankStage!==want) return; const m=$('rankMode'); if(m) m.textContent='📵 Kein Netz – die Rangliste braucht eine Internetverbindung'; const el=$('rank_'+st.id); if(el) el.textContent='nicht verfügbar'; });
 }
 // ---------- Fahrerkopf: Comic-Kopf im Spielstil aus wählbaren Merkmalen ----------
@@ -2094,7 +2099,7 @@ const Avatar = { pending:null, editing:null, urlCache:{},
   encode(p){ return p? 'p:'+JSON.stringify(p) : null; },
   decode(str){ if(!str||typeof str!=='string'||!str.startsWith('p:')) return null; try{ const p=JSON.parse(str.slice(2)); if(p.moustache===true) p.moustache='wide'; if(p.moustache===false) p.moustache='none'; if(p.glasses===true) p.glasses='round'; if(p.glasses===false) p.glasses='none'; if(typeof p.eye==='string') p.eye = p.eye==='#3a6a9a'? 1 : 0; return Object.assign(defaultAvatar(),p); }catch(e){ return null; } },
   dataUrl(p){ const k=JSON.stringify(p); if(Avatar.urlCache[k]) return Avatar.urlCache[k]; const c=mkCanvas(64,64); drawAvatarHead(c.getContext('2d'),32,36,24,p,'front'); return Avatar.urlCache[k]=c.toDataURL('image/png'); },
-  drawPreview(){ const c=$('avatarPreview'), x=c.getContext('2d'); x.clearRect(0,0,128,128);
+  drawPreview(){ const c=$('avatarPreview'), x=c.getContext('2d'); x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,256,256); x.setTransform(2,0,0,2,0,0);
     const p = Avatar.editing || Avatar.pending || Avatar.paramsFor($('nameInput').value);
     if(p){ drawAvatarHead(x,64,70,44,p,'front'); } else { x.fillStyle='rgba(255,255,255,.5)'; x.font='60px Arial'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('🙂',64,70); }
     $('btnPhotoDel').style.display = (p && !Avatar.editing)? '' : 'none'; $('btnAvatarEdit').style.display = Avatar.editing? 'none' : ''; },
@@ -2201,6 +2206,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.10.0','2026-10-02','Rangliste: jeder Spieler nur einmal (sein bestes Ergebnis), Anzeige der 30 Besten, eigener Platz auch außerhalb der 30. Avatar-Vorschau bei der Namenseingabe größer.'],
  ['3.9.2','2026-10-02','Autowahl: Der Kopf des Fahrers ragt leicht über die Windschutzscheibe. Mit drei Fahrzeugen bleiben Zurück/Weiter unten immer sichtbar, die Karten werden kompakter.'],
  ['3.9.1','2026-10-02','Rangliste zeigt nur noch Ergebnisse mit Avatar. Jeder Spieler hat ab jetzt automatisch einen Avatar (Standardgesicht, im Namensbildschirm anpassbar), damit jedes neue Ergebnis eines trägt.'],
  ['3.9.0','2026-10-02','Autowahl: Der Avatar sitzt jetzt im Auto hinter der Scheibe statt auf dem Dach. Streckenwahl: Mallorca mit spanischer Flagge 🇪🇸, Weltraum mit Alien.'],
