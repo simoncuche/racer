@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **3.2.0**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **3.3.0**, sie steht unten auf dem Startbildschirm. Ein Tipp auf die Versionszeile öffnet den Versionsverlauf; ausführlich steht er in `CHANGELOG.md`.
 
 ## Spielen
 
@@ -73,7 +73,7 @@ Rangliste neben dem Namen; gespeichert und geteilt werden nur die Merkmale als k
 | Strecke | Unterwegs |
 |---|---|
 | 🏰 Palma → Artà | Kathedrale, spanische Fahnen, Windmühlen von Sant Jordi, Mandelbäume und Schafe auf der Ebene Es Pla, Algaida, Montuïri, Manacor, Strand von Cala Millor mit Liegestühlen, Sonnenschirmen und Booten, Weinberge, Steinbrücken, Talaiot und die Wallfahrtskirche hoch über Artà |
-| 🇨🇭 Luzern → Sursee | Bergig: zwei Anstiege, Abfahrt ins Tal, Viadukt mit Steinbrüstung über das Tal, Serpentinen und ein Tunnel zum Pass, lange Abfahrt zum See, zum Schluss noch zwei Hügel. Statt Meeresfrüchten gibt es Käse, Schokolade, Bratwurst und Zopf zu sammeln, im Ziel jubeln Kühe und Murmeltiere. Kapellbrücke mit Wasserturm, Löwendenkmal, Sendeturm Beromünster, Schenkon am See, Gansabhauet in Sursee, Chalets, Tannen, Apfelbäume, schwarz-weiße Kühe mit Glocke, Murmeltiere, Schweizer Fahnen, Luftseilbahnen mit fahrender Gondel, Berge mit Schneekuppe direkt an der Straße, Sempachersee mit Segelbooten am Straßenrand, Emmen, Rothenburg, Sempach; Schneeberge im Hintergrund und graue Straßenkante statt Rot-Weiß |
+| 🇨🇭 Luzern → Sursee | Bergig: zwei Anstiege, Abfahrt ins Tal, Viadukt mit Steinbrüstung über das Tal, Serpentinen und ein Tunnel durch einen Berg mit Felsportal und Gewölbe zum Pass, lange Abfahrt zum See, zum Schluss noch zwei Hügel. Statt Meeresfrüchten gibt es Käse, Schokolade, Bratwurst und Zopf zu sammeln, im Ziel jubeln Kühe und Murmeltiere. Kapellbrücke mit Wasserturm, Löwendenkmal, Sendeturm Beromünster, Schenkon am See, Gansabhauet in Sursee, Chalets, Tannen, Apfelbäume, schwarz-weiße Kühe mit Glocke, Murmeltiere, Schweizer Fahnen, Luftseilbahnen mit fahrender Gondel, Berge mit Schneekuppe direkt an der Straße, Sempachersee mit Segelbooten am Straßenrand, Emmen, Rothenburg, Sempach; Schneeberge im Hintergrund und graue Straßenkante statt Rot-Weiß |
 | 🚀 Mondbasis → Alienstadt | Mondlandschaft mit Kratern und Felsen, Sternenhimmel mit Mond, Sonne und Ringplanet, Raketen, Kuppelbasen, Antennen, Raumtore über der Straße, UFOs, Mondrover und Astronauten als Verkehr, Aliens und Roboter am Rand und als Publikum, Kristalle, Kometen, Mini-Planeten und Alien-Eier zum Sammeln, leuchtende Fahrbahnränder |
 
 Die Strecken werden mit einem festen Zufallsgenerator je Strecke aufgebaut und sind damit auf allen
@@ -85,7 +85,7 @@ Zielbogen, Konfetti-Regen, Applaus und eine Allee voller hüpfender, klatschende
 
 Touristenbusse mit blinkendem Blinker, Roller mit Auspuffwölkchen, strampelnde Radfahrer und trottende
 Ziegen mit Glocke sind unterwegs, alle mit zwei Bewegungsphasen und kleinen Seitenbewegungen. Beim
-Zusammenstoß sprühen Funken, Staub steigt auf, Sterne kreisen über dem Kopf und das Auto verliert Tempo. Auch das andere Kind weicht
+Zusammenstoß blitzt es kurz auf, eine Druckwelle läuft vom Aufprallpunkt weg, Funken und Trümmer fliegen, das Auto hüpft, rutscht zur Seite und qualmt, Sterne kreisen über dem Kopf, der getroffene Verkehrsteilnehmer wird weggeschubst und wackelt, und das Auto verliert Tempo. Auch das andere Kind weicht
 dem Verkehr aus.
 
 ### Meeresfrüchte sammeln
@@ -128,6 +128,7 @@ WebAudio erzeugt. Über das Lautsprecher-Symbol abschaltbar.
 | `manifest.json` | Macht die Seite auf dem Home-Bildschirm zur App (Name, Farben, Vollbild) |
 | `sw.js` | Service Worker für Offline-Betrieb. Fragt zuerst das Netz, liefert ohne Verbindung aus dem Cache |
 | `firestore.rules` | Zugriffsregeln für die gemeinsame Online-Rangliste, zum Einfügen in die Firebase-Konsole |
+| `CHANGELOG.md` | Versionsverlauf, die Kurzfassung steht auch im Spiel hinter der Versionszeile |
 | `LICENSE` | MIT-Lizenz |
 
 ## Technik
