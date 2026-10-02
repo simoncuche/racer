@@ -16,8 +16,10 @@
   html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#0e2a4a;font-family:"Trebuchet MS",Arial,Helvetica,sans-serif;color:var(--ui);overscroll-behavior:none}
   #game,#controls,.pbtn,.icon,#hud{touch-action:none}
   #game{position:fixed;inset:0;width:100%;height:100%;display:block}
-  .screen{position:fixed;left:0;top:0;width:100%;height:100vh;height:100dvh;height:var(--vh,100dvh);touch-action:pan-y;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(16px,env(safe-area-inset-top)) 16px calc(env(safe-area-inset-bottom) + 64px);text-align:center;background:linear-gradient(180deg,rgba(8,40,90,.55),rgba(8,40,90,.85))}
+  .screen{position:fixed;left:0;top:0;width:100%;height:100vh;height:100dvh;height:var(--vh,100dvh);touch-action:pan-y;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(16px,env(safe-area-inset-top)) 16px calc(env(safe-area-inset-bottom) + 64px);text-align:center;background:transparent}
   .screen::before,.screen::after{content:'';margin:auto}
+  #menubg{position:fixed;inset:0;background:linear-gradient(180deg,rgba(8,40,90,.55),rgba(8,40,90,.85));display:none}
+  body.menu #menubg{display:block}
   .hidden{display:none!important}
   h1{margin:0 0 4px;font-size:clamp(30px,9vw,58px);letter-spacing:1px;color:var(--accent);text-shadow:0 3px 0 #a56a00,0 6px 16px rgba(0,0,0,.6)}
   h2{margin:0 0 8px;font-size:clamp(20px,6vw,32px);text-shadow:0 2px 8px rgba(0,0,0,.6)}
@@ -76,6 +78,7 @@
 </head>
 <body>
 <canvas id="game"></canvas>
+<div id="menubg"></div>
 
 <!-- HUD -->
 <div id="hud" class="hidden">
@@ -103,7 +106,7 @@
 <!-- Name -->
 <div id="name" class="screen hidden">
   <h2>Wie heißt du?</h2>
-  <input id="nameInput" maxlength="14" placeholder="Dein Name" autocomplete="off" autocapitalize="words" style="width:min(90vw,320px);padding:12px 14px;border-radius:14px;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;font-size:22px;text-align:center;user-select:text;-webkit-user-select:text">
+  <input id="nameInput" name="spieler" maxlength="14" placeholder="Dein Name" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="words" inputmode="text" enterkeyhint="done" style="width:min(90vw,320px);padding:12px 14px;border-radius:14px;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;font-size:22px;text-align:center;user-select:text;-webkit-user-select:text">
   <div class="row" id="nameChips" style="margin-top:12px;gap:8px"></div>
   <div id="avatarBox" style="margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:8px">
     <canvas id="avatarPreview" width="128" height="128" style="width:96px;height:96px;border-radius:50%;background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.5);touch-action:none"></canvas>
@@ -166,7 +169,7 @@
 
 <script>
 'use strict';
-const VERSION='3.1.1', VERSION_DATE='2026-10-02';
+const VERSION='3.1.2', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -1256,7 +1259,9 @@ function resize(){ DPR=Math.min(window.devicePixelRatio||1, 2); const cw=window.
   canvas.width=Math.round(W*DPR*Math.min(1,1.5/DPR)); canvas.height=Math.round(H*DPR*Math.min(1,1.5/DPR));
   ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);
 }
-function setVH(){ const h=(window.visualViewport? window.visualViewport.height : window.innerHeight); document.documentElement.style.setProperty('--vh', Math.round(h)+'px'); }
+function setVH(){ const ae=document.activeElement; if(ae && (ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')) return; // bei offener Tastatur Höhe behalten
+  const h=(window.visualViewport? window.visualViewport.height : window.innerHeight); document.documentElement.style.setProperty('--vh', Math.round(h)+'px'); }
+document.addEventListener('focusout',()=>setTimeout(setVH,250));
 window.addEventListener('resize',()=>{ resize(); setVH(); }); if(window.ResizeObserver) new ResizeObserver(()=>{ resize(); setVH(); }).observe(document.documentElement); window.addEventListener('orientationchange',()=>setTimeout(()=>{ resize(); setVH(); },200)); if(window.visualViewport) window.visualViewport.addEventListener('resize',setVH); setVH();
 
 const G = { state:'title', driver:'girl', stageIdx:0, track:null, stage:null,
@@ -1284,6 +1289,7 @@ function startRace(){
 function setState(s){
   G.state=s;
   for(const id of ['title','name','select','stages','pause','result','rankpick','ranking']) $(id).classList.toggle('hidden', id!==s);
+  document.body.classList.toggle('menu', s!=='race');
   const racing = s==='race'||s==='pause';
   for(const id of ['hud','prog','topbtns','controls']) $(id).classList.toggle('hidden', !racing);
   $('msg').classList.toggle('hidden', s!=='race');
