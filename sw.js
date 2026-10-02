@@ -1,5 +1,5 @@
 // Offline-Cache: erst das Netz fragen (damit Updates sofort ankommen), nur ohne Verbindung aus dem Cache liefern.
-const CACHE='mallorca-rallye-3.1.0';
+const CACHE='mallorca-rallye-3.1.1';
 const FILES=['./','./index.html','./manifest.json'];
 self.addEventListener('install',e=>{ e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).catch(()=>{})); self.skipWaiting(); });
 self.addEventListener('activate',e=>{ e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
