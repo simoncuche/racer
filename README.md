@@ -7,7 +7,7 @@ Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **3.4.0**, sie steht unten auf dem Startbildschirm. Ein Tipp auf die Versionszeile öffnet den Versionsverlauf; ausführlich steht er in `CHANGELOG.md`.
+Handy, am Tablet und am Computer. Aktuelle Version: **3.5.0**, sie steht unten auf dem Startbildschirm. Ein Tipp auf die Versionszeile öffnet den Versionsverlauf; ausführlich steht er in `CHANGELOG.md`.
 
 ## Spielen
 
@@ -89,11 +89,18 @@ Geräten identisch, inklusive Objekten, Meeresfrüchten, Boost-Feldern und Verke
 anderthalb Minuten. Ortsschilder zeigen, wo man gerade ist. Im Ziel warten ein
 Zielbogen, Konfetti-Regen, Applaus und eine Allee voller hüpfender, klatschender Meeresfrüchte.
 
+### Start
+
+Vor dem Auto liegt eine Schachbrett-Startlinie, links und rechts stehen Streckenposten mit
+Zielflagge. Während des Countdowns leuchtet die Startampel über der Straße Licht für Licht rot, der
+Motor dreht hörbar und sichtbar hoch, Auspuffwölkchen steigen auf. Bei „LOS!“ springt die Ampel auf
+Grün, die Posten senken die Flagge und die Reifen qualmen.
+
 ### Verkehr und Crashs
 
 Touristenbusse mit blinkendem Blinker, Roller mit Auspuffwölkchen, strampelnde Radfahrer und trottende
 Ziegen mit Glocke sind unterwegs, alle mit zwei Bewegungsphasen und kleinen Seitenbewegungen. Beim
-Zusammenstoß blitzt es kurz auf, eine Druckwelle läuft vom Aufprallpunkt weg, Funken und Trümmer fliegen, das Auto hüpft, rutscht zur Seite und qualmt, Sterne kreisen über dem Kopf, der getroffene Verkehrsteilnehmer wird weggeschubst und wackelt, und das Auto verliert Tempo. Auch das andere Kind weicht
+Zusammenstoß blitzt es kurz auf, eine Druckwelle läuft vom Aufprallpunkt weg, Funken und Trümmer fliegen, das Auto hüpft, rutscht zur Seite und qualmt, Sterne kreisen über dem Kopf, der getroffene Verkehrsteilnehmer wird weggeschubst und wackelt, und das Auto verliert Tempo. Auf Android-Handys vibriert das Gerät dabei kurz (iPhones erlauben im Browser keine Vibration). Auch das andere Kind weicht
 dem Verkehr aus.
 
 ### Meeresfrüchte sammeln
