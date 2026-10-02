@@ -1,13 +1,13 @@
 # 🌴 Mallorca Rallye
 
 Ein Rennspiel für zwei Kinder und ihre Flitzer: Der **rote Sportwagen** (SX 158) und der
-**blaue Jeep** (SX 1718) rasen quer über Mallorca. Von der Kathedrale in Palma durch die Serra de
-Tramuntana nach Sóller, die Küstenstraße hinauf zum Leuchtturm am Cap de Formentor und durch
+**blaue Jeep** (SX 1718) rasen quer über Mallorca. Von der Kathedrale in Palma über die Ebene Es Pla
+nach Artà, die Küstenstraße hinauf zum Leuchtturm am Cap de Formentor und durch
 Windmühlen- und Sonnenblumenland bis zum Strand von Es Trenc.
 
 Das Spiel ist eine reine Web-App: **eine HTML-Datei, kein Server, keine Installation, keine
 Abhängigkeiten.** Grafik, Sound und Strecken werden beim Start im Browser erzeugt. Es läuft auf dem
-Handy, am Tablet und am Computer. Aktuelle Version: **2.0.0**, sie steht unten auf dem Startbildschirm.
+Handy, am Tablet und am Computer. Aktuelle Version: **2.1.0**, sie steht unten auf dem Startbildschirm.
 
 ## Spielen
 
@@ -69,7 +69,7 @@ andere Kind fährt als Gegner mit.
 
 | Strecke | Unterwegs |
 |---|---|
-| ⛰️ Palma → Sóller | Kathedrale, Altstadt, Trockensteinmauern, Olivenhaine, Bergmassive, Valldemossa, Deià, Steinbrücken, Orangental, Sóller-Tram |
+| 🏰 Palma → Artà | Kathedrale, Windmühlen von Sant Jordi, Mandelbäume und Schafe auf der Ebene Es Pla, Algaida, Montuïri, Manacor, Weinberge, Steinbrücken, Talaiot und die Wallfahrtskirche hoch über Artà |
 | 🌊 Pollença → Formentor | Hafenort mit Café, Strandhütten, Klippen, Pinien, Serpentinen, Mirador, Leuchtturm |
 | 🏖️ Santanyí → Es Trenc | Windmühlen, Mandelbäume, Weinberge, Sonnenblumen, Kakteen, Schafe, Ses Salines, Colònia, Dünen und Strand |
 
@@ -96,7 +96,7 @@ mit.
 
 Die Rangliste ist **online und für alle Handys gemeinsam**: Jedes Ergebnis wird in eine Firebase-Firestore-
 Datenbank geschrieben (Projekt `mallorca-ralley`, eine Sammlung pro Strecke, zum Beispiel
-`scores_tramuntana`). Der Ranglisten-Bildschirm zeigt die zehn besten Punktzahlen aller Spieler, das
+`scores_arta`). Der Ranglisten-Bildschirm zeigt die zehn besten Punktzahlen aller Spieler, das
 Ergebnis nennt den eigenen Platz in der gemeinsamen Liste. Ohne Netz werden Ergebnisse in einer
 Warteschlange gespeichert und beim nächsten Start nachgereicht, die Rangliste zeigt dann die lokale
 Liste dieses Handys. Lokal bleiben pro Strecke die zehn besten Einträge im Browser (localStorage) und

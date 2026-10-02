@@ -135,7 +135,7 @@
 
 <script>
 'use strict';
-const VERSION='2.0.0', VERSION_DATE='2026-10-02';
+const VERSION='2.1.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -470,6 +470,10 @@ function drawSheep(x,w,h){ x.save(); x.translate(w/2,h);
   x.fillStyle='#3a3a3a'; x.beginPath(); x.ellipse(w*0.38,-h*0.55,w*0.12,h*0.14,0,0,7); x.fill(); x.fillStyle='#fff'; x.beginPath(); x.arc(w*0.42,-h*0.6,w*0.025,0,7); x.fill();
   x.restore(); }
 function drawLamp(x,w,h){ x.fillStyle='#333'; x.fillRect(w*0.45,h*0.15,w*0.1,h*0.85); x.fillStyle='#222'; x.beginPath(); x.moveTo(w*0.3,h*0.18); x.lineTo(w*0.5,0); x.lineTo(w*0.7,h*0.18); x.fill(); x.fillStyle='#fff6c0'; x.fillRect(w*0.35,h*0.1,w*0.3,h*0.08); }
+function drawTalaiot(x,w,h){ x.save(); x.translate(w/2,h);
+  for(let r=0;r<6;r++){ const rw=w*(0.9-r*0.07), ry=-h*0.16*(r+1); let px=-rw/2; while(px<rw/2){ const sw=rnd(20,40); x.fillStyle=['#b9a98a','#a39474','#cbbb9c','#8f8266'][Math.floor(rnd(0,4))]; x.beginPath(); x.roundRect(px+1,ry+1,Math.min(sw,rw/2-px)-2,h*0.16-2,3); x.fill(); px+=sw; } }
+  x.fillStyle='#3a3a2a'; x.beginPath(); x.roundRect(-w*0.1,-h*0.3,w*0.2,h*0.3,[w*0.1,w*0.1,0,0]); x.fill();
+  x.fillStyle='#6f8a5a'; for(let i=0;i<5;i++){ x.beginPath(); x.arc(-w*0.4+i*w*0.2,-h*0.02,w*0.07,0,7); x.fill(); } x.restore(); }
 function drawCliff(x,w,h){ x.fillStyle='#b9ad98'; x.beginPath(); x.moveTo(0,h); x.lineTo(w*0.05,h*0.3); x.lineTo(w*0.3,h*0.05); x.lineTo(w*0.6,h*0.15); x.lineTo(w*0.85,h*0.0); x.lineTo(w,h*0.4); x.lineTo(w,h); x.fill();
   x.fillStyle='#d6cbb6'; x.beginPath(); x.moveTo(w*0.3,h*0.05); x.lineTo(w*0.6,h*0.15); x.lineTo(w*0.5,h*0.6); x.lineTo(w*0.2,h*0.5); x.fill(); x.fillStyle='#8a7a5a'; x.beginPath(); x.moveTo(w*0.85,0); x.lineTo(w,h*0.4); x.lineTo(w*0.8,h*0.7); x.fill();
   x.fillStyle='#5f8a4a'; for(let i=0;i<5;i++){ x.beginPath(); x.arc(w*0.1+i*w*0.2,h*0.95,w*0.07,0,7); x.fill(); } }
@@ -747,6 +751,7 @@ function buildSprites(){
   makeSprite('sheep',80,60,drawSheep);
   makeSprite('lamp',40,200,drawLamp);
   makeSprite('cliff',300,220,drawCliff);
+  makeSprite('talaiot',240,200,drawTalaiot);
   for(const f of [0,1]){ makeSprite('bus_'+f,140,180,(x,w,h)=>drawBus(x,w,h,f)); makeSprite('scooter_'+f,70,115,(x,w,h)=>drawScooter(x,w,h,f)); makeSprite('cyclist_'+f,70,115,(x,w,h)=>drawCyclist(x,w,h,f)); makeSprite('goat_'+f,90,85,(x,w,h)=>drawGoat(x,w,h,f)); }
   for(const d of Object.values(DRIVERS)){
     for(let s=-2;s<=2;s++) makeSprite('car_'+d.id+'_'+s,300,260,(x,w,h)=>drawVehicleBack(x,w,h,d,s/2));
@@ -755,18 +760,18 @@ function buildSprites(){
 
 // ---------- Strecken ----------
 const STAGES = [
-  { id:'tramuntana', name:'Palma → Sóller', emoji:'⛰️', desc:'Von der Kathedrale durch die kurvigen Berge der Tramuntana ins Orangental.',
-    sky:['#5fb3ff','#bfe3ff'], fog:'#cfe6ff', grass:['#8aa65a','#7f9a52'], rumble:['#fff','#e2231a'], road:['#6e6e72','#67676b'], lane:'#f4f4f4',
-    sea:false, mountains:1.0, rivalSpeed:0.80, itemName:'Meeresfrüchte', towns:[[0,'Palma'],[0.3,'Valldemossa'],[0.62,'Deià'],[1,'Sóller']],
+  { id:'arta', name:'Palma → Artà', emoji:'🏰', desc:'Von der Kathedrale über die Ebene Es Pla mit Windmühlen und Mandelbäumen nach Manacor und hinauf zur Wallfahrtskirche von Artà.',
+    sky:['#4fa9ff','#c9e7ff'], fog:'#dcebff', grass:['#b9b36a','#afa961'], rumble:['#fff','#e2231a'], road:['#6e6e72','#67676b'], lane:'#f4f4f4',
+    sea:false, mountains:0.55, rivalSpeed:0.80, itemName:'Meeresfrüchte', towns:[[0,'Palma'],[0.22,'Algaida'],[0.42,'Montuïri'],[0.66,'Manacor'],[0.84,'Sant Llorenç'],[1,'Artà']],
     build(t){ t.straight(40); t.sprite(10,-1.4,'cathedral'); t.sprite(10,1.6,'palm'); t.sprite(14,1.7,'palm2'); t.sprite(18,-1.6,'palm');
-      t.town(12,38,false); t.fill(4,40,'palm',1.6,0.3); t.sprite(30,1.3,'cafe'); t.curve(60,-3,0); t.fill(40,100,'oleander',1.3,0.35); t.mix(40,100,['lamp','palm'],1.2,0.1);
-      t.straight(50); t.fill(100,150,'olive',1.6,0.3); t.mix(100,150,['sheep','wall'],1.3,0.2); t.hill(60,40); t.curve(60,4,30); t.fill(150,270,'wall',1.15,1); t.far(150,270,'mountain',40); t.mix(150,270,['cactus','agave'],1.6,0.15);
-      t.curve(80,-5,-20); t.fill(270,350,'olive',1.9,0.25); t.town(290,330,true); t.sprite(300,1.3,'cafe'); t.sCurve(100,4,60); t.fill(350,450,'pine',1.7,0.3); t.far(350,450,'mountain2',35); t.over(400,'bridge');
-      t.hill(50,-60); t.curve(90,6,10); t.fill(450,540,'rock',1.3,0.3); t.fill(450,540,'agave',1.4,0.25); t.far(450,540,'mountain',30); t.mix(450,540,['cliff','cactus'],1.6,0.12);
-      t.straight(40); t.sprite(560,-1.5,'finca'); t.fill(540,600,'oleander',1.3,0.3); t.town(570,600,true);
-      t.sCurve(120,-5,40); t.fill(600,720,'olive',1.7,0.3); t.fill(600,720,'wall',1.15,0.5); t.mix(600,720,['vineyard','sheep'],1.8,0.15); t.over(680,'bridge');
-      t.hill(60,-50); t.curve(60,3,0); t.fill(720,840,'pine',1.6,0.35); t.far(720,840,'mountain2',40);
-      t.straight(80); t.fill(840,920,'orangeTree',1.5,0.6); t.sprite(905,-1.8,'finca'); t.town(880,915,true); t.sprite(870,1.4,'tram'); t.sprite(895,1.3,'cafe'); }
+      t.town(12,38,false); t.fill(4,40,'palm',1.6,0.3); t.sprite(30,1.3,'cafe'); t.curve(60,-3,0); t.fill(40,100,'windmill',2.2,0.08); t.fill(40,100,'oleander',1.3,0.3); t.mix(40,100,['lamp','palm'],1.2,0.1);
+      t.straight(60); t.fill(100,160,'almond',1.6,0.35); t.mix(100,160,['sheep','wall'],1.3,0.2); t.sprite(150,-1.6,'finca'); t.hill(40,20); t.curve(60,4,0); t.fill(160,280,'wall',1.15,0.8); t.mix(160,280,['almond','olive'],1.8,0.25);
+      t.town(200,235,true); t.sprite(215,1.3,'cafe'); t.sCurve(100,-4,10); t.fill(280,380,'olive',1.7,0.3); t.mix(280,380,['vineyard','sheep'],1.7,0.2); t.far(280,380,'mountain2',45);
+      t.straight(50); t.sprite(395,-1.9,'windmill'); t.sprite(410,1.9,'windmill'); t.sprite(425,-1.9,'windmill'); t.town(385,420,true); t.hill(50,40); t.fill(430,480,'almond',1.6,0.35); t.over(455,'bridge');
+      t.curve(80,5,-30); t.fill(480,560,'wall',1.15,0.6); t.mix(480,560,['vineyard','cactus'],1.6,0.25); t.sCurve(120,5,20); t.fill(560,680,'olive',1.7,0.3); t.mix(560,680,['sunflowers','sheep'],1.7,0.2);
+      t.straight(60); t.town(600,660,true); t.sprite(615,1.3,'cafe'); t.sprite(640,-1.3,'cafe'); t.mix(600,660,['lamp'],1.15,0.15); t.over(690,'bridge');
+      t.curve(70,-4,30); t.fill(680,760,'almond',1.6,0.3); t.mix(680,760,['wall','rock'],1.3,0.3); t.far(680,760,'mountain',40); t.hill(60,60); t.curve(60,4,30); t.fill(760,840,'pine',1.6,0.3); t.mix(760,840,['rock','agave'],1.4,0.3); t.far(760,840,'mountain2',35); t.sprite(800,-2.4,'talaiot');
+      t.hill(50,40); t.straight(70); t.fill(840,900,'wall',1.15,0.6); t.mix(840,900,['pine','cactus'],1.6,0.25); t.town(880,915,true); t.sprite(905,-1.9,'church'); t.sprite(910,1.8,'church'); t.sprite(895,1.4,'cafe'); t.far(840,920,'mountain',30); }
   },
   { id:'formentor', name:'Pollença → Formentor', emoji:'🌊', desc:'Küstenstraße mit Klippen, Pinien und Meerblick bis zum Leuchtturm.',
     sky:['#3f9ff0','#a9dcff'], fog:'#bfe2ff', grass:['#c7b98c','#bdae80'], rumble:['#fff','#c33'], road:['#727276','#6b6b6f'], lane:'#f4f4f4',
