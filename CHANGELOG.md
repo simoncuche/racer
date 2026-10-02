@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.13.0 (2026-10-02)
+
+Avatar: Hautfarben Grün, Gelb, Blau und Lila. Ohren von Katze, Hase, Bär und Alien, Schweine- und Katzennase. Neue Rubrik „Besonderes“: Tentakel, Fühler, Hörner, Schnurrhaare, drittes Auge, Einhorn.
+
 ## 3.12.0 (2026-10-02)
 
 Avatar bei der Namenseingabe und im Konfigurator größer. Ranglisten-Einträge lassen sich antippen: großer Avatar mit allen Werten (Platz, Punkte, Zeit, Items, Turbos, Fahrzeug, Datum).

@@ -207,7 +207,7 @@
 
 <script>
 'use strict';
-const VERSION='3.12.0', VERSION_DATE='2026-10-02';
+const VERSION='3.13.0', VERSION_DATE='2026-10-02';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -2027,7 +2027,7 @@ function renderRanking(){
   }).catch(err=>{ if(rankStage!==want) return; const why = err&&err.name==='AbortError' ? 'Zeitüberschreitung' : (err&&err.message)||'unbekannt'; const m=$('rankMode'); if(m) m.textContent='📵 Rangliste konnte nicht geladen werden ('+why+')'; const el=$('rank_'+st.id); if(el){ el.innerHTML='<button class="btn secondary" id="btnRankRetry" style="padding:8px 16px;font-size:15px;margin-top:6px">🔄 Nochmals versuchen</button>'; $('btnRankRetry').onclick=()=>renderRanking(); } });
 }
 // ---------- Fahrerkopf: Comic-Kopf im Spielstil aus wählbaren Merkmalen ----------
-const AV_SKIN=['#fde3c8','#f1c9a5','#d9a26f','#b97b4c','#8a5a3a','#5a3a26'];
+const AV_SKIN=['#fde3c8','#f1c9a5','#d9a26f','#b97b4c','#8a5a3a','#5a3a26','#7fd36a','#f5e04a','#6aa8f5','#b56cff'];
 const AV_HAIR=['#f2d27a','#c48a3a','#8a5a2a','#4a2b1a','#1a1a1a','#b0b0b0','#d9542b','#ffffff','#5b8def','#e05ab0','#4fc36a'];
 const AV_CAP=['#e2231a','#1e8fe0','#1a1a1a','#3cc06a','#ffffff','#f5c531','#b56cff','#ff7a1a'];
 const AV_EYE=[['#2a1a10','Braun'],['#3a6a9a','Blau'],['#4a8a3a','Grün'],['#6a6a70','Grau']];
@@ -2039,9 +2039,10 @@ const AV_HEAD=[['none','Nichts'],['cap','Cap'],['hat','Hut'],['beanie','Mütze']
 const AV_FACE=[['round','Rund'],['oval','Oval'],['square','Kantig'],['wide','Breit']];
 const AV_MOUTH=[['smile','Lächeln'],['grin','Grinsen'],['laugh','Lachen'],['neutral','Neutral'],['open','Staunen'],['frown','Schmollen'],['smirk','Schief'],['tongue','Zunge'],['kiss','Kussmund'],['braces','Zahnspange']];
 const AV_EYESHAPE=[['round','Rund'],['almond','Mandel'],['wide','Groß'],['narrow','Schmal'],['sleepy','Müde'],['happy','Lachend']];
-const AV_NOSE=[['small','Klein'],['button','Knopf'],['long','Lang'],['wide','Breit'],['pointy','Spitz'],['hook','Haken']];
-const AV_EARS=[['normal','Normal'],['small','Klein'],['big','Groß'],['stand','Abstehend'],['pointy','Spitz']];
-function defaultAvatar(){ return { skin:1, hair:'short', hairColor:3, beard:'none', moustache:'none', headwear:'none', capColor:0, glasses:'none', face:'round', eye:0, eyeShape:'round', nose:'small', ears:'normal', mouth:'smile', brows:1, freckles:false, earrings:false }; }
+const AV_NOSE=[['small','Klein'],['button','Knopf'],['long','Lang'],['wide','Breit'],['pointy','Spitz'],['hook','Haken'],['pig','Schwein'],['cat','Katze']];
+const AV_EARS=[['normal','Normal'],['small','Klein'],['big','Groß'],['stand','Abstehend'],['pointy','Spitz'],['alien','Alien'],['cat','Katze'],['bunny','Hase'],['bear','Bär']];
+const AV_CREATURE=[['none','Nichts'],['tentacles','Tentakel'],['antenna','Fühler'],['horns','Hörner'],['whiskers','Schnurrhaare'],['thirdeye','Drittes Auge'],['unicorn','Einhorn']];
+function defaultAvatar(){ return { skin:1, hair:'short', hairColor:3, beard:'none', moustache:'none', headwear:'none', capColor:0, glasses:'none', face:'round', eye:0, eyeShape:'round', nose:'small', ears:'normal', creature:'none', mouth:'smile', brows:1, freckles:false, earrings:false }; }
 function drawAvatarHead(x, cx, cy, s, p, view){
   const skin=AV_SKIN[p.skin]||AV_SKIN[1], hair=AV_HAIR[p.hairColor]||AV_HAIR[3], cap=AV_CAP[p.capColor]||AV_CAP[0], eyeC=(AV_EYE[p.eye]||AV_EYE[0])[0];
   const r=s*0.6, fw = p.face==='oval'? 0.9 : p.face==='square'? 1.02 : p.face==='wide'? 1.12 : 1.0, fh = p.face==='oval'? 1.1 : p.face==='wide'? 0.95 : 1.0;
@@ -2057,8 +2058,18 @@ function drawAvatarHead(x, cx, cy, s, p, view){
   // Ohren
   { const er = p.ears==='small'? 0.16 : p.ears==='big'? 0.3 : p.ears==='stand'? 0.24 : 0.22, ex = p.ears==='stand'? 1.1 : p.ears==='big'? 1.0 : 0.95;
     x.fillStyle=skin;
-    for(const sd of [-1,1]){ x.beginPath(); if(p.ears==='pointy'){ x.moveTo(cx+sd*r*0.8*fw,cy+r*0.3); x.lineTo(cx+sd*r*1.45*fw,cy-r*0.45); x.lineTo(cx+sd*r*0.85*fw,cy-r*0.25); x.closePath(); } else x.arc(cx+sd*r*ex*fw,cy+r*0.05,r*er,0,7); x.fill();
-      if(!back && p.ears!=='pointy'){ x.fillStyle='rgba(0,0,0,0.12)'; x.beginPath(); x.arc(cx+sd*r*(ex+0.02)*fw,cy+r*0.07,r*er*0.5,0,7); x.fill(); x.fillStyle=skin; } } }
+    for(const sd of [-1,1]){ x.beginPath();
+      if(p.ears==='pointy'){ x.moveTo(cx+sd*r*0.8*fw,cy+r*0.3); x.lineTo(cx+sd*r*1.45*fw,cy-r*0.45); x.lineTo(cx+sd*r*0.85*fw,cy-r*0.25); x.closePath(); }
+      else if(p.ears==='alien'){ x.save(); x.translate(cx+sd*r*1.05*fw,cy-r*0.25); x.rotate(sd*0.9); x.ellipse(0,0,r*0.22,r*0.62,0,0,7); x.restore(); }
+      else if(p.ears==='cat'){ x.moveTo(cx+sd*r*0.3*fw,cy-r*0.8*fh); x.lineTo(cx+sd*r*0.75*fw,cy-r*1.45*fh); x.lineTo(cx+sd*r*0.95*fw,cy-r*0.55*fh); x.closePath(); }
+      else if(p.ears==='bunny'){ x.ellipse(cx+sd*r*0.42*fw,cy-r*1.5*fh,r*0.2,r*0.72,sd*0.15,0,7); }
+      else if(p.ears==='bear'){ x.arc(cx+sd*r*0.72*fw,cy-r*0.72*fh,r*0.32,0,7); }
+      else x.arc(cx+sd*r*ex*fw,cy+r*0.05,r*er,0,7);
+      x.fill();
+      if(p.ears==='cat'){ x.fillStyle='#f0a0b0'; x.beginPath(); x.moveTo(cx+sd*r*0.42*fw,cy-r*0.82*fh); x.lineTo(cx+sd*r*0.74*fw,cy-r*1.28*fh); x.lineTo(cx+sd*r*0.86*fw,cy-r*0.65*fh); x.closePath(); x.fill(); x.fillStyle=skin; }
+      if(p.ears==='bunny'){ x.fillStyle='#f0a0b0'; x.beginPath(); x.ellipse(cx+sd*r*0.42*fw,cy-r*1.5*fh,r*0.1,r*0.52,sd*0.15,0,7); x.fill(); x.fillStyle=skin; }
+      if(p.ears==='bear'){ x.fillStyle='rgba(0,0,0,0.15)'; x.beginPath(); x.arc(cx+sd*r*0.72*fw,cy-r*0.72*fh,r*0.17,0,7); x.fill(); x.fillStyle=skin; }
+      if(!back && !['pointy','alien','cat','bunny','bear'].includes(p.ears)){ x.fillStyle='rgba(0,0,0,0.12)'; x.beginPath(); x.arc(cx+sd*r*(ex+0.02)*fw,cy+r*0.07,r*er*0.5,0,7); x.fill(); x.fillStyle=skin; } } }
   if(p.earrings){ x.fillStyle='#f5c531'; x.beginPath(); x.arc(cx-r*0.98*fw,cy+r*0.28,r*0.06,0,7); x.fill(); x.beginPath(); x.arc(cx+r*0.98*fw,cy+r*0.28,r*0.06,0,7); x.fill(); }
   // Kopf
   x.fillStyle=skin; headPath(); x.fill();
@@ -2073,6 +2084,7 @@ function drawAvatarHead(x, cx, cy, s, p, view){
     else if(p.hair==='afro'){ x.beginPath(); x.arc(cx,cy-r*0.2,r*1.45,0,7); x.fill(); }
     else if(p.hair==='mohawk'){ x.beginPath(); x.roundRect(cx-r*0.18,cy-r*1.5,r*0.36,r*2.2,r*0.18); x.fill(); }
     else { x.fillStyle='rgba(255,255,255,0.25)'; x.beginPath(); x.ellipse(cx-r*0.25,cy-r*0.35,r*0.3,r*0.18,-0.5,0,7); x.fill(); }
+    drawCreature(x,cx,cy,r,fw,fh,p,skin,true);
     drawHeadwear(x,cx,cy,r,fw,fh,p,cap,true);
     return;
   }
@@ -2110,6 +2122,8 @@ function drawAvatarHead(x, cx, cy, s, p, view){
     else if(n==='wide'){ x.moveTo(cx-r*0.16,cy+r*0.04); x.quadraticCurveTo(cx-r*0.2,cy+r*0.24,cx-r*0.04,cy+r*0.22); x.quadraticCurveTo(cx,cy+r*0.18,cx+r*0.04,cy+r*0.22); x.quadraticCurveTo(cx+r*0.2,cy+r*0.24,cx+r*0.16,cy+r*0.04); x.stroke(); }
     else if(n==='pointy'){ x.moveTo(cx-r*0.02,cy-r*0.08); x.lineTo(cx+r*0.16,cy+r*0.18); x.lineTo(cx-r*0.04,cy+r*0.2); x.stroke(); }
     else if(n==='hook'){ x.moveTo(cx-r*0.02,cy-r*0.1); x.quadraticCurveTo(cx+r*0.16,cy,cx+r*0.06,cy+r*0.2); x.quadraticCurveTo(cx-r*0.02,cy+r*0.24,cx-r*0.06,cy+r*0.17); x.stroke(); }
+    else if(n==='pig'){ x.fillStyle='#f0a0b0'; x.beginPath(); x.ellipse(cx,cy+r*0.16,r*0.2,r*0.14,0,0,7); x.fill(); x.fillStyle='rgba(0,0,0,0.3)'; x.beginPath(); x.ellipse(cx-r*0.08,cy+r*0.16,r*0.04,r*0.06,0,0,7); x.fill(); x.beginPath(); x.ellipse(cx+r*0.08,cy+r*0.16,r*0.04,r*0.06,0,0,7); x.fill(); }
+    else if(n==='cat'){ x.fillStyle='#e07a8a'; x.beginPath(); x.moveTo(cx-r*0.1,cy+r*0.08); x.lineTo(cx+r*0.1,cy+r*0.08); x.lineTo(cx,cy+r*0.2); x.closePath(); x.fill(); x.strokeStyle='rgba(120,70,50,0.6)'; x.beginPath(); x.moveTo(cx,cy+r*0.2); x.lineTo(cx,cy+r*0.28); x.moveTo(cx-r*0.1,cy+r*0.34); x.quadraticCurveTo(cx,cy+r*0.26,cx+r*0.1,cy+r*0.34); x.stroke(); }
     else { x.moveTo(cx-r*0.04,cy+r*0.02); x.quadraticCurveTo(cx-r*0.1,cy+r*0.16,cx+r*0.06,cy+r*0.16); x.stroke(); } }
   // Bart (hinter dem Mund)
   if(p.beard==='stubble'){ x.fillStyle='rgba(50,35,25,0.28)'; x.beginPath(); x.moveTo(cx-r*0.9*fw,cy+r*0.1); x.quadraticCurveTo(cx-r*0.95*fw,cy+r*0.9,cx,cy+r*0.98*fh); x.quadraticCurveTo(cx+r*0.95*fw,cy+r*0.9,cx+r*0.9*fw,cy+r*0.1); x.quadraticCurveTo(cx+r*0.6,cy+r*0.45,cx,cy+r*0.5); x.quadraticCurveTo(cx-r*0.6,cy+r*0.45,cx-r*0.9*fw,cy+r*0.1); x.fill(); }
@@ -2141,7 +2155,17 @@ function drawAvatarHead(x, cx, cy, s, p, view){
     for(const sd of [-1,1]){ x.beginPath(); if(g==='round') x.arc(cx+sd*r*0.35,cy-r*0.03,r*0.27,0,7); else if(g==='square') x.roundRect(cx+sd*r*0.35-r*0.27,cy-r*0.28,r*0.54,r*0.5,r*0.08); else if(g==='pilot'){ x.moveTo(cx+sd*r*0.08,cy-r*0.28); x.lineTo(cx+sd*r*0.64,cy-r*0.28); x.quadraticCurveTo(cx+sd*r*0.66,cy+r*0.28,cx+sd*r*0.36,cy+r*0.28); x.quadraticCurveTo(cx+sd*r*0.1,cy+r*0.28,cx+sd*r*0.08,cy-r*0.28); } else x.ellipse(cx+sd*r*0.35,cy-r*0.03,r*0.28,r*0.24,0,0,7);
       if(g==='sun'||g==='pilot'){ x.fillStyle= g==='pilot'? 'rgba(40,30,60,0.75)' : '#1a1a1a'; x.fill(); x.fillStyle='rgba(255,255,255,0.3)'; } x.stroke(); }
     x.beginPath(); x.moveTo(cx-r*0.08,cy-r*0.08); x.lineTo(cx+r*0.08,cy-r*0.08); x.stroke(); x.beginPath(); x.moveTo(cx-r*0.62,cy-r*0.1); x.lineTo(cx-r*0.95*fw,cy-r*0.02); x.moveTo(cx+r*0.62,cy-r*0.1); x.lineTo(cx+r*0.95*fw,cy-r*0.02); x.stroke(); }
+  drawCreature(x,cx,cy,r,fw,fh,p,skin,false);
   drawHeadwear(x,cx,cy,r,fw,fh,p,cap,false);
+}
+function drawCreature(x,cx,cy,r,fw,fh,p,skin,back){ // Tentakel, Fühler, Hörner, Schnurrhaare, drittes Auge, Einhorn
+  const c=p.creature||'none'; if(c==='none') return; const lw=k=>Math.max(1.2,r*k);
+  if(c==='tentacles'){ x.strokeStyle=shade(skin,0.8); x.lineCap='round'; for(let i=-2;i<=2;i++){ const bx=cx+i*r*0.32*fw, by=cy-r*0.8*fh; x.lineWidth=lw(0.16); x.beginPath(); x.moveTo(bx,by); x.quadraticCurveTo(bx+i*r*0.35,cy-r*1.35,bx+i*r*0.5,cy-r*1.75+Math.abs(i)*r*0.15); x.stroke(); x.fillStyle=shade(skin,0.65); x.beginPath(); x.arc(bx+i*r*0.5,cy-r*1.75+Math.abs(i)*r*0.15,r*0.1,0,7); x.fill(); } }
+  else if(c==='antenna'){ x.strokeStyle=shade(skin,0.75); x.lineWidth=lw(0.07); x.lineCap='round'; for(const sd of [-1,1]){ x.beginPath(); x.moveTo(cx+sd*r*0.3,cy-r*0.9*fh); x.quadraticCurveTo(cx+sd*r*0.5,cy-r*1.4,cx+sd*r*0.55,cy-r*1.7); x.stroke(); x.fillStyle='#ffcf3f'; x.beginPath(); x.arc(cx+sd*r*0.55,cy-r*1.7,r*0.13,0,7); x.fill(); x.fillStyle='rgba(255,255,255,0.5)'; x.beginPath(); x.arc(cx+sd*r*0.52,cy-r*1.74,r*0.05,0,7); x.fill(); } }
+  else if(c==='horns'){ x.fillStyle='#d8c7a0'; for(const sd of [-1,1]){ x.beginPath(); x.moveTo(cx+sd*r*0.45*fw,cy-r*0.75*fh); x.quadraticCurveTo(cx+sd*r*0.9,cy-r*1.3,cx+sd*r*0.8,cy-r*1.75); x.quadraticCurveTo(cx+sd*r*0.95,cy-r*1.2,cx+sd*r*0.72*fw,cy-r*0.65*fh); x.closePath(); x.fill(); } x.strokeStyle='rgba(0,0,0,0.2)'; x.lineWidth=lw(0.03); for(const sd of [-1,1]) for(let k=1;k<4;k++){ x.beginPath(); x.moveTo(cx+sd*r*(0.5+k*0.08),cy-r*(0.8+k*0.22)); x.lineTo(cx+sd*r*(0.72+k*0.06),cy-r*(0.72+k*0.22)); x.stroke(); } }
+  else if(c==='whiskers' && !back){ x.strokeStyle='rgba(40,30,30,0.7)'; x.lineWidth=lw(0.035); x.lineCap='round'; for(const sd of [-1,1]) for(const dy of [-0.08,0.04,0.16]){ x.beginPath(); x.moveTo(cx+sd*r*0.25,cy+r*0.2); x.lineTo(cx+sd*r*1.1*fw,cy+r*(0.2+dy*2.2)); x.stroke(); } }
+  else if(c==='thirdeye' && !back){ const ex=cx, ey=cy-r*0.62; x.fillStyle='#fff'; x.beginPath(); x.ellipse(ex,ey,r*0.17,r*0.14,0,0,7); x.fill(); x.fillStyle=(AV_EYE[p.eye]||AV_EYE[0])[0]; x.beginPath(); x.arc(ex,ey+r*0.01,r*0.085,0,7); x.fill(); x.fillStyle='#111'; x.beginPath(); x.arc(ex,ey+r*0.01,r*0.04,0,7); x.fill(); x.fillStyle='#fff'; x.beginPath(); x.arc(ex-r*0.03,ey-r*0.03,r*0.025,0,7); x.fill(); }
+  else if(c==='unicorn'){ x.fillStyle='#f5c531'; x.beginPath(); x.moveTo(cx-r*0.16,cy-r*0.75*fh); x.lineTo(cx,cy-r*1.75); x.lineTo(cx+r*0.16,cy-r*0.75*fh); x.closePath(); x.fill(); x.strokeStyle='rgba(180,110,0,0.6)'; x.lineWidth=lw(0.035); for(let k=1;k<5;k++){ const t=k/5; x.beginPath(); x.moveTo(cx-r*0.16*(1-t),cy-r*(0.75+t*1.0)); x.lineTo(cx+r*0.16*(1-t),cy-r*(0.75+t*1.0)-r*0.08); x.stroke(); } }
 }
 function drawHeadwear(x,cx,cy,r,fw,fh,p,cap,back){
   const h=p.headwear;
@@ -2176,7 +2200,7 @@ const Avatar = { pending:null, editing:null, urlCache:{},
     const row=(label,html)=>`<div class="avlabel">${label}</div>${html}`;
     const needCapColor=['cap','beanie','helmet','band'].includes(e.headwear);
     let body='';
-    if(Avatar.tab==='face') body = row('Gesichtsform',opts(AV_FACE,'face')) + row('Hautfarbe',colors(AV_SKIN,'skin')) + row('Nase',opts(AV_NOSE,'nose')) + row('Ohren',opts(AV_EARS,'ears'));
+    if(Avatar.tab==='face') body = row('Gesichtsform',opts(AV_FACE,'face')) + row('Hautfarbe',colors(AV_SKIN,'skin')) + row('Nase',opts(AV_NOSE,'nose')) + row('Ohren',opts(AV_EARS,'ears')) + row('Besonderes',opts(AV_CREATURE,'creature'));
     else if(Avatar.tab==='eyes') body = row('Augenform',opts(AV_EYESHAPE,'eyeShape')) + row('Augenfarbe',colors(AV_EYE.map(v=>v[0]),'eye')) + row('Augenbrauen',opts([['0','Fein'],['1','Normal'],['2','Buschig']],'brows'));
     else if(Avatar.tab==='mouth') body = row('Mund',opts(AV_MOUTH,'mouth')) + row('Schnauz',opts(AV_MUST,'moustache')) + row('Bart',opts(AV_BEARD,'beard'));
     else if(Avatar.tab==='hair') body = row('Frisur',opts(AV_STYLES,'hair')) + row('Haarfarbe',colors(AV_HAIR,'hairColor'));
@@ -2188,7 +2212,7 @@ const Avatar = { pending:null, editing:null, urlCache:{},
       const x=b.querySelector('canvas').getContext('2d'); drawAvatarHead(x,56,66,50,q,'front'); }
     for(const b of box.querySelectorAll('.avopt,.avcolor')){ b.onclick=()=>{ const k=b.dataset.k, v=b.dataset.v; if(v==='toggle') e[k]=!e[k]; else if(num.includes(k)) e[k]=+v; else e[k]=v; Avatar.openEditor(e); }; }
     for(const t of box.querySelectorAll('.avtab')){ t.onclick=()=>{ Avatar.tab=t.dataset.tab; Avatar.openEditor(e); }; }
-    $('btnAvatarRandom').onclick=()=>{ const pick=a=>a[Math.floor(Math.random()*a.length)]; e.hair=pick(AV_STYLES)[0]; e.hairColor=Math.floor(Math.random()*8); e.skin=Math.floor(Math.random()*AV_SKIN.length); e.face=pick(AV_FACE)[0]; e.eye=Math.floor(Math.random()*AV_EYE.length); e.eyeShape=pick(AV_EYESHAPE)[0]; e.nose=pick(AV_NOSE)[0]; e.ears=pick(AV_EARS)[0]; e.mouth=pick(AV_MOUTH)[0]; e.brows=Math.floor(Math.random()*3); e.moustache=Math.random()<0.3? pick(AV_MUST)[0] : 'none'; e.beard=Math.random()<0.3? pick(AV_BEARD)[0] : 'none'; e.glasses=Math.random()<0.3? pick(AV_GLASSES)[0] : 'none'; e.headwear=Math.random()<0.4? pick(AV_HEAD)[0] : 'none'; e.capColor=Math.floor(Math.random()*AV_CAP.length); e.freckles=Math.random()<0.2; e.earrings=Math.random()<0.15; Avatar.openEditor(e); };
+    $('btnAvatarRandom').onclick=()=>{ const pick=a=>a[Math.floor(Math.random()*a.length)]; e.hair=pick(AV_STYLES)[0]; e.hairColor=Math.floor(Math.random()*8); e.skin=Math.floor(Math.random()*AV_SKIN.length); e.face=pick(AV_FACE)[0]; e.eye=Math.floor(Math.random()*AV_EYE.length); e.eyeShape=pick(AV_EYESHAPE)[0]; e.nose=pick(AV_NOSE)[0]; e.ears=pick(AV_EARS)[0]; e.creature=Math.random()<0.3? pick(AV_CREATURE)[0] : 'none'; e.mouth=pick(AV_MOUTH)[0]; e.brows=Math.floor(Math.random()*3); e.moustache=Math.random()<0.3? pick(AV_MUST)[0] : 'none'; e.beard=Math.random()<0.3? pick(AV_BEARD)[0] : 'none'; e.glasses=Math.random()<0.3? pick(AV_GLASSES)[0] : 'none'; e.headwear=Math.random()<0.4? pick(AV_HEAD)[0] : 'none'; e.capColor=Math.floor(Math.random()*AV_CAP.length); e.freckles=Math.random()<0.2; e.earrings=Math.random()<0.15; Avatar.openEditor(e); };
     $('btnAvatarOk').onclick=()=>{ Avatar.pending=Avatar.editing; Avatar.editing=null; box.style.display='none'; const n=$('nameInput').value.trim(); if(n){ Avatar.save(n,Avatar.pending); } Avatar.drawPreview(); };
     Avatar.drawPreview(); },
   remove(){ Avatar.pending=null; Avatar.editing=null; $('avatarEditor').style.display='none'; Avatar.save($('nameInput').value,null); Avatar.drawPreview(); }
@@ -2278,6 +2302,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.13.0','2026-10-02','Avatar: Hautfarben Grün, Gelb, Blau und Lila. Ohren von Katze, Hase, Bär und Alien, Schweine- und Katzennase. Neue Rubrik „Besonderes“: Tentakel, Fühler, Hörner, Schnurrhaare, drittes Auge, Einhorn.'],
  ['3.12.0','2026-10-02','Avatar bei der Namenseingabe und im Konfigurator größer. Ranglisten-Einträge lassen sich antippen: großer Avatar mit allen Werten (Platz, Punkte, Zeit, Items, Turbos, Fahrzeug, Datum).'],
  ['3.11.0','2026-10-02','Avatar-Konfigurator neu: Reiter für Gesicht, Augen, Mund, Haare und Zubehör, jede Option als Vorschaubild. Neu wählbar: 6 Augenformen, 6 Nasen, 5 Ohrenformen, 10 Münder.'],
  ['3.10.2','2026-10-02','Home-Screen-App: Rangliste robuster. Anfragen haben ein Zeitlimit, Fehler werden mit Ursache und „Nochmals versuchen“ angezeigt, die App prüft beim Öffnen auf eine neue Version.'],
