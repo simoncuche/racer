@@ -212,7 +212,7 @@
 
 <script>
 'use strict';
-const VERSION='3.18.0', VERSION_DATE='2026-10-03';
+const VERSION='3.18.1', VERSION_DATE='2026-10-03';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -1981,6 +1981,12 @@ function drawTunnels(vis, playerSeg){ // Wände, Decke, Lampen und Felsportal; n
   if(playerSeg.tunnel){ // im Tunnel: Decke und Wände bis zum Bildrand, der Himmel verschwindet
     const n=vis.find(sg=>sg.tunnel); if(n){ const a=n.p1.screen; ctx.fillStyle='#26262d'; ctx.fillRect(0,0,W,Math.max(0,a.y-a.w*HT*0.7)+1); ctx.fillStyle='#34343c'; ctx.fillRect(0,0,Math.max(0,a.x-a.w*OUT)+1,a.y+2); ctx.fillRect(Math.min(W,a.x+a.w*OUT)-1,0,W,a.y+2); }
   }
+  let clipped=false;
+  if(!playerSeg.tunnel){ // von außen: das Innere nur durch die Portalöffnung zeigen, nicht durch die Bergwand
+    const start=vis.find(sg=>sg.tunnelStart && sg.index>playerSeg.index); if(!start) return;
+    const a=start.p1.screen, w=a.w, cx=a.x, by=a.y+1; ctx.save(); ctx.beginPath();
+    ctx.moveTo(cx-w*OUT,by+2); ctx.lineTo(cx-w*OUT,by-w*HT*0.7); ctx.quadraticCurveTo(cx-w*OUT,by-w*HT*1.02,cx-w*OUT*0.45,by-w*HT*1.02); ctx.lineTo(cx+w*OUT*0.45,by-w*HT*1.02); ctx.quadraticCurveTo(cx+w*OUT,by-w*HT*1.02,cx+w*OUT,by-w*HT*0.7); ctx.lineTo(cx+w*OUT,by+2); ctx.closePath(); ctx.clip(); clipped=true;
+  }
   for(const seg of vis){ if(!seg.tunnel) continue;
     const a=seg.p1.screen, b=seg.p2.screen; const col=seg.color;
     const wl= col? '#3b3b44':'#34343c', sl= col? '#32323a':'#2d2d35', ce= col? '#2b2b33':'#26262d';
@@ -1993,6 +1999,7 @@ function drawTunnels(vis, playerSeg){ // Wände, Decke, Lampen und Felsportal; n
     poly(a.x-a.w*OUT*IN,a.y-a.w*HT, a.x+a.w*OUT*IN,a.y-a.w*HT, b.x+b.w*OUT*IN,b.y-b.w*HT, b.x-b.w*OUT*IN,b.y-b.w*HT, ce);
     if(seg.index%5===0){ ctx.fillStyle='rgba(255,230,150,0.3)'; ctx.beginPath(); ctx.ellipse(b.x,b.y-b.w*HT+b.w*0.04,b.w*0.2,b.w*0.08,0,0,7); ctx.fill(); ctx.fillStyle='#fff3b0'; ctx.fillRect(b.x-b.w*0.06,b.y-b.w*HT,b.w*0.12,b.w*0.03); }
   }
+  if(clipped) ctx.restore();
 }
 function drawCarsInSegment(seg){
   const list=[]; for(const c of G.traffic){ if(findSegment(c.z)===seg) list.push(c); } if(findSegment(G.rival.z)===seg) list.push(G.rival);
@@ -2393,6 +2400,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.18.1','2026-10-03','Tunnel: Das Innere ist von außen nur noch durch die Öffnung sichtbar, nicht mehr durch die Bergwand.'],
  ['3.18.0','2026-10-03','Avatar ohne Kreis und deutlich größer (Namenseingabe, Konfigurator, Detailansicht). Rangliste zeigt wieder alle Fahrten als eigene Zeilen, die 30 besten.'],
  ['3.17.0','2026-10-02','Ranglisten-Detail eines Spielers zeigt alle seine Fahrten auf der Strecke, nicht nur die beste.'],
  ['3.16.1','2026-10-02','Körper des Fahrers hat dieselbe Hautfarbe wie der Avatar. Turbo-Felder sind jetzt Pfeile.'],
