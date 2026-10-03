@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.18.0 (2026-10-03)
+
+Avatar ohne Kreis und deutlich größer (Namenseingabe, Konfigurator, Detailansicht). Rangliste zeigt wieder alle Fahrten als eigene Zeilen, die 30 besten.
+
 ## 3.17.0 (2026-10-02)
 
 Ranglisten-Detail eines Spielers zeigt alle seine Fahrten auf der Strecke, nicht nur die beste.

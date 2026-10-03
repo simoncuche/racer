@@ -60,7 +60,7 @@
   .avlabel{font-size:12px;opacity:.8;margin:8px 0 4px;text-align:left}
   .avgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
   .avopt{appearance:none;border:2px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);color:#fff;border-radius:12px;padding:4px 2px 3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
-  .avopt canvas{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.08)}
+  .avopt canvas{width:64px;height:64px}
   .avopt span{font-size:10.5px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
   .avopt.sel{border-color:var(--accent);background:rgba(255,207,63,.22)}
   .avcolors{display:flex;flex-wrap:wrap;gap:6px}
@@ -144,7 +144,7 @@
   <input id="nameInput" name="spieler" maxlength="14" placeholder="Dein Name" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="words" inputmode="text" enterkeyhint="done" style="width:min(90vw,320px);padding:12px 14px;border-radius:14px;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.35);color:#fff;font-size:22px;text-align:center;user-select:text;-webkit-user-select:text">
   <div class="row" id="nameChips" style="margin-top:12px;gap:8px"></div>
   <div id="avatarBox" style="margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:8px">
-    <canvas id="avatarPreview" width="400" height="400" style="width:min(56vw,220px);height:min(56vw,220px);border-radius:50%;background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.5)"></canvas>
+    <canvas id="avatarPreview" width="400" height="400" style="width:min(60vw,240px);height:min(60vw,240px)"></canvas>
     <div class="row" style="gap:8px"><button class="btn secondary" id="btnAvatarEdit" style="padding:8px 14px;font-size:15px">🎨 Avatar gestalten</button><button class="btn secondary" id="btnPhotoDel" style="padding:8px 14px;font-size:15px;display:none">✕ Entfernen</button></div>
     <div id="avatarEditor" style="display:none;flex-direction:column;gap:6px;width:min(94vw,400px);background:var(--panel);border-radius:16px;padding:10px"></div>
   </div>
@@ -183,7 +183,7 @@
 <div id="rankDetail" class="hidden" style="position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--panel);border-radius:20px;padding:16px 18px;width:min(92vw,360px);text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5)">
     <div style="display:flex;align-items:center;justify-content:center;gap:10px">
-      <canvas id="rdAvatar" width="400" height="400" style="width:min(40vw,170px);height:min(40vw,170px);border-radius:50%;background:rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.5)"></canvas>
+      <canvas id="rdAvatar" width="400" height="400" style="width:min(44vw,180px);height:min(44vw,180px)"></canvas>
       <canvas id="rdVehicle" width="300" height="220" style="width:min(36vw,150px);height:auto;border-radius:12px;background:linear-gradient(#bfe3ff,#e9d9b7)"></canvas>
     </div>
     <div id="rdName" style="font-size:clamp(20px,6vw,28px);font-weight:900;margin-top:8px"></div>
@@ -212,7 +212,7 @@
 
 <script>
 'use strict';
-const VERSION='3.17.0', VERSION_DATE='2026-10-02';
+const VERSION='3.18.0', VERSION_DATE='2026-10-03';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -252,10 +252,10 @@ const Online = {
     const body={ structuredQuery:{ from:[{collectionId:'scores_'+colKey(stageId)}], orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}], limit:1000 } };
     const r=await Online.fetch(`${Online.base()}:runQuery?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!r.ok) throw new Error('HTTP '+r.status); const rows=await r.json(); const best=new Map();
-    const runs={}; // alle Fahrten je Spieler, für die Detailansicht
-    for(const x of rows){ if(!x.document||!Online.hasAvatar(x.document)) continue; const e=Online.dec(x.document); const k=Online.pkey(e.name); (runs[k]=runs[k]||[]).push(e); const b=best.get(k); if(!b || e.score>b.score || (e.score===b.score && e.time<b.time)) best.set(k,e); }
-    for(const k in runs) runs[k].sort((a,b)=>b.score-a.score || a.time-b.time);
-    const list=[...best.values()].sort((a,b)=>b.score-a.score || a.time-b.time); (Online._cache=Online._cache||{})[stageId]={t:now,list,runs}; return list; },
+    const runs={}, list=[]; // alle Fahrten, dazu je Spieler gruppiert für die Detailansicht
+    for(const x of rows){ if(!x.document||!Online.hasAvatar(x.document)) continue; const e=Online.dec(x.document); list.push(e); const k=Online.pkey(e.name); (runs[k]=runs[k]||[]).push(e); }
+    list.sort((a,b)=>b.score-a.score || a.time-b.time); for(const k in runs) runs[k].sort((a,b)=>b.score-a.score || a.time-b.time);
+    (Online._cache=Online._cache||{})[stageId]={t:now,list,runs}; return list; },
   runsOf(stageId,name){ const c=Online._cache&&Online._cache[stageId]; return (c&&c.runs&&c.runs[Online.pkey(name)])||[]; },
   async count(stageId){ return (await Online.all(stageId)).length; },
   async add(entry){ // schreibt ein Ergebnis; schlägt es fehl, landet es in der Warteschlange
@@ -267,8 +267,8 @@ const Online = {
   async flush(){ const q=store('queue')||[]; if(!q.length) return; const rest=[]; for(const e of q){ if(!(await Online.add({...e,_retry:true}))) rest.push(e); } store('queue',rest); },
   async top(stageId,n=10){ return (await Online.all(stageId)).slice(0,n); },
   async rankOfName(stageId,name){ const list=await Online.all(stageId); const k=Online.pkey(name); const i=list.findIndex(e=>Online.pkey(e.name)===k); return i>=0 ? i+1 : null; },
-  async rankOf(entry){ // Platz des Spielers (sein bestes Ergebnis); ist er noch nicht drin, Platz nach Punktzahl
-    const list=await Online.all(entry.stage); const k=Online.pkey(entry.name); const i=list.findIndex(e=>Online.pkey(e.name)===k); if(i>=0) return i+1; return list.filter(e=>e.score>entry.score).length+1; }
+  async rankOf(entry){ // Platz dieser Fahrt unter allen Fahrten; ist sie noch nicht drin, Platz nach Punktzahl
+    const list=await Online.all(entry.stage); const i=list.findIndex(e=>e.ts===entry.id); if(i>=0) return i+1; return list.filter(e=>e.score>entry.score || (e.score===entry.score && e.time<entry.time)).length+1; }
 };
 // Lokale Rangliste: wird im Browser gespeichert (localStorage) und zusätzlich als Cookie abgelegt
 const Ranking = {
@@ -2028,9 +2028,8 @@ function showResult(){
   (async()=>{ const ok=await Online.add(entry); const big=$('resBig'), el=$('onlineRank'); if(!el) return;
     if(!ok){ const rejected=/^HTTP 4/.test(Online.lastError||''); big.textContent= rejected ? '⚠️ Abgelehnt' : '📵 Kein Netz'; el.innerHTML= rejected ? 'Die Online-Rangliste hat das Ergebnis abgelehnt ('+Online.lastError+'). Meist fehlen in Firebase die aktuellen Regeln aus firestore.rules. Es wird später nochmals versucht.' : 'Das Ergebnis wird nachgereicht, sobald wieder Netz da ist'; return; }
     try{ const [r,total,top,all]=await Promise.all([Online.rankOf(entry),Online.count(G.stage.id),Online.top(G.stage.id,5),Online.all(G.stage.id)]);
-      const myBest=all.find(e=>Online.pkey(e.name)===Online.pkey(entry.name)); const beaten = myBest && myBest.score>entry.score;
       big.textContent=(r===1?'🥇 ':r===2?'🥈 ':r===3?'🥉 ':'🌍 ')+'Platz '+r+' von '+Math.max(total,r);
-      el.innerHTML = beaten ? 'Deine Bestmarke bleibt '+myBest.score+' ⭐ – jeder Spieler zählt nur mit seinem besten Ergebnis' : r===1 ? 'Neue Bestmarke auf dieser Strecke!' : 'in der gemeinsamen Rangliste aller Handys';
+      el.innerHTML = r===1 ? 'Neue Bestmarke auf dieser Strecke!' : 'in der gemeinsamen Rangliste aller Fahrten';
       $('onlineTop').innerHTML=rankingTable(G.stage.id,entry.id,5,top); }
     catch(e){ big.textContent='🌍 Gespeichert'; el.innerHTML='Platz konnte gerade nicht ermittelt werden'; } })();
   $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${G.stage.itemIcon||'🦐'} ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · ${G.stage.itemName} ${G.items*ITEM_POINTS} · Turbos ${G.boosts*50}</td></tr>`
@@ -2054,7 +2053,7 @@ function showRankDetail(row){ // großer Avatar mit allen Werten eines Rangliste
   $('rdName').textContent=e.name; $('rdRank').textContent=medal+' · '+(st.emoji||'')+' '+(st.name||'');
   $('rdStats').innerHTML=[['⭐ Punkte',Ranking.score(e)],['⏱️ Zeit',fmtTime(e.time)],[(st.itemIcon||'🦐')+' '+(st.itemName||'Items'),e.items||0],['🔥 Turbos',e.boosts||0],['Fahrzeug',veh],['📅 Datum',e.date||'–']].map(([k,v])=>`<tr><td style="text-align:left;opacity:.8;padding:3px 10px 3px 0">${k}</td><td style="text-align:right;font-weight:700">${v}</td></tr>`).join('');
   const c=$('rdAvatar'), x=c.getContext('2d'); x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,400,400); x.setTransform(400/128,0,0,400/128,0,0);
-  if(e.avatar) drawAvatarHead(x,64,70,44,e.avatar,'front'); else { x.font='70px Arial'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(e.driver==='girl'?'🚗':e.driver==='plane'?'✈️':'🚙',64,66); }
+  if(e.avatar) drawAvatarHead(x,64,78,56,e.avatar,'front'); else { x.font='70px Arial'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(e.driver==='girl'?'🚗':e.driver==='plane'?'✈️':'🚙',64,66); }
   const runs=Online.runsOf(row.stageId,e.name); const icon=d=>d==='girl'?'🚗':d==='plane'?'✈️':d==='rocket'?'🚀':'🚙';
   $('rdRuns').innerHTML = runs.length>1 ? `<div style="font-size:13px;opacity:.8;margin:10px 0 4px">Alle ${runs.length} Fahrten auf dieser Strecke</div><div style="max-height:160px;overflow-y:auto"><table style="margin:0 auto;font-size:13px;width:100%">`+runs.map((r,i)=>`<tr style="${r===e||(r.ts===e.ts&&r.score===e.score)?'color:var(--accent);font-weight:700':''}"><td style="text-align:left;padding:2px 6px">${i+1}.</td><td style="text-align:left">${icon(r.driver)} ${r.date||''}</td><td style="color:var(--accent)">${Ranking.score(r)} ⭐</td><td style="opacity:.85">${fmtTime(r.time)} · ${st.itemIcon||'🦐'}${r.items||0} · 🔥${r.boosts||0}</td></tr>`).join('')+'</table></div>' : '';
   const vc=$('rdVehicle'), vx=vc.getContext('2d'); vx.clearRect(0,0,300,220); const vd=Object.assign({},DRIVERS[e.driver]||DRIVERS.girl,{avatar:e.avatar||null}); drawVehicleFront(vx,300,220,vd); // das Fahrzeug mit dem Avatar des Spielers
@@ -2077,8 +2076,8 @@ function renderRanking(){
   Online.flush().catch(()=>{}).then(()=>Online.all(st.id)).then(all=>{ if(rankStage!==want) return;
     const list=all.slice(0,TOPN); const myRank=all.findIndex(e=>Online.pkey(e.name)===Online.pkey(me))+1;
     const extra = (myRank>TOPN) ? { e:all[myRank-1], rank:myRank } : null;
-    const el=$('rank_'+st.id); if(el) el.innerHTML=rankingTable(st.id,null,TOPN,list,extra);
-    const m=$('rankMode'); if(m) m.textContent=!all.length? '🌍 Noch niemand hat diese Strecke gefahren' : (myRank? `🌍 Du bist auf Platz ${myRank} von ${all.length}` : `🌍 ${all.length} Spieler – jeder mit seinem besten Ergebnis`) + (all.length>TOPN? ` · die ${TOPN} Besten` : '');
+    const el=$('rank_'+st.id); if(el) el.innerHTML=rankingTable(st.id,G.lastEntry&&G.lastEntry.stage===st.id?G.lastEntry.id:null,TOPN,list,extra);
+    const m=$('rankMode'); if(m) m.textContent=!all.length? '🌍 Noch niemand hat diese Strecke gefahren' : (myRank? `🌍 Deine beste Fahrt: Platz ${myRank} von ${all.length}` : `🌍 ${all.length} ${all.length===1?'Fahrt':'Fahrten'} von allen Handys`) + (all.length>TOPN? ` · die ${TOPN} Besten` : '');
   }).catch(err=>{ if(rankStage!==want) return; const why = err&&err.name==='AbortError' ? 'Zeitüberschreitung' : (err&&err.message)||'unbekannt'; const m=$('rankMode'); if(m) m.textContent='📵 Rangliste konnte nicht geladen werden ('+why+')'; const el=$('rank_'+st.id); if(el){ el.innerHTML='<button class="btn secondary" id="btnRankRetry" style="padding:8px 16px;font-size:15px;margin-top:6px">🔄 Nochmals versuchen</button>'; $('btnRankRetry').onclick=()=>renderRanking(); } });
 }
 // ---------- Fahrerkopf: Comic-Kopf im Spielstil aus wählbaren Merkmalen ----------
@@ -2277,7 +2276,7 @@ const Avatar = { pending:null, editing:null, urlCache:{},
   dataUrl(p){ const k=JSON.stringify(p); if(Avatar.urlCache[k]) return Avatar.urlCache[k]; const c=mkCanvas(64,64); drawAvatarHead(c.getContext('2d'),32,36,24,p,'front'); return Avatar.urlCache[k]=c.toDataURL('image/png'); },
   drawPreview(){ const c=$('avatarPreview'), x=c.getContext('2d'); x.setTransform(1,0,0,1,0,0); x.clearRect(0,0,400,400); x.setTransform(400/128,0,0,400/128,0,0);
     const p = Avatar.editing || Avatar.pending || Avatar.paramsFor($('nameInput').value);
-    if(p){ drawAvatarHead(x,64,70,44,p,'front'); } else { x.fillStyle='rgba(255,255,255,.5)'; x.font='60px Arial'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('🙂',64,70); }
+    if(p){ drawAvatarHead(x,64,78,56,p,'front'); } else { x.fillStyle='rgba(255,255,255,.5)'; x.font='60px Arial'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('🙂',64,70); }
     $('btnPhotoDel').style.display = (p && !Avatar.editing)? '' : 'none'; $('btnAvatarEdit').style.display = Avatar.editing? 'none' : ''; },
   tab:'face',
   openEditor(p,keepScroll){ Avatar.editing=Object.assign(defaultAvatar(),p||{}); const box=$('avatarEditor'); box.style.display='flex'; const e=Avatar.editing;
@@ -2301,7 +2300,7 @@ const Avatar = { pending:null, editing:null, urlCache:{},
     const nb=box.querySelector('.avbody'); if(nb) nb.scrollTop=sc; $('name').scrollTop=screenSc;
     // Vorschaubilder: der eigene Avatar mit genau dieser Option
     for(const b of box.querySelectorAll('.avopt')){ const k=b.dataset.k, v=b.dataset.v; const q=Object.assign({},e); if(v==='toggle') q[k]=!e[k]; else q[k]= num.includes(k)? +v : v;
-      const x=b.querySelector('canvas').getContext('2d'); drawAvatarHead(x,56,66,50,q,'front'); }
+      const x=b.querySelector('canvas').getContext('2d'); drawAvatarHead(x,56,68,54,q,'front'); }
     for(const b of box.querySelectorAll('.avopt,.avcolor')){ b.onclick=()=>{ const k=b.dataset.k, v=b.dataset.v; if(v==='toggle') e[k]=!e[k]; else if(num.includes(k)) e[k]=+v; else e[k]=v; Avatar.openEditor(e,true); }; }
     for(const t of box.querySelectorAll('.avtab')){ t.onclick=()=>{ Avatar.tab=t.dataset.tab; Avatar.openEditor(e); }; }
     $('btnAvatarRandom').onclick=()=>{ const pick=a=>a[Math.floor(Math.random()*a.length)]; e.hair=pick(AV_STYLES)[0]; e.hairColor=Math.floor(Math.random()*8); e.skin=Math.floor(Math.random()*AV_SKIN.length); e.face=pick(AV_FACE)[0]; e.eye=Math.floor(Math.random()*AV_EYE.length); e.eyeShape=pick(AV_EYESHAPE)[0]; e.nose=pick(AV_NOSE)[0]; e.ears=pick(AV_EARS)[0]; e.creature=Math.random()<0.3? pick(AV_CREATURE)[0] : 'none'; e.mouth=pick(AV_MOUTH)[0]; e.brows=Math.floor(Math.random()*3); e.browShape=Math.random()<0.5? 'normal' : pick(AV_BROWS)[0]; e.moustache=Math.random()<0.3? pick(AV_MUST)[0] : 'none'; e.beard=Math.random()<0.3? pick(AV_BEARD)[0] : 'none'; e.glasses=Math.random()<0.3? pick(AV_GLASSES)[0] : 'none'; e.headwear=Math.random()<0.4? pick(AV_HEAD)[0] : 'none'; e.capColor=Math.floor(Math.random()*AV_CAP.length); e.freckles=Math.random()<0.2; e.earrings=Math.random()<0.15; Avatar.openEditor(e); };
@@ -2394,6 +2393,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.18.0','2026-10-03','Avatar ohne Kreis und deutlich größer (Namenseingabe, Konfigurator, Detailansicht). Rangliste zeigt wieder alle Fahrten als eigene Zeilen, die 30 besten.'],
  ['3.17.0','2026-10-02','Ranglisten-Detail eines Spielers zeigt alle seine Fahrten auf der Strecke, nicht nur die beste.'],
  ['3.16.1','2026-10-02','Körper des Fahrers hat dieselbe Hautfarbe wie der Avatar. Turbo-Felder sind jetzt Pfeile.'],
  ['3.16.0','2026-10-02','Zweites Geheimfahrzeug: eine Rakete mit 250 km/h, die sich nur träge lenken lässt. Ranglisten-Detail zeigt das Fahrzeug mit dem Avatar des Spielers.'],
