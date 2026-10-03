@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.18.2 (2026-10-03)
+
+Online-Rangliste: Bei „Kein Netz“ steht jetzt der genaue Grund dabei, das Spiel versucht die Übertragung im Resultatbildschirm automatisch bis zu zwei Minuten lang erneut und zeigt dann den Platz an. Wartende Ergebnisse werden beim Zurückkommen ins Netz sofort nachgereicht.
+
 ## 3.18.1 (2026-10-03)
 
 Tunnel: Das Innere ist von außen nur noch durch die Öffnung sichtbar, nicht mehr durch die Bergwand.

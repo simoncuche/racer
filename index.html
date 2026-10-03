@@ -212,7 +212,7 @@
 
 <script>
 'use strict';
-const VERSION='3.18.1', VERSION_DATE='2026-10-03';
+const VERSION='3.18.2', VERSION_DATE='2026-10-03';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -262,9 +262,12 @@ const Online = {
     Online.lastError=null;
     try{ const r=await Online.fetch(`${Online.base()}/scores_${colKey(entry.stage)}?key=${FIREBASE.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Online.enc(entry))});
       if(!r.ok){ Online.lastError='HTTP '+r.status; throw new Error('HTTP '+r.status); } if(Online._cache) delete Online._cache[entry.stage]; return true; }
-    catch(err){ if(!Online.lastError) Online.lastError='net'; const q=store('queue')||[]; if(!q.some(e=>e.id===entry.id)) q.push(entry); store('queue',q.slice(-50)); return false; }
+    catch(err){ if(!Online.lastError) Online.lastError = err&&err.name==='AbortError' ? 'Zeitüberschreitung' : 'Netz: '+((err&&err.message)||'Fehler')+(navigator.onLine===false?' (offline)':'');
+      if(!entry._retry && !/^HTTP 4/.test(Online.lastError)){ await new Promise(r=>setTimeout(r,1500)); return Online.add({...entry,_retry:true}); } // einmal kurz danach nochmals probieren
+      const q=store('queue')||[]; if(!q.some(e=>e.id===entry.id)) q.push(entry); store('queue',q.slice(-50)); return false; }
   },
-  async flush(){ const q=store('queue')||[]; if(!q.length) return; const rest=[]; for(const e of q){ if(!(await Online.add({...e,_retry:true}))) rest.push(e); } store('queue',rest); },
+  async flush(){ const q=store('queue')||[]; if(!q.length) return 0; const rest=[]; let sent=0; for(const e of q){ if(await Online.add({...e,_retry:true})) sent++; else rest.push(e); } store('queue',rest); return sent; },
+  queued(){ return (store('queue')||[]).length; },
   async top(stageId,n=10){ return (await Online.all(stageId)).slice(0,n); },
   async rankOfName(stageId,name){ const list=await Online.all(stageId); const k=Online.pkey(name); const i=list.findIndex(e=>Online.pkey(e.name)===k); return i>=0 ? i+1 : null; },
   async rankOf(entry){ // Platz dieser Fahrt unter allen Fahrten; ist sie noch nicht drin, Platz nach Punktzahl
@@ -2032,13 +2035,22 @@ function showResult(){
   const {entry,rank} = Ranking.add({ name:playerName(), driver:me.id, stage:G.stage.id, time:Math.round(G.finishTime*10)/10, items:G.items, boosts:G.boosts, won, score, date:new Date().toISOString().slice(0,10), avatar:Avatar.paramsFor(playerName())||undefined });
   G.lastEntry=entry;
   // online speichern, dann Platz in der Gesamtrangliste und Top 5 anzeigen
-  (async()=>{ const ok=await Online.add(entry); const big=$('resBig'), el=$('onlineRank'); if(!el) return;
-    if(!ok){ const rejected=/^HTTP 4/.test(Online.lastError||''); big.textContent= rejected ? '⚠️ Abgelehnt' : '📵 Kein Netz'; el.innerHTML= rejected ? 'Die Online-Rangliste hat das Ergebnis abgelehnt ('+Online.lastError+'). Meist fehlen in Firebase die aktuellen Regeln aus firestore.rules. Es wird später nochmals versucht.' : 'Das Ergebnis wird nachgereicht, sobald wieder Netz da ist'; return; }
-    try{ const [r,total,top,all]=await Promise.all([Online.rankOf(entry),Online.count(G.stage.id),Online.top(G.stage.id,5),Online.all(G.stage.id)]);
-      big.textContent=(r===1?'🥇 ':r===2?'🥈 ':r===3?'🥉 ':'🌍 ')+'Platz '+r+' von '+Math.max(total,r);
-      el.innerHTML = r===1 ? 'Neue Bestmarke auf dieser Strecke!' : 'in der gemeinsamen Rangliste aller Fahrten';
-      $('onlineTop').innerHTML=rankingTable(G.stage.id,entry.id,5,top); }
-    catch(e){ big.textContent='🌍 Gespeichert'; el.innerHTML='Platz konnte gerade nicht ermittelt werden'; } })();
+  const myEntry=entry; (async()=>{ await new Promise(r=>setTimeout(r,0)); const big=$('resBig'), el=$('onlineRank'); if(!el) return; // erst nachdem die Tabelle unten eingefügt ist
+    const showRank=async()=>{ try{ const [r,total,top]=await Promise.all([Online.rankOf(myEntry),Online.count(G.stage.id),Online.top(G.stage.id,5)]);
+        big.textContent=(r===1?'🥇 ':r===2?'🥈 ':r===3?'🥉 ':'🌍 ')+'Platz '+r+' von '+Math.max(total,r);
+        el.innerHTML = r===1 ? 'Neue Bestmarke auf dieser Strecke!' : 'in der gemeinsamen Rangliste aller Fahrten';
+        $('onlineTop').innerHTML=rankingTable(G.stage.id,myEntry.id,5,top); }
+      catch(e){ big.textContent='🌍 Gespeichert'; el.innerHTML='Platz konnte gerade nicht ermittelt werden'; } };
+    let ok=await Online.add(myEntry);
+    if(ok){ await showRank(); return; }
+    const rejected=/^HTTP 4/.test(Online.lastError||'');
+    if(rejected){ big.textContent='⚠️ Abgelehnt'; el.innerHTML='Die Online-Rangliste hat das Ergebnis abgelehnt ('+Online.lastError+'). Meist fehlen in Firebase die aktuellen Regeln aus firestore.rules. Es wird später nochmals versucht.'; return; }
+    // Kein Netz: Grund zeigen und im Hintergrund weiterprobieren, solange der Resultatbildschirm offen ist (bis 2 Minuten)
+    let tries=0; const why=Online.lastError||'';
+    const update=()=>{ big.textContent='📵 Kein Netz'; el.innerHTML='Das Ergebnis wird nachgereicht, sobald wieder Netz da ist'+(tries?' · Versuch '+(tries+1)+' …':'')+'<br><span style="font-size:.75em;opacity:.6">'+escapeHtml(why)+'</span>'; };
+    update();
+    while(G.state==='result' && G.lastEntry===myEntry && tries<24){ await new Promise(r=>setTimeout(r,5000)); if(G.state!=='result') return; tries++; update();
+      if(await Online.flush()>0 || !(store('queue')||[]).some(e=>e.id===myEntry.id)){ await showRank(); return; } } })();
   $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${G.stage.itemIcon||'🦐'} ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · ${G.stage.itemName} ${G.items*ITEM_POINTS} · Turbos ${G.boosts*50}</td></tr>`
     + '<tr><td colspan="2" style="text-align:center;padding-top:6px;opacity:.85" id="onlineRank">Rangliste wird aktualisiert …</td></tr>'
     + '<tr><td colspan="2" style="text-align:center;padding-top:2px" id="onlineTop"></td></tr>';
@@ -2084,7 +2096,7 @@ function renderRanking(){
     const list=all.slice(0,TOPN); const myRank=all.findIndex(e=>Online.pkey(e.name)===Online.pkey(me))+1;
     const extra = (myRank>TOPN) ? { e:all[myRank-1], rank:myRank } : null;
     const el=$('rank_'+st.id); if(el) el.innerHTML=rankingTable(st.id,G.lastEntry&&G.lastEntry.stage===st.id?G.lastEntry.id:null,TOPN,list,extra);
-    const m=$('rankMode'); if(m) m.textContent=!all.length? '🌍 Noch niemand hat diese Strecke gefahren' : (myRank? `🌍 Deine beste Fahrt: Platz ${myRank} von ${all.length}` : `🌍 ${all.length} ${all.length===1?'Fahrt':'Fahrten'} von allen Handys`) + (all.length>TOPN? ` · die ${TOPN} Besten` : '');
+    const m=$('rankMode'); if(m) m.textContent=(!all.length? '🌍 Noch niemand hat diese Strecke gefahren' : (myRank? `🌍 Deine beste Fahrt: Platz ${myRank} von ${all.length}` : `🌍 ${all.length} ${all.length===1?'Fahrt':'Fahrten'} von allen Handys`) + (all.length>TOPN? ` · die ${TOPN} Besten` : '')) + (Online.queued()? ` · ⏳ ${Online.queued()} ${Online.queued()===1?'Ergebnis wartet':'Ergebnisse warten'} auf Übertragung` : '');
   }).catch(err=>{ if(rankStage!==want) return; const why = err&&err.name==='AbortError' ? 'Zeitüberschreitung' : (err&&err.message)||'unbekannt'; const m=$('rankMode'); if(m) m.textContent='📵 Rangliste konnte nicht geladen werden ('+why+')'; const el=$('rank_'+st.id); if(el){ el.innerHTML='<button class="btn secondary" id="btnRankRetry" style="padding:8px 16px;font-size:15px;margin-top:6px">🔄 Nochmals versuchen</button>'; $('btnRankRetry').onclick=()=>renderRanking(); } });
 }
 // ---------- Fahrerkopf: Comic-Kopf im Spielstil aus wählbaren Merkmalen ----------
@@ -2400,6 +2412,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.18.2','2026-10-03','Online-Rangliste: Bei „Kein Netz“ steht jetzt der genaue Grund dabei, das Spiel versucht die Übertragung im Resultatbildschirm automatisch bis zu zwei Minuten lang erneut und zeigt dann den Platz an. Wartende Ergebnisse werden beim Zurückkommen ins Netz sofort nachgereicht.'],
  ['3.18.1','2026-10-03','Tunnel: Das Innere ist von außen nur noch durch die Öffnung sichtbar, nicht mehr durch die Bergwand.'],
  ['3.18.0','2026-10-03','Avatar ohne Kreis und deutlich größer (Namenseingabe, Konfigurator, Detailansicht). Rangliste zeigt wieder alle Fahrten als eigene Zeilen, die 30 besten.'],
  ['3.17.0','2026-10-02','Ranglisten-Detail eines Spielers zeigt alle seine Fahrten auf der Strecke, nicht nur die beste.'],
@@ -2475,7 +2488,7 @@ G.driver=store('driver')||'girl'; G.stageIdx=clamp(store('stage')||0,0,STAGES.le
 setState('title');
 Tilt.updateUI();
 if(store('season')!==SEASON){ store('queue',[]); for(const st of STAGES){ store('best_'+st.id,null); store('wins_'+st.id,null); } store('season',SEASON); }
-Online.flush().catch(()=>{});
+Online.flush().catch(()=>{}); window.addEventListener('online',()=>Online.flush().catch(()=>{})); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') Online.flush().catch(()=>{}); });
 if(store('tilt') && Tilt.supported){ if(typeof DeviceOrientationEvent.requestPermission==='function'){ $('btnStart').addEventListener('click',()=>Tilt.enable(),{once:true}); } else Tilt.enable(); }
 requestAnimationFrame(frame);
 
