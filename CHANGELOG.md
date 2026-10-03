@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.18.3 (2026-10-03)
+
+Tunnel: Wände in der Kurve nicht mehr durchsichtig. Das Innere wird jetzt in der Tiefe des Portals gezeichnet und der Berg legt sich darüber.
+
 ## 3.18.2 (2026-10-03)
 
 Online-Rangliste: Bei „Kein Netz“ steht jetzt der genaue Grund dabei, das Spiel versucht die Übertragung im Resultatbildschirm automatisch bis zu zwei Minuten lang erneut und zeigt dann den Platz an. Wartende Ergebnisse werden beim Zurückkommen ins Netz sofort nachgereicht.
