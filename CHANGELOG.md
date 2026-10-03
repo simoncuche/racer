@@ -2,6 +2,10 @@
 
 Neueste Version zuoberst. Die Kurzfassung steht auch im Spiel: ein Tipp auf die Versionszeile des Startbildschirms öffnet sie.
 
+## 3.18.4 (2026-10-03)
+
+Streckenwahl: statt der Goldmedaillen (Siege gegen das andere Auto, ein Relikt aus der Duell-Zeit) steht jetzt die Zahl deiner Fahrten auf der Strecke.
+
 ## 3.18.3 (2026-10-03)
 
 Tunnel: Wände in der Kurve nicht mehr durchsichtig. Das Innere wird jetzt in der Tiefe des Portals gezeichnet und der Berg legt sich darüber.

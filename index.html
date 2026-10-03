@@ -212,7 +212,7 @@
 
 <script>
 'use strict';
-const VERSION='3.18.3', VERSION_DATE='2026-10-03';
+const VERSION='3.18.4', VERSION_DATE='2026-10-03';
 /* =====================================================================
    Mallorca Rallye – ein Pseudo-3D-Rennspiel ohne Server.
    Alles (Grafik, Sound, Strecken) wird im Browser erzeugt.
@@ -2047,7 +2047,7 @@ function showResult(){
   $('resTable').innerHTML = `<tr><td>Deine Zeit</td><td>${fmtTime(G.finishTime)} ${isBest?'🏆 Neue Bestzeit!':''}</td></tr><tr><td>${G.stage.itemIcon||'🦐'} ${G.stage.itemName}</td><td>${G.items} gesammelt</td></tr><tr><td>Turbos</td><td>${G.boosts}</td></tr><tr><td>⭐ Punkte</td><td style="color:var(--accent)">${score}</td></tr><tr><td style="font-size:.8em">davon</td><td style="font-size:.8em;font-weight:400">Zeit ${Math.max(0,Math.round((200-G.finishTime)*20))} · ${G.stage.itemName} ${G.items*ITEM_POINTS} · Turbos ${G.boosts*50}</td></tr>`
     + '<tr><td colspan="2" style="text-align:center;padding-top:6px;opacity:.85" id="onlineRank">Rangliste wird aktualisiert …</td></tr>'
     + '<tr><td colspan="2" style="text-align:center;padding-top:2px" id="onlineTop"></td></tr>';
-  if(won){ const wins=store('wins_'+G.stage.id)||0; store('wins_'+G.stage.id,wins+1); }
+  store('runs_'+G.stage.id,(store('runs_'+G.stage.id)||0)+1); // Fahrten auf dieser Strecke (auf diesem Gerät)
   setState('result'); Audio.setEngine(0,false);
 }
 
@@ -2345,8 +2345,8 @@ function renderDrivers(){
 function renderStages(){
   const box=$('stagelist'); box.innerHTML='';
   STAGES.forEach((s,i)=>{ const card=document.createElement('div'); card.className='card stage'+(G.stageIdx===i?' sel':'');
-    const best=store('best_'+s.id), wins=store('wins_'+s.id)||0;
-    card.innerHTML=`<div class="title">${s.emoji} ${s.name}</div><div class="desc">${s.desc}</div><div class="best">${best?'Bestzeit: '+fmtTime(best):'Noch nicht gefahren'}${wins?' · 🥇×'+wins:''}</div><button class="rankbtn">🏆 Rangliste öffnen</button>`;
+    const best=store('best_'+s.id), runs=store('runs_'+s.id)||0;
+    card.innerHTML=`<div class="title">${s.emoji} ${s.name}</div><div class="desc">${s.desc}</div><div class="best">${best?'Bestzeit: '+fmtTime(best):'Noch nicht gefahren'}${runs?' · 🏁 '+runs+(runs===1?' Fahrt':' Fahrten'):''}</div><button class="rankbtn">🏆 Rangliste öffnen</button>`;
     card.addEventListener('click',()=>{ G.stageIdx=i; store('stage',i); renderStages(); });
     card.querySelector('.rankbtn').addEventListener('click',e=>{ e.stopPropagation(); G.stageIdx=i; store('stage',i); rankStage=s.id; rankReturn='stages'; setState('ranking'); });
     box.appendChild(card); });
@@ -2405,6 +2405,7 @@ RNG.seed('sprites-v1'); buildSprites(); buildOrangeTree(); RNG.reset(); resize()
 
 // ---------- Versionsverlauf (neueste zuerst; ausführlich in CHANGELOG.md) ----------
 const CHANGES=[
+ ['3.18.4','2026-10-03','Streckenwahl: statt der Goldmedaillen (Siege gegen das andere Auto, ein Relikt aus der Duell-Zeit) steht jetzt die Zahl deiner Fahrten auf der Strecke.'],
  ['3.18.3','2026-10-03','Tunnel: Wände in der Kurve nicht mehr durchsichtig. Das Innere wird jetzt in der Tiefe des Portals gezeichnet und der Berg legt sich darüber.'],
  ['3.18.2','2026-10-03','Online-Rangliste: Bei „Kein Netz“ steht jetzt der genaue Grund dabei, das Spiel versucht die Übertragung im Resultatbildschirm automatisch bis zu zwei Minuten lang erneut und zeigt dann den Platz an. Wartende Ergebnisse werden beim Zurückkommen ins Netz sofort nachgereicht.'],
  ['3.18.1','2026-10-03','Tunnel: Das Innere ist von außen nur noch durch die Öffnung sichtbar, nicht mehr durch die Bergwand.'],
@@ -2481,7 +2482,7 @@ $('ver').textContent='Version '+VERSION+' · '+VERSION_DATE+' · Verlauf'; $('ve
 G.driver=store('driver')||'girl'; G.stageIdx=clamp(store('stage')||0,0,STAGES.length-1);
 setState('title');
 Tilt.updateUI();
-if(store('season')!==SEASON){ store('queue',[]); for(const st of STAGES){ store('best_'+st.id,null); store('wins_'+st.id,null); } store('season',SEASON); }
+if(store('season')!==SEASON){ store('queue',[]); for(const st of STAGES){ store('best_'+st.id,null); store('wins_'+st.id,null); store('runs_'+st.id,null); } store('season',SEASON); }
 Online.flush().catch(()=>{}); window.addEventListener('online',()=>Online.flush().catch(()=>{})); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') Online.flush().catch(()=>{}); });
 if(store('tilt') && Tilt.supported){ if(typeof DeviceOrientationEvent.requestPermission==='function'){ $('btnStart').addEventListener('click',()=>Tilt.enable(),{once:true}); } else Tilt.enable(); }
 requestAnimationFrame(frame);
